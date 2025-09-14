@@ -1,20 +1,20 @@
 # Build artifacts
-/build/
-/target/
-/.gradle/
-/.gradle-dist/
+**/build/
+**/target/
+**/.gradle/
+**/.gradle-dist/
 
 # IDE/project files
 /.vscode/
-*.iml
+**/*.iml
 .DS_Store
 
 # Environment variables
-.env
+**/.env
 
 # Runtime logs and run dir
-/app.log
-/gradle-app.log
-/gradle-build.log
-/run/
+**/app.log
+**/gradle-app.log
+**/gradle-build.log
+**/run/
 
