@@ -1,0 +1,90 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.2'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+}
+
+ext {
+  pgContainer = System.getenv('PG_CONTAINER') ?: 'orgmgr-pg'
+  pgDb       = System.getenv('PG_DB') ?: 'studs'
+  pgUser     = System.getenv('PG_USER') ?: 'postgres'
+  pgPassword = System.getenv('PG_PASSWORD') ?: 'postgres'
+  pgPort     = System.getenv('PG_PORT') ?: '5432'
+  webPort    = System.getenv('WEB_PORT') ?: '13131'
+  pgHost     = System.getenv('PG_HOST') ?: 'localhost'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    runtimeOnly 'org.postgresql:postgresql'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['-parameters']
+}
+
+tasks.register('startDbDocker', Exec) {
+  group = 'dev'
+  description = 'Start local Postgres in Docker (if not running)'
+  commandLine('bash','-lc', """
+    set -e
+    if ! command -v docker >/dev/null 2>&1; then
+      echo 'Docker not found. Skipping DB container start.'
+      exit 0
+    fi
+    docker stop '${pgContainer}' >/dev/null 2>&1 || true
+    if ! docker ps -a --format '{{.Names}}' | grep -qx '${pgContainer}'; then
+      echo 'Running postgres container ${pgContainer}...'
+      docker run -d --name '${pgContainer}' \
+        -e POSTGRES_DB='${pgDb}' \
+        -e POSTGRES_USER='${pgUser}' \
+        -e POSTGRES_PASSWORD='${pgPassword}' \
+        -p ${pgPort}:5432 postgres:16 >/dev/null
+    else
+      docker start '${pgContainer}' >/dev/null
+    fi
+    echo -n 'Waiting for Postgres to be ready'
+    for i in \$(seq 1 60); do
+      if docker exec '${pgContainer}' pg_isready -U '${pgUser}' -d '${pgDb}' >/dev/null 2>&1; then
+        echo ' ✔'; exit 0; fi; echo -n ' .'; sleep 1; done
+    echo ' ✖ (timeout)'; exit 1
+  """)
+}
+
+// Build and deploy the Boot jar to remote server
+tasks.register('deploy', Exec) {
+    group = 'deployment'
+    description = 'Build bootJar and upload it to remote server via scp'
+    dependsOn tasks.named('bootJar')
+
+    def jarName = "${project.name}-${project.version}.jar"
+    def jarPath = "${buildDir}/libs/${jarName}"
+    def remoteUserHost = 's408698@helios.cs.ifmo.ru'
+    def remotePort = '2222'
+
+    doFirst {
+        println "Deploying ${jarPath} to ${remoteUserHost} on port ${remotePort}"
+    }
+
+    commandLine('bash', '-lc', """
+      set -e
+      scp -P ${remotePort} '${jarPath}' '${remoteUserHost}:~/'
+    """)
+}
