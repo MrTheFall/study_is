@@ -2,7 +2,7 @@
 #import "title.typ": title_page
 
 #set page(margin: 2.5cm)
-#set figure(numbering: "1", supplement: [рисунок])
+#set figure(numbering: "1", supplement: [Рисунок])
 
 // Титульная страница
 #title_page(
