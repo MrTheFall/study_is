@@ -20,7 +20,7 @@
     </div>
     <div>
       <label class="block text-sm text-gray-600 mb-1">Значение</label>
-      <input class="w-full border border-gray-300 rounded px-3 py-2" type="text" name="filterValue" placeholder="Значение" th:value="${filterValue}">
+      <input class="w-full border border-gray-300 rounded px-3 py-2" type="text" name="filterValue" placeholder="Значение" th:value="${filterValue} ?: ''">
     </div>
     <div>
       <label class="block text-sm text-gray-600 mb-1">Сортировка</label>
