@@ -47,7 +47,9 @@
     </div>
   </form>
 
-  <div id="org-table" th:replace="~{organizations/_table :: table}"></div>
+  <div id="org-table">
+    <th:block th:replace="~{organizations/_table :: table}"></th:block>
+  </div>
 
 </body>
 </html>

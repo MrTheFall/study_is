@@ -18,6 +18,9 @@ spring:
 
 app:
   schema-init-enabled: true
+  sse:
+    heartbeat-enabled: true
+    heartbeat-interval-ms: 15000
 
 logging:
   level:

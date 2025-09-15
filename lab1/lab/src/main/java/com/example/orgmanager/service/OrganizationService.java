@@ -15,6 +15,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.*;
 
@@ -23,13 +25,16 @@ public class OrganizationService {
     private final OrganizationRepository organizationRepository;
     private final AddressRepository addressRepository;
     private final CoordinatesRepository coordinatesRepository;
+    private final OrganizationEventPublisher eventPublisher;
 
     public OrganizationService(OrganizationRepository organizationRepository,
                                AddressRepository addressRepository,
-                               CoordinatesRepository coordinatesRepository) {
+                               CoordinatesRepository coordinatesRepository,
+                               OrganizationEventPublisher eventPublisher) {
         this.organizationRepository = organizationRepository;
         this.addressRepository = addressRepository;
         this.coordinatesRepository = coordinatesRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     public Page<Organization> list(@Nullable String filterField,
@@ -63,7 +68,9 @@ public class OrganizationService {
     public Organization create(OrganizationForm form) {
         Organization org = new Organization();
         applyForm(org, form);
-        return organizationRepository.save(org);
+        Organization saved = organizationRepository.save(org);
+        afterCommit(() -> eventPublisher.broadcast("created", saved.getId()));
+        return saved;
     }
 
     @Transactional
@@ -75,6 +82,7 @@ public class OrganizationService {
         // one-shot orphan cleanup
         addressRepository.deleteUnassigned();
         coordinatesRepository.deleteUnassigned();
+        afterCommit(() -> eventPublisher.broadcast("updated", saved.getId()));
         return saved;
     }
 
@@ -85,6 +93,17 @@ public class OrganizationService {
         organizationRepository.flush();
         addressRepository.deleteUnassigned();
         coordinatesRepository.deleteUnassigned();
+        afterCommit(() -> eventPublisher.broadcast("deleted", id));
+    }
+
+    private void afterCommit(Runnable r) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void afterCommit() { r.run(); }
+            });
+        } else {
+            r.run();
+        }
     }
 
 
