@@ -10,14 +10,14 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:student}
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
     show-sql: false
 
 app:
-  schema-init-enabled: true
+  schema-init-enabled: false
   sse:
     heartbeat-enabled: true
     heartbeat-interval-ms: 15000
