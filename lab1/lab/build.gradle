@@ -34,10 +34,31 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'com.h2database:h2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+
+    // Fix warning
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    testCompileOnly 'com.google.code.findbugs:jsr305:3.0.2'
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += ['-parameters']
+}
+
+tasks.named('test') {
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        exceptionFormat 'short'
+    }
+}
+
+testing {
+    suites {
+        test {
+            useJUnitJupiter()
+        }
+    }
 }
 
 tasks.register('startDbDocker', Exec) {
@@ -68,7 +89,7 @@ tasks.register('startDbDocker', Exec) {
   """)
 }
 
-// Build and deploy the Boot jar to remote server
+// Build and deploy the Boot jar to helios
 tasks.register('deploy', Exec) {
     group = 'deployment'
     description = 'Build bootJar and upload it to remote server via scp'
