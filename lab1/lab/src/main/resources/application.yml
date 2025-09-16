@@ -1,0 +1,28 @@
+server:
+  port: 13131
+
+spring:
+  thymeleaf:
+    cache: false
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://pg:5432/studs}
+    username: ${SPRING_DATASOURCE_USERNAME:student}
+    password: ${SPRING_DATASOURCE_PASSWORD:student}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+
+app:
+  schema-init-enabled: false
+  sse:
+    heartbeat-enabled: true
+    heartbeat-interval-ms: 15000
+
+logging:
+  level:
+    org.springframework.web: info
+    org.hibernate.SQL: warn

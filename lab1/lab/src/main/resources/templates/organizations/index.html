@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::body})}">
+<body>
+  <div class="flex items-center justify-between mb-6">
+    <h2 class="text-2xl font-semibold">Организации</h2>
+    <a class="inline-flex items-center px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white shadow" href="/organizations/new">Добавить</a>
+  </div>
+
+  <form id="filterForm" class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6" method="get" action="/organizations">
+    <div>
+      <label class="block text-sm text-gray-600 mb-1">Поле</label>
+      <select class="w-full border border-gray-300 rounded px-3 py-2 bg-white" name="filterField">
+        <option th:selected="${filterField} == null" value="">Без фильтра</option>
+        <option value="name" th:selected="${filterField}=='name'">Название</option>
+        <option value="fullName" th:selected="${filterField}=='fullName'">Полное название</option>
+        <option value="officialStreet" th:selected="${filterField}=='officialStreet'">Офиц. адрес: улица</option>
+        <option value="postalStreet" th:selected="${filterField}=='postalStreet'">Почт. адрес: улица</option>
+        <option value="type" th:selected="${filterField}=='type'">Тип</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm text-gray-600 mb-1">Значение</label>
+      <input class="w-full border border-gray-300 rounded px-3 py-2" type="text" name="filterValue" placeholder="Значение" th:value="${filterValue} ?: ''">
+    </div>
+    <div>
+      <label class="block text-sm text-gray-600 mb-1">Сортировка</label>
+      <select class="w-full border border-gray-300 rounded px-3 py-2 bg-white" name="sort">
+        <option th:selected="${sort} == null" value="">Без сортировки</option>
+        <option value="id" th:selected="${sort}=='id'">ID</option>
+        <option value="name" th:selected="${sort}=='name'">Название</option>
+        <option value="fullName" th:selected="${sort}=='fullName'">Полное название</option>
+        <option value="annualTurnover" th:selected="${sort}=='annualTurnover'">Оборот</option>
+        <option value="employeesCount" th:selected="${sort}=='employeesCount'">Сотрудники</option>
+        <option value="rating" th:selected="${sort}=='rating'">Рейтинг</option>
+        <option value="type" th:selected="${sort}=='type'">Тип</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm text-gray-600 mb-1">Направление</label>
+      <select class="w-full border border-gray-300 rounded px-3 py-2 bg-white" name="dir">
+        <option value="asc" th:selected="${dir}=='asc'">по возрастанию</option>
+        <option value="desc" th:selected="${dir}=='desc'">по убыванию</option>
+      </select>
+    </div>
+    <div class="flex items-end">
+      <button class="inline-flex items-center px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 text-gray-700" type="submit">Применить</button>
+    </div>
+  </form>
+
+  <div id="org-table">
+    <th:block th:replace="~{organizations/_table :: table}"></th:block>
+  </div>
+
+</body>
+</html>
