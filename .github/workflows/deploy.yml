@@ -6,7 +6,7 @@ on:
       ref:
         description: "Branch or tag to deploy"
         required: false
-        default: main
+        default: lab1
 
 jobs:
   deploy:
