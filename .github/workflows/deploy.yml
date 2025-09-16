@@ -1,0 +1,46 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      lab:
+        description: "Lab number (e.g. 1, 2, 3)"
+        required: true
+        default: "1"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_USER: ${{ secrets.HELIOS_USER }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: lab${{ inputs.lab }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v2
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
+
+      - name: Start ssh-agent and add key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.HELIOS }}
+
+      - name: Trust helios host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p 2222 helios.cs.ifmo.ru >> ~/.ssh/known_hosts
+
+      - name: Deploy (Gradle)
+        working-directory: lab${{ inputs.lab }}/lab
+        run: ./gradlew deploy --no-daemon -i
