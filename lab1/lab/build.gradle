@@ -97,7 +97,9 @@ tasks.register('deploy', Exec) {
 
     def jarName = "${project.name}-${project.version}.jar"
     def jarPath = "${buildDir}/libs/${jarName}"
-    def remoteUserHost = 's408698@helios.cs.ifmo.ru'
+    def remoteUser = System.getenv('DEPLOY_USER') ?: 'root'
+    def remoteHost = 'helios.cs.ifmo.ru'
+    def remoteUserHost = "${remoteUser}@${remoteHost}"
     def remotePort = '2222'
 
     doFirst {

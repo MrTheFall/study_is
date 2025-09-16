@@ -4,7 +4,6 @@ import com.example.orgmanager.model.Address;
 import com.example.orgmanager.model.Coordinates;
 import com.example.orgmanager.model.Organization;
 import com.example.orgmanager.model.OrganizationType;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -29,50 +28,28 @@ class OrganizationRepositoryTest {
     @Autowired
     private TestEntityManager entityManager;
 
-    private Organization newOrg(String name, String fullName, double rating, long employees, float turnover) {
-        Organization o = new Organization();
-        o.setName(name);
-        o.setFullName(fullName);
-        o.setRating(rating);
-        o.setEmployeesCount(employees);
-        o.setAnnualTurnover(turnover);
-        o.setType(OrganizationType.COMMERCIAL);
-
-        Coordinates c = new Coordinates();
-        c.setX(10);
-        c.setY(20f);
-        o.setCoordinates(c);
-
-        Address a1 = new Address();
-        a1.setStreet("Main");
-        a1.setZipCode("1000");
-        o.setOfficialAddress(a1);
-
-        Address a2 = new Address();
-        a2.setStreet("Second");
-        a2.setZipCode("2000");
-        o.setPostalAddress(a2);
-
-        return o;
-    }
 
     @Test
-    @DisplayName("countByRating returns correct count")
-    void countByRating() {
-        organizationRepository.save(newOrg("A", "A inc", 5.0, 10, 100f));
-        organizationRepository.save(newOrg("B", "B llc", 4.0, 5, 80f));
-        organizationRepository.save(newOrg("C", "C gmbh", 5.0, 15, 120f));
+    void countByRatingReturnsCorrectCount() {
+        organizationRepository.save(org()
+                .name("A").fullName("A inc").rating(5.0).employees(10).turnover(100f)
+                .build());
+        organizationRepository.save(org()
+                .name("B").fullName("B llc").rating(4.0).employees(5).turnover(80f)
+                .build());
+        organizationRepository.save(org()
+                .name("C").fullName("C gmbh").rating(5.0).employees(15).turnover(120f)
+                .build());
 
         long count = organizationRepository.countByRating(5.0);
         assertThat(count).isEqualTo(2);
     }
 
     @Test
-    @DisplayName("findByFullNameStartingWith filters correctly")
-    void startsWith() {
-        organizationRepository.save(newOrg("A", "Alpha Corp", 1.0, 1, 5f));
-        organizationRepository.save(newOrg("B", "Beta Corp", 1.0, 1, 5f));
-        organizationRepository.save(newOrg("C", "Alpine LLC", 1.0, 1, 5f));
+    void findByFullNameStartingWithReturnsMatches() {
+        organizationRepository.save(org().name("A").fullName("Alpha Corp").rating(1.0).employees(1).turnover(5f).build());
+        organizationRepository.save(org().name("B").fullName("Beta Corp").rating(1.0).employees(1).turnover(5f).build());
+        organizationRepository.save(org().name("C").fullName("Alpine LLC").rating(1.0).employees(1).turnover(5f).build());
 
         List<Organization> list = organizationRepository.findByFullNameStartingWith("Al");
         assertThat(list).extracting(Organization::getFullName)
@@ -80,10 +57,12 @@ class OrganizationRepositoryTest {
     }
 
     @Test
-    @DisplayName("top5ByTurnover returns top 5 sorted desc")
-    void top5ByTurnover() {
+    void findTop5ByTurnoverReturnsTop5SortedDesc() {
         for (int i = 1; i <= 8; i++) {
-            organizationRepository.save(newOrg("N" + i, "Full" + i, 1.0, i, i * 10f));
+            organizationRepository.save(
+                    org().name("N" + i).fullName("Full" + i).rating(1.0).employees(i).turnover(i * 10f)
+                            .build()
+            );
         }
 
         List<Organization> top5 = organizationRepository.findTop5ByOrderByAnnualTurnoverDesc();
@@ -94,10 +73,9 @@ class OrganizationRepositoryTest {
     }
 
     @Test
-    @DisplayName("deleteUnassigned removes addresses and coords not referenced")
-    void deleteUnassigned() {
+    void deleteUnassignedRemovesOrphanEntities() {
         // one org with its related entities
-        organizationRepository.save(newOrg("A", "A inc", 5.0, 10, 100f));
+        organizationRepository.save(org().name("A").fullName("A inc").rating(5.0).employees(10).turnover(100f).build());
 
         // unassigned address and coordinates
         Address orphanAddress = new Address();
@@ -120,5 +98,48 @@ class OrganizationRepositoryTest {
 
         assertThat(addressRepository.findById(orphanAddress.getId())).isEmpty();
         assertThat(coordinatesRepository.findById(orphanCoords.getId())).isEmpty();
+    }
+
+    private static OrgBuilder org() { return new OrgBuilder(); }
+
+    private static class OrgBuilder {
+        private String name;
+        private String fullName;
+        private double rating;
+        private long employees;
+        private float turnover;
+
+        OrgBuilder name(String name) { this.name = name; return this; }
+        OrgBuilder fullName(String fullName) { this.fullName = fullName; return this; }
+        OrgBuilder rating(double rating) { this.rating = rating; return this; }
+        OrgBuilder employees(long employees) { this.employees = employees; return this; }
+        OrgBuilder turnover(float turnover) { this.turnover = turnover; return this; }
+
+        Organization build() {
+            Organization o = new Organization();
+            o.setName(name);
+            o.setFullName(fullName);
+            o.setRating(rating);
+            o.setEmployeesCount(employees);
+            o.setAnnualTurnover(turnover);
+            o.setType(OrganizationType.COMMERCIAL);
+
+            Coordinates c = new Coordinates();
+            c.setX(10);
+            c.setY(20f);
+            o.setCoordinates(c);
+
+            Address a1 = new Address();
+            a1.setStreet("Main");
+            a1.setZipCode("1000");
+            o.setOfficialAddress(a1);
+
+            Address a2 = new Address();
+            a2.setStreet("Second");
+            a2.setZipCode("2000");
+            o.setPostalAddress(a2);
+
+            return o;
+        }
     }
 }
