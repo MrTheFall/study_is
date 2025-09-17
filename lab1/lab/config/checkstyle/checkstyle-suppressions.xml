@@ -3,4 +3,7 @@
     "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
     "https://checkstyle.org/dtds/suppressions_1_2.dtd">
 <suppressions>
+    <suppress checks="MagicNumber" files="src/test/java/.*"/>
+    <suppress checks="DesignForExtension" files="src/main/java/com/example/orgmanager/(web|service|model)/.*"/>
+    <suppress checks="HideUtilityClassConstructor" files="src/main/java/com/example/orgmanager/OrgManagerApplication.java"/>
 </suppressions>

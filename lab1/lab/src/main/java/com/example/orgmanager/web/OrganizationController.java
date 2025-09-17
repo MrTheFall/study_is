@@ -6,6 +6,7 @@ import com.example.orgmanager.service.OrganizationService;
 import com.example.orgmanager.web.dto.OrganizationForm;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,13 +14,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Optional;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
-public class OrganizationController {
+public final class OrganizationController {
     private final OrganizationService service;
 
     public OrganizationController(OrganizationService service) {
@@ -33,14 +35,17 @@ public class OrganizationController {
 
     @GetMapping("/organizations")
     public String list(@RequestParam(defaultValue = "0") int page,
-                       @RequestParam(defaultValue = "10") int size,
-                       @RequestParam(required = false) String sort,
-                       @RequestParam(required = false) String dir,
-                       @RequestParam(required = false) String filterField,
-                       @RequestParam(required = false) String filterValue,
-                       Model model) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String dir,
+            @RequestParam(required = false) String filterField,
+            @RequestParam(required = false) String filterValue,
+            Model model) {
         Pageable pageable = buildPageable(page, size, sort, dir);
-        Page<Organization> data = service.list(filterField, filterValue, pageable);
+        Page<Organization> data = service.list(
+                filterField,
+                filterValue,
+                pageable);
         model.addAttribute("page", data);
         model.addAttribute("filterField", filterField);
         model.addAttribute("filterValue", filterValue);
@@ -52,14 +57,17 @@ public class OrganizationController {
 
     @GetMapping("/organizations/table")
     public String table(@RequestParam(defaultValue = "0") int page,
-                        @RequestParam(defaultValue = "10") int size,
-                        @RequestParam(required = false) String sort,
-                        @RequestParam(required = false) String dir,
-                        @RequestParam(required = false) String filterField,
-                        @RequestParam(required = false) String filterValue,
-                        Model model) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String dir,
+            @RequestParam(required = false) String filterField,
+            @RequestParam(required = false) String filterValue,
+            Model model) {
         Pageable pageable = buildPageable(page, size, sort, dir);
-        Page<Organization> data = service.list(filterField, filterValue, pageable);
+        Page<Organization> data = service.list(
+                filterField,
+                filterValue,
+                pageable);
         model.addAttribute("page", data);
         model.addAttribute("filterField", filterField);
         model.addAttribute("filterValue", filterValue);
@@ -80,7 +88,7 @@ public class OrganizationController {
 
     @PostMapping("/organizations")
     public String create(@Valid @ModelAttribute("form") OrganizationForm form,
-                         BindingResult binding, Model model) {
+            BindingResult binding, Model model) {
         if (binding.hasErrors()) {
             model.addAttribute("coords", service.allCoordinates());
             model.addAttribute("addresses", service.allAddresses());
@@ -93,14 +101,16 @@ public class OrganizationController {
 
     @GetMapping("/organizations/{id}")
     public String show(@PathVariable Integer id, Model model) {
-        Organization org = service.findById(id).orElseThrow(EntityNotFoundException::new);
+        Organization org = service.findById(id)
+                .orElseThrow(EntityNotFoundException::new);
         model.addAttribute("org", org);
         return "organizations/show";
     }
 
     @GetMapping("/organizations/{id}/edit")
     public String editForm(@PathVariable Integer id, Model model) {
-        Organization org = service.findById(id).orElseThrow(EntityNotFoundException::new);
+        Organization org = service.findById(id)
+                .orElseThrow(EntityNotFoundException::new);
         OrganizationForm form = toForm(org);
         model.addAttribute("form", form);
         model.addAttribute("orgId", id);
@@ -112,8 +122,8 @@ public class OrganizationController {
 
     @PostMapping("/organizations/{id}")
     public String update(@PathVariable Integer id,
-                         @Valid @ModelAttribute("form") OrganizationForm form,
-                         BindingResult binding, Model model) {
+            @Valid @ModelAttribute("form") OrganizationForm form,
+            BindingResult binding, Model model) {
         if (binding.hasErrors()) {
             model.addAttribute("orgId", id);
             model.addAttribute("coords", service.allCoordinates());
@@ -131,17 +141,33 @@ public class OrganizationController {
         return "redirect:/organizations";
     }
 
-    private Pageable buildPageable(int page, int size, String sort, String dir) {
+    private Pageable buildPageable(
+            int page,
+            int size,
+            String sort,
+            String dir) {
         if (sort == null || sort.isBlank()) {
             return PageRequest.of(Math.max(page, 0), Math.max(size, 1));
         }
-        Sort.Direction direction = (dir != null && dir.equalsIgnoreCase("desc")) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Sort.Direction direction = (dir != null && dir.equalsIgnoreCase("desc"))
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
         // only allow sorting by known simple fields
-        List<String> allowed = List.of("id", "name", "fullName", "annualTurnover", "employeesCount", "rating", "type");
+        List<String> allowed = List.of(
+                "id",
+                "name",
+                "fullName",
+                "annualTurnover",
+                "employeesCount",
+                "rating",
+                "type");
         if (!allowed.contains(sort)) {
             return PageRequest.of(Math.max(page, 0), Math.max(size, 1));
         }
-        return PageRequest.of(Math.max(page, 0), Math.max(size, 1), Sort.by(direction, sort));
+        return PageRequest.of(
+                Math.max(page, 0),
+                Math.max(size, 1),
+                Sort.by(direction, sort));
     }
 
     private OrganizationForm toForm(Organization org) {
@@ -168,9 +194,12 @@ public class OrganizationController {
             f.setPostalStreet(org.getPostalAddress().getStreet());
             f.setPostalZipCode(org.getPostalAddress().getZipCode());
         }
-        if (org.getOfficialAddress() != null && org.getPostalAddress() != null
-                && org.getOfficialAddress().getId() != null && org.getPostalAddress().getId() != null
-                && org.getOfficialAddress().getId().equals(org.getPostalAddress().getId())) {
+        if (org.getOfficialAddress() != null
+                && org.getPostalAddress() != null
+                && org.getOfficialAddress().getId() != null
+                && org.getPostalAddress().getId() != null
+                && org.getOfficialAddress().getId()
+                        .equals(org.getPostalAddress().getId())) {
             f.setPostalSameAsOfficial(true);
         }
         return f;

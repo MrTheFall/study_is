@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::body})}">
+
 <body>
   <h2 class="text-2xl font-semibold mb-6">Создать организацию</h2>
-  <form id="org-form" method="post" th:action="@{/organizations}" th:object="${form}" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+  <form id="org-form" method="post" th:action="@{/organizations}" th:object="${form}"
+    class="grid grid-cols-1 md:grid-cols-2 gap-5">
     <div>
       <label class="block text-sm text-gray-600 mb-1">Название</label>
       <input class="w-full border border-gray-300 rounded px-3 py-2" th:field="*{name}" required>
@@ -19,15 +21,18 @@
     </div>
     <div>
       <label class="block text-sm text-gray-600 mb-1">Годовой оборот</label>
-      <input type="number" step="0.01" min="0.01" class="w-full border border-gray-300 rounded px-3 py-2" th:field="*{annualTurnover}" required>
+      <input type="number" step="0.01" min="0.01" class="w-full border border-gray-300 rounded px-3 py-2"
+        th:field="*{annualTurnover}" required>
     </div>
     <div>
       <label class="block text-sm text-gray-600 mb-1">Количество сотрудников</label>
-      <input type="number" min="1" class="w-full border border-gray-300 rounded px-3 py-2" th:field="*{employeesCount}" required>
+      <input type="number" min="1" class="w-full border border-gray-300 rounded px-3 py-2" th:field="*{employeesCount}"
+        required>
     </div>
     <div>
       <label class="block text-sm text-gray-600 mb-1">Рейтинг</label>
-      <input type="number" step="0.01" min="0.01" class="w-full border border-gray-300 rounded px-3 py-2" th:field="*{rating}" required>
+      <input type="number" step="0.01" min="0.01" class="w-full border border-gray-300 rounded px-3 py-2"
+        th:field="*{rating}" required>
     </div>
 
     <div class="md:col-span-2 border-t pt-4">
@@ -35,9 +40,11 @@
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="md:col-span-2">
           <label class="block text-sm text-gray-600 mb-1">Выбрать существующие</label>
-          <select class="w-full border border-gray-300 rounded px-3 py-2 bg-white" th:field="*{coordinatesId}" id="coordinatesId">
+          <select class="w-full border border-gray-300 rounded px-3 py-2 bg-white" th:field="*{coordinatesId}"
+            id="coordinatesId">
             <option value="">Добавить новый</option>
-            <option th:each="c : ${coords}" th:value="${c.id}" th:text="${'id='+c.id+' x='+c.x+' y='+c.y}" th:attr="data-x=${c.x},data-y=${c.y}"></option>
+            <option th:each="c : ${coords}" th:value="${c.id}" th:text="${'id='+c.id+' x='+c.x+' y='+c.y}"
+              th:attr="data-x=${c.x},data-y=${c.y}"></option>
           </select>
         </div>
         <div>
@@ -46,7 +53,8 @@
         </div>
         <div>
           <label class="block text-sm text-gray-600 mb-1">y (<= 476)</label>
-          <input type="number" step="0.01" max="476" class="w-full border border-gray-300 rounded px-3 py-2" th:field="*{coordY}">
+              <input type="number" step="0.01" max="476" class="w-full border border-gray-300 rounded px-3 py-2"
+                th:field="*{coordY}">
         </div>
       </div>
     </div>
@@ -56,9 +64,11 @@
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="md:col-span-2">
           <label class="block text-sm text-gray-600 mb-1">Выбрать существующий</label>
-          <select class="w-full border border-gray-300 rounded px-3 py-2 bg-white" th:field="*{officialAddressId}" id="officialAddressId">
+          <select class="w-full border border-gray-300 rounded px-3 py-2 bg-white" th:field="*{officialAddressId}"
+            id="officialAddressId">
             <option value="">Добавить новый</option>
-            <option th:each="a : ${addresses}" th:value="${a.id}" th:text="${'id='+a.id+' '+a.street+' '+a.zipCode}" th:attr="data-street=${a.street},data-zip=${a.zipCode}"></option>
+            <option th:each="a : ${addresses}" th:value="${a.id}" th:text="${'id='+a.id+' '+a.street+' '+a.zipCode}"
+              th:attr="data-street=${a.street},data-zip=${a.zipCode}"></option>
           </select>
         </div>
         <div>
@@ -81,9 +91,11 @@
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="postalFieldsCreate">
         <div class="md:col-span-2">
           <label class="block text-sm text-gray-600 mb-1">Выбрать существующий</label>
-          <select class="w-full border border-gray-300 rounded px-3 py-2 bg-white" th:field="*{postalAddressId}" id="postalAddressId">
+          <select class="w-full border border-gray-300 rounded px-3 py-2 bg-white" th:field="*{postalAddressId}"
+            id="postalAddressId">
             <option value="">Добавить новый</option>
-            <option th:each="a : ${addresses}" th:value="${a.id}" th:text="${'id='+a.id+' '+a.street+' '+a.zipCode}" th:attr="data-street=${a.street},data-zip=${a.zipCode}"></option>
+            <option th:each="a : ${addresses}" th:value="${a.id}" th:text="${'id='+a.id+' '+a.street+' '+a.zipCode}"
+              th:attr="data-street=${a.street},data-zip=${a.zipCode}"></option>
           </select>
         </div>
         <div>
@@ -95,13 +107,16 @@
           <input class="w-full border border-gray-300 rounded px-3 py-2" th:field="*{postalZipCode}">
         </div>
       </div>
-      
+
     </div>
 
     <div class="md:col-span-2 flex gap-3">
-      <button class="inline-flex items-center px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white" type="submit">Создать</button>
-      <a class="inline-flex items-center px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 text-gray-700" href="/organizations">Отмена</a>
+      <button class="inline-flex items-center px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white"
+        type="submit">Создать</button>
+      <a class="inline-flex items-center px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 text-gray-700"
+        href="/organizations">Отмена</a>
     </div>
   </form>
 </body>
+
 </html>

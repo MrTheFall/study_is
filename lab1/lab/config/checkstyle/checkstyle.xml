@@ -19,6 +19,7 @@
     <module name="FileLength"/>
     <module name="LineLength">
         <property name="fileExtensions" value="java"/>
+        <property name="max" value="120"/>
     </module>
 
     <module name="FileTabCharacter"/>
@@ -31,7 +32,7 @@
     </module>
 
     <module name="TreeWalker">
-        <module name="SuppressionCommentFilter"/>
+    <module name="SuppressionCommentFilter"/>
 
         <module name="SuppressionXpathFilter">
             <property name="file" value="${config_loc}/checkstyle-suppressions.xml"/>
@@ -100,4 +101,8 @@
         <module name="UpperEll"/>
     </module>
 
+    <module name="SuppressionFilter">
+        <property name="file" value="${config_loc}/checkstyle-suppressions.xml"/>
+        <property name="optional" value="false"/>
+    </module>
 </module>

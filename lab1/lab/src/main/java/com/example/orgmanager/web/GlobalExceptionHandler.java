@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice
-public class GlobalExceptionHandler {
+public final class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public String handleNotFound(EntityNotFoundException ex, Model model) {
@@ -23,9 +23,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public String handleBeanValidation(MethodArgumentNotValidException ex, Model model) {
-        model.addAttribute("error", "Проверьте корректность введенных данных");
+    public String handleBeanValidation(
+            MethodArgumentNotValidException ex,
+            Model model) {
+        model.addAttribute(
+                "error",
+                "Проверьте корректность введенных данных");
         return "error";
     }
 }
-

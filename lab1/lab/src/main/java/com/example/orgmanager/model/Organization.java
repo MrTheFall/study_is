@@ -1,8 +1,26 @@
 package com.example.orgmanager.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.SourceType;
 
@@ -10,6 +28,8 @@ import java.util.Date;
 
 @Entity
 @Table(name = "organization")
+@Getter
+@Setter
 public class Organization {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,22 +43,40 @@ public class Organization {
 
     @NotNull
     @Valid
-    @ManyToOne(optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinColumn(name = "coordinates_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_org_coordinates"))
+    @ManyToOne(
+            optional = false,
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE}
+    )
+    @JoinColumn(
+            name = "coordinates_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_org_coordinates")
+    )
     private Coordinates coordinates;
 
     @Temporal(TemporalType.TIMESTAMP)
     @CreationTimestamp(source = SourceType.DB)
-    @Column(nullable = false, name = "creation_date", updatable = false, insertable = false,
-            columnDefinition = "timestamp default current_timestamp")
+    @Setter(AccessLevel.NONE)
+    @Column(
+            name = "creation_date",
+            nullable = false,
+            updatable = false,
+            insertable = false,
+            columnDefinition = "timestamp default current_timestamp"
+    )
     private Date creationDate;
 
     @NotNull
     @Valid
-    @ManyToOne(optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinColumn(name = "official_address_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_org_official_address"))
+    @ManyToOne(
+            optional = false,
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE}
+    )
+    @JoinColumn(
+            name = "official_address_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_org_official_address")
+    )
     private Address officialAddress;
 
     @Positive
@@ -64,30 +102,15 @@ public class Organization {
 
     @NotNull
     @Valid
-    @ManyToOne(optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinColumn(name = "postal_address_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_org_postal_address"))
+    @ManyToOne(
+            optional = false,
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE}
+    )
+    @JoinColumn(
+            name = "postal_address_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_org_postal_address")
+    )
     private Address postalAddress;
 
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public Coordinates getCoordinates() { return coordinates; }
-    public void setCoordinates(Coordinates coordinates) { this.coordinates = coordinates; }
-    public Date getCreationDate() { return creationDate; }
-    public Address getOfficialAddress() { return officialAddress; }
-    public void setOfficialAddress(Address officialAddress) { this.officialAddress = officialAddress; }
-    public float getAnnualTurnover() { return annualTurnover; }
-    public void setAnnualTurnover(float annualTurnover) { this.annualTurnover = annualTurnover; }
-    public Long getEmployeesCount() { return employeesCount; }
-    public void setEmployeesCount(Long employeesCount) { this.employeesCount = employeesCount; }
-    public double getRating() { return rating; }
-    public void setRating(double rating) { this.rating = rating; }
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
-    public OrganizationType getType() { return type; }
-    public void setType(OrganizationType type) { this.type = type; }
-    public Address getPostalAddress() { return postalAddress; }
-    public void setPostalAddress(Address postalAddress) { this.postalAddress = postalAddress; }
 }

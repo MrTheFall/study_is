@@ -6,4 +6,3 @@ public enum OrganizationType {
     TRUST,
     PRIVATE_LIMITED_COMPANY
 }
-

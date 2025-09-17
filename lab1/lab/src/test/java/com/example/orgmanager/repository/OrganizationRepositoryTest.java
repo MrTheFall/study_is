@@ -1,5 +1,8 @@
 package com.example.orgmanager.repository;
 
+import java.util.List;
+import java.util.stream.IntStream;
+
 import com.example.orgmanager.model.Address;
 import com.example.orgmanager.model.Coordinates;
 import com.example.orgmanager.model.Organization;
@@ -10,8 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,7 +31,6 @@ class OrganizationRepositoryTest {
     @Autowired
     private TestEntityManager entityManager;
 
-    
     @Test
     void countByRatingReturnsCorrectCount() {
         organizationRepository.save(org()
@@ -49,35 +49,55 @@ class OrganizationRepositoryTest {
 
     @Test
     void findByFullNameStartingWithReturnsMatches() {
-        organizationRepository.save(org().name("A").fullName("Alpha Corp").rating(1.0).employees(1).turnover(5f).build());
-        organizationRepository.save(org().name("B").fullName("Beta Corp").rating(1.0).employees(1).turnover(5f).build());
-        organizationRepository.save(org().name("C").fullName("Alpine LLC").rating(1.0).employees(1).turnover(5f).build());
+        organizationRepository.save(org()
+                .name("A").fullName("Alpha Corp").rating(1.0).employees(1).turnover(5f)
+                .build());
+        organizationRepository.save(org()
+                .name("B").fullName("Beta Corp").rating(1.0).employees(1).turnover(5f)
+                .build());
+        organizationRepository.save(org()
+                .name("C").fullName("Alpine LLC").rating(1.0).employees(1).turnover(5f)
+                .build());
 
-        List<Organization> list = organizationRepository.findByFullNameStartingWith("Al");
+        List<Organization> list = organizationRepository
+                .findByFullNameStartingWith("Al");
         assertThat(list).extracting(Organization::getFullName)
                 .containsExactlyInAnyOrder("Alpha Corp", "Alpine LLC");
     }
 
     @Test
     void findTop5ByTurnoverReturnsTop5SortedDesc() {
-        for (int i = 1; i <= 8; i++) {
-            organizationRepository.save(
-                    org().name("N" + i).fullName("Full" + i).rating(1.0).employees(i).turnover(i * 10f)
-                            .build()
-            );
+        for (int index = 1; index <= 8; index++) {
+            organizationRepository.save(org()
+                    .name("N" + index)
+                    .fullName("Full" + index)
+                    .rating(1.0)
+                    .employees(index)
+                    .turnover(index * 10f)
+                    .build());
         }
 
-        List<Organization> top5 = organizationRepository.findTop5ByOrderByAnnualTurnoverDesc();
-        assertThat(top5).hasSize(5);
-        assertThat(top5).isSortedAccordingTo((o1, o2) -> Float.compare(o2.getAnnualTurnover(), o1.getAnnualTurnover()));
-        assertThat(top5.get(0).getAnnualTurnover()).isEqualTo(80f);
-        assertThat(top5.get(4).getAnnualTurnover()).isEqualTo(40f);
+        List<Organization> top5 = organizationRepository
+                .findTop5ByOrderByAnnualTurnoverDesc();
+        List<Float> expectedTurnover = IntStream
+                .iterate(8,
+                        value -> value > 3,
+                        value -> value - 1)
+                .mapToObj(value -> Float.valueOf(value * 10f))
+                .toList();
+
+        assertThat(top5)
+                .hasSize(5)
+                .extracting(Organization::getAnnualTurnover)
+                .containsExactlyElementsOf(expectedTurnover);
     }
 
     @Test
     void deleteUnassignedRemovesOrphanEntities() {
         // one org with its related entities
-        organizationRepository.save(org().name("A").fullName("A inc").rating(5.0).employees(10).turnover(100f).build());
+        organizationRepository.save(org()
+                .name("A").fullName("A inc").rating(5.0).employees(10).turnover(100f)
+                .build());
 
         // unassigned address and coordinates
         Address orphanAddress = new Address();
@@ -99,14 +119,17 @@ class OrganizationRepositoryTest {
         assertThat(removedCoords).isGreaterThanOrEqualTo(1);
 
         assertThat(addressRepository.findById(orphanAddress.getId())).isEmpty();
-        assertThat(coordinatesRepository.findById(orphanCoords.getId())).isEmpty();
+        assertThat(coordinatesRepository.findById(orphanCoords.getId()))
+                .isEmpty();
     }
 
-    private static OrgBuilder org() { return new OrgBuilder(); }
+    private static OrgBuilder org() {
+        return new OrgBuilder();
+    }
 
     @Setter
     @Accessors(fluent = true, chain = true)
-    private static class OrgBuilder {
+    private static final class OrgBuilder {
         private String name;
         private String fullName;
         private double rating;

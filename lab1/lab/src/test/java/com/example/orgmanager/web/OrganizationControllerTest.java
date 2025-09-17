@@ -1,5 +1,7 @@
 package com.example.orgmanager.web;
 
+import java.util.List;
+
 import com.example.orgmanager.model.Organization;
 import com.example.orgmanager.service.OrganizationService;
 import org.junit.jupiter.api.DisplayName;
@@ -12,13 +14,15 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 @WebMvcTest(controllers = OrganizationController.class)
 class OrganizationControllerTest {
@@ -41,14 +45,18 @@ class OrganizationControllerTest {
     @DisplayName("GET /organizations renders index view and calls service")
     void organizationsList() throws Exception {
         Page<Organization> page = new PageImpl<>(List.of());
-        given(service.list(any(), any(), any(PageRequest.class))).willReturn(page);
+        given(service.list(any(), any(), any(PageRequest.class)))
+                .willReturn(page);
 
         mockMvc.perform(get("/organizations"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("organizations/index"))
                 .andExpect(model().attributeExists("page"));
 
-        verify(service).list(isNull(), isNull(), any(PageRequest.class));
+        verify(service).list(
+                isNull(),
+                isNull(),
+                any(PageRequest.class));
     }
 
     @Test
@@ -60,7 +68,10 @@ class OrganizationControllerTest {
         mockMvc.perform(get("/organizations/new"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("organizations/create"))
-                .andExpect(model().attributeExists("form", "coords", "addresses", "types"));
+                .andExpect(model().attributeExists(
+                        "form",
+                        "coords",
+                        "addresses",
+                        "types"));
     }
 }
-

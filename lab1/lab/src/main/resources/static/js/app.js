@@ -6,7 +6,7 @@
     const bust = (qs && qs.length > 0) ? `${qs}&_rt=${Date.now()}` : `?_rt=${Date.now()}`;
     try {
       const resp = await fetch(`/organizations/table${bust}`, {
-        headers: {'X-Requested-With': 'fetch', 'Cache-Control': 'no-cache'},
+        headers: { 'X-Requested-With': 'fetch', 'Cache-Control': 'no-cache' },
         cache: 'no-store'
       });
       if (resp.ok) {
@@ -61,10 +61,10 @@
     setRequired('postalStreet', !!needPost);
   }
 
-  function bindFill(selId, map){
+  function bindFill(selId, map) {
     const sel = document.getElementById(selId);
     if (!sel) return;
-    function fill(){
+    function fill() {
       const opt = sel.options[sel.selectedIndex];
       if (!opt || !opt.value) return; // only when existing selected
       Object.entries(map).forEach(([k, attr]) => {
@@ -76,7 +76,7 @@
     fill();
   }
 
-  function updatePostalDisabled(){
+  function updatePostalDisabled() {
     const cb = document.getElementById('samePostalEdit') || document.getElementById('samePostalCreate');
     const wrap = document.getElementById('postalFieldsEdit') || document.getElementById('postalFieldsCreate');
     if (!wrap) return;
@@ -84,11 +84,11 @@
     wrap.querySelectorAll('input,select,textarea,button').forEach(el => { el.disabled = disabled; });
   }
 
-  function init(){
+  function init() {
     // Autofill from selected existing options
-    bindFill('coordinatesId', {coordX: 'data-x', coordY: 'data-y'});
-    bindFill('officialAddressId', {officialStreet: 'data-street', officialZipCode: 'data-zip'});
-    bindFill('postalAddressId', {postalStreet: 'data-street', postalZipCode: 'data-zip'});
+    bindFill('coordinatesId', { coordX: 'data-x', coordY: 'data-y' });
+    bindFill('officialAddressId', { officialStreet: 'data-street', officialZipCode: 'data-zip' });
+    bindFill('postalAddressId', { postalStreet: 'data-street', postalZipCode: 'data-zip' });
 
     // Disable postal fields if same as official
     updatePostalDisabled();
@@ -101,7 +101,7 @@
     attachValidity('postalStreet', 'Укажите улицу (или выберите адрес из списка, либо отметьте совпадение)');
 
     // Toggle required states reactively
-    ['coordinatesId','officialAddressId','postalAddressId','samePostalEdit','samePostalCreate']
+    ['coordinatesId', 'officialAddressId', 'postalAddressId', 'samePostalEdit', 'samePostalCreate']
       .forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', updateRequiredStates); });
     updateRequiredStates();
 
@@ -109,7 +109,7 @@
     try {
       if (!!window.EventSource) {
         const es = new EventSource('/events/organizations');
-        const closeSse = () => { try { es.close(); } catch (_) {} };
+        const closeSse = () => { try { es.close(); } catch (_) { } };
         window.addEventListener('beforeunload', closeSse);
         window.addEventListener('pagehide', closeSse);
 

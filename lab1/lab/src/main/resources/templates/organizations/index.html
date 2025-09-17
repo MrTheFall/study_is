@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::body})}">
+
 <body>
   <div class="flex items-center justify-between mb-6">
     <h2 class="text-2xl font-semibold">Организации</h2>
-    <a class="inline-flex items-center px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white shadow" href="/organizations/new">Добавить</a>
+    <a class="inline-flex items-center px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white shadow"
+      href="/organizations/new">Добавить</a>
   </div>
 
   <form id="filterForm" class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6" method="get" action="/organizations">
@@ -20,7 +22,8 @@
     </div>
     <div>
       <label class="block text-sm text-gray-600 mb-1">Значение</label>
-      <input class="w-full border border-gray-300 rounded px-3 py-2" type="text" name="filterValue" placeholder="Значение" th:value="${filterValue} ?: ''">
+      <input class="w-full border border-gray-300 rounded px-3 py-2" type="text" name="filterValue"
+        placeholder="Значение" th:value="${filterValue} ?: ''">
     </div>
     <div>
       <label class="block text-sm text-gray-600 mb-1">Сортировка</label>
@@ -43,7 +46,8 @@
       </select>
     </div>
     <div class="flex items-end">
-      <button class="inline-flex items-center px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 text-gray-700" type="submit">Применить</button>
+      <button class="inline-flex items-center px-4 py-2 rounded border border-gray-300 hover:bg-gray-100 text-gray-700"
+        type="submit">Применить</button>
     </div>
   </form>
 
@@ -52,4 +56,5 @@
   </div>
 
 </body>
+
 </html>

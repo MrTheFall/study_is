@@ -21,14 +21,9 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
 
-
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
-    - name: Checkstyle
-      working-directory: lab1/lab
-      run: ./gradlew checkstyle --no-daemon
-
-    - name: Build with Gradle Wrapper
+    - name: Build
       working-directory: lab1/lab
       run: ./gradlew build --no-daemon

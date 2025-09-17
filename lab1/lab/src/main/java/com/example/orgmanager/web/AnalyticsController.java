@@ -1,5 +1,7 @@
 package com.example.orgmanager.web;
 
+import java.util.List;
+
 import com.example.orgmanager.model.Organization;
 import com.example.orgmanager.service.OrganizationService;
 import org.springframework.stereotype.Controller;
@@ -8,22 +10,28 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
-
 @Controller
 @RequestMapping("/analytics")
-public class AnalyticsController {
+public final class AnalyticsController {
     private final OrganizationService service;
 
-    public AnalyticsController(OrganizationService service) { this.service = service; }
+    public AnalyticsController(OrganizationService service) {
+        this.service = service;
+    }
 
     @GetMapping
-    public String page(Model model,
-                       @RequestParam(value = "ratingEq", required = false) Double ratingEq,
-                       @RequestParam(value = "startsWith", required = false) String startsWith,
-                       @RequestParam(value = "fullNameGt", required = false) String fullNameGt) {
+    public String page(
+            Model model,
+            @RequestParam(value = "ratingEq", required = false)
+            Double ratingEq,
+            @RequestParam(value = "startsWith", required = false)
+            String startsWith,
+            @RequestParam(value = "fullNameGt", required = false)
+            String fullNameGt) {
         if (ratingEq != null) {
-            model.addAttribute("countRatingEq", service.countByRatingEquals(ratingEq));
+            model.addAttribute(
+                    "countRatingEq",
+                    service.countByRatingEquals(ratingEq));
             model.addAttribute("ratingEq", ratingEq);
         }
         if (startsWith != null && !startsWith.isBlank()) {
@@ -37,8 +45,9 @@ public class AnalyticsController {
             model.addAttribute("fullNameGt", fullNameGt);
         }
         model.addAttribute("top5", service.top5ByTurnover());
-        model.addAttribute("avgTop10Employees", service.averageEmployeesTop10ByTurnover());
+        model.addAttribute(
+                "avgTop10Employees",
+                service.averageEmployeesTop10ByTurnover());
         return "analytics/index";
     }
 }
-
