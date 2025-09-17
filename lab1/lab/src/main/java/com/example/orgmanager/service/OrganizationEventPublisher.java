@@ -1,28 +1,33 @@
 package com.example.orgmanager.service;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
- 
-
-@Component
+@Service
 public class OrganizationEventPublisher {
-    private static final Logger log = LoggerFactory.getLogger(OrganizationEventPublisher.class);
-    private static final long TIMEOUT_MS = 30 * 60 * 1000L; // 30 минут
+    private static final long TIMEOUT_MINUTES = 5L;
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(OrganizationEventPublisher.class);
+    private static final long TIMEOUT_MS =
+            Duration.ofMinutes(TIMEOUT_MINUTES).toMillis();
 
     private final boolean heartbeatEnabled;
 
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
-    public OrganizationEventPublisher(@Value("${app.sse.heartbeat-enabled:false}") boolean heartbeatEnabled) {
+    public OrganizationEventPublisher(
+            @Value("${app.sse.heartbeat-enabled:false}")
+            boolean heartbeatEnabled) {
         this.heartbeatEnabled = heartbeatEnabled;
     }
 
@@ -37,56 +42,80 @@ public class OrganizationEventPublisher {
         });
         emitter.onError(e -> {
             emitters.remove(emitter);
-            safeComplete(emitter);
+            safeComplete(emitter, e);
         });
-
 
         return emitter;
     }
 
     public void broadcast(String type, Integer id) {
-        if (emitters.isEmpty()) return;
+        if (emitters.isEmpty()) {
+            return;
+        }
         try {
             var event = new OrganizationEvent(type, id);
             for (SseEmitter emitter : emitters) {
                 try {
-                    emitter.send(SseEmitter.event().name("org").data(event));
+                    emitter.send(
+                            SseEmitter.event()
+                                    .name("org")
+                                    .data(event));
                 } catch (Exception e) {
-                    log.debug("Removing broken SSE emitter: {}", e.getMessage());
+                    LOGGER.debug(
+                            "Removing broken SSE emitter: {}",
+                            e.getMessage());
                     emitters.remove(emitter);
-                    safeCompleteWithError(emitter, e);
+                    safeComplete(emitter, e);
                 }
             }
         } catch (Throwable t) {
-            log.debug("Broadcast failed: {}", t.toString());
+            LOGGER.error("Broadcast failed", t);
         }
     }
 
-    // Периодический ping, чтобы соединение не простаивало и не закрывалось прокси
+    // Periodic ping keeps SSE connection from idling out via proxies
     @Scheduled(fixedRateString = "${app.sse.heartbeat-interval-ms:15000}")
     public void heartbeat() {
-        if (!heartbeatEnabled || emitters.isEmpty()) return;
+        if (!heartbeatEnabled || emitters.isEmpty()) {
+            return;
+        }
         try {
             for (SseEmitter emitter : emitters) {
                 try {
-                    emitter.send(SseEmitter.event().name("ping").data(Instant.now().toString(), MediaType.TEXT_PLAIN));
+                    emitter.send(
+                            SseEmitter.event()
+                                    .name("ping")
+                                    .data(
+                                            Instant.now().toString(),
+                                            MediaType.TEXT_PLAIN));
                 } catch (Exception e) {
                     emitters.remove(emitter);
-                    safeComplete(emitter);
+                    safeComplete(emitter, e);
                 }
             }
         } catch (Throwable t) {
-            log.debug("Heartbeat tick error: {}", t.toString());
+            LOGGER.error("Heartbeat tick error", t);
         }
     }
 
-    public record OrganizationEvent(String type, Integer id) {}
+    public record OrganizationEvent(String type, Integer id) {
+    }
 
     private void safeComplete(SseEmitter emitter) {
-        try { emitter.complete(); } catch (Throwable ignored) {}
+        safeComplete(emitter, null);
     }
 
-    private void safeCompleteWithError(SseEmitter emitter, Throwable ex) {
-        try { emitter.completeWithError(ex); } catch (Throwable ignored) {}
+    private void safeComplete(SseEmitter emitter, Throwable cause) {
+        try {
+            if (cause == null) {
+                emitter.complete();
+            } else {
+                LOGGER.debug("Completing SSE emitter with error", cause);
+                emitter.completeWithError(cause);
+            }
+        } catch (Throwable ex) {
+            LOGGER.debug("Failed to complete SSE emitter", ex);
+        }
     }
+
 }
