@@ -32,14 +32,6 @@ checkstyle {
     configDirectory = layout.projectDirectory.dir('config/checkstyle')
 }
 
-tasks.withType(org.gradle.api.plugins.quality.Checkstyle).configureEach {
-    reports {
-        xml.required.set(false)
-        html.required.set(true)
-    }
-    ignoreFailures = true
-}
-
 tasks.register('checkstyle') {
     group = 'verification'
     description = 'Run Checkstyle on main and test sources'
