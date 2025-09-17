@@ -3,9 +3,13 @@ package com.example.orgmanager.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "address")
+@Getter
+@Setter
 public class Address {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,10 +23,4 @@ public class Address {
     @Column(name = "zip_code")
     private String zipCode; // can be null
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getStreet() { return street; }
-    public void setStreet(String street) { this.street = street; }
-    public String getZipCode() { return zipCode; }
-    public void setZipCode(String zipCode) { this.zipCode = zipCode; }
 }

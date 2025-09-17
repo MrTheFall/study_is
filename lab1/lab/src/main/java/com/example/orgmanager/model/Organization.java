@@ -3,6 +3,8 @@ package com.example.orgmanager.model;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SourceType;
 
 import java.util.Date;
 
@@ -26,10 +28,11 @@ public class Organization {
             foreignKey = @ForeignKey(name = "fk_org_coordinates"))
     private Coordinates coordinates;
 
-    @NotNull
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(nullable = false, name = "creation_date")
-    private Date creationDate; // generated automatically
+    @CreationTimestamp(source = SourceType.DB)
+    @Column(nullable = false, name = "creation_date", updatable = false, insertable = false,
+            columnDefinition = "timestamp default current_timestamp")
+    private Date creationDate;
 
     @NotNull
     @Valid
@@ -66,13 +69,6 @@ public class Organization {
             foreignKey = @ForeignKey(name = "fk_org_postal_address"))
     private Address postalAddress;
 
-    @PrePersist
-    protected void onCreate() {
-        if (creationDate == null) {
-            creationDate = new Date();
-        }
-    }
-
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
     public String getName() { return name; }
@@ -80,7 +76,6 @@ public class Organization {
     public Coordinates getCoordinates() { return coordinates; }
     public void setCoordinates(Coordinates coordinates) { this.coordinates = coordinates; }
     public Date getCreationDate() { return creationDate; }
-    public void setCreationDate(Date creationDate) { this.creationDate = creationDate; }
     public Address getOfficialAddress() { return officialAddress; }
     public void setOfficialAddress(Address officialAddress) { this.officialAddress = officialAddress; }
     public float getAnnualTurnover() { return annualTurnover; }

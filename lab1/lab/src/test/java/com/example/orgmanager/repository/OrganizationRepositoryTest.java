@@ -4,6 +4,8 @@ import com.example.orgmanager.model.Address;
 import com.example.orgmanager.model.Coordinates;
 import com.example.orgmanager.model.Organization;
 import com.example.orgmanager.model.OrganizationType;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -28,7 +30,7 @@ class OrganizationRepositoryTest {
     @Autowired
     private TestEntityManager entityManager;
 
-
+    
     @Test
     void countByRatingReturnsCorrectCount() {
         organizationRepository.save(org()
@@ -102,18 +104,14 @@ class OrganizationRepositoryTest {
 
     private static OrgBuilder org() { return new OrgBuilder(); }
 
+    @Setter
+    @Accessors(fluent = true, chain = true)
     private static class OrgBuilder {
         private String name;
         private String fullName;
         private double rating;
         private long employees;
         private float turnover;
-
-        OrgBuilder name(String name) { this.name = name; return this; }
-        OrgBuilder fullName(String fullName) { this.fullName = fullName; return this; }
-        OrgBuilder rating(double rating) { this.rating = rating; return this; }
-        OrgBuilder employees(long employees) { this.employees = employees; return this; }
-        OrgBuilder turnover(float turnover) { this.turnover = turnover; return this; }
 
         Organization build() {
             Organization o = new Organization();

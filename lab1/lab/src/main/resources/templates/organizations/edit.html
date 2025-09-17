@@ -42,11 +42,11 @@
         </div>
         <div>
           <label class="block text-sm text-gray-600 mb-1">x (> -524)</label>
-          <input type="number" class="w-full border border-gray-300 rounded px-3 py-2" th:field="*{coordX}">
+          <input type="number" min="-523" class="w-full border border-gray-300 rounded px-3 py-2" th:field="*{coordX}">
         </div>
         <div>
           <label class="block text-sm text-gray-600 mb-1">y (<= 476)</label>
-          <input type="number" step="0.01" class="w-full border border-gray-300 rounded px-3 py-2" th:field="*{coordY}">
+          <input type="number" step="0.01" max="476" class="w-full border border-gray-300 rounded px-3 py-2" th:field="*{coordY}">
         </div>
       </div>
     </div>
