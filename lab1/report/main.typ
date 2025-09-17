@@ -31,6 +31,13 @@
 
 #v(1cm)
 
+#figure(
+  image("ui.png", width: 100%),
+  caption: [Пользовательский интерфейс разработанного приложения]
+)
+
+#v(1cm)
+
 = Исходный код
 
 #link("https://github.com/MrTheFall/study_is")[https://github.com/MrTheFall/study_is]
@@ -48,7 +55,7 @@
 
 #figure(
   image("uml2.png", width: 100%),
-  caption: [UML-диаграмма пакетов разработанного приложения]
+  caption: [UML-диаграмма пакетов и их зависимостей]
 )
 
 #v(1cm)
