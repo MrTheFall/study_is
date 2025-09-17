@@ -85,25 +85,14 @@ tasks.register('startDbDocker', Exec) {
   commandLine project.file('scripts/start-db-docker.sh')
 }
 
-// Build and deploy the Boot jar to helios
+
+
 tasks.register('deploy', Exec) {
-    group = 'deployment'
-    description = 'Build bootJar and upload it to remote server via scp'
-    dependsOn tasks.named('bootJar')
-
-    def jarName = "${project.name}-${project.version}.jar"
-    def jarPath = "${buildDir}/libs/${jarName}"
-    def remoteUser = System.getenv('DEPLOY_USER') ?: 'root'
-    def remoteHost = 'helios.cs.ifmo.ru'
-    def remoteUserHost = "${remoteUser}@${remoteHost}"
-    def remotePort = '2222'
-
-    doFirst {
-        println "Deploying ${jarPath} to ${remoteUserHost} on port ${remotePort}"
-    }
-
-    commandLine('bash', '-lc', """
-      set -e
-      scp -P ${remotePort} '${jarPath}' '${remoteUserHost}:~/'
-    """)
+  group = 'deployment'
+  description = 'Build bootJar and upload it to remote server via scp'
+  dependsOn tasks.named('bootJar')
+  environment 'DEPLOY_USER', System.getenv('DEPLOY_USER') ?: 'root'
+  environment 'DEPLOY_HOST', System.getenv('DEPLOY_HOST') ?: 'helios.cs.ifmo.ru'
+  environment 'DEPLOY_PORT', System.getenv('DEPLOY_PORT') ?: '2222'
+  commandLine project.file('scripts/deploy.sh'), '--skip-build'
 }
