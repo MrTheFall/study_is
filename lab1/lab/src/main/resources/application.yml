@@ -16,6 +16,11 @@ spring:
         format_sql: true
     show-sql: false
 
+springdoc:
+  swagger-ui:
+    url: /openapi.yaml
+    disable-swagger-default-url: true
+
 app:
   schema-init-enabled: false
   sse:
