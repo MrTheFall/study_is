@@ -2,11 +2,14 @@ package com.example.orgmanager.web;
 
 import com.example.orgmanager.model.Organization;
 import com.example.orgmanager.model.OrganizationType;
+import com.example.orgmanager.service.OrganizationFilter;
 import com.example.orgmanager.service.OrganizationService;
 import com.example.orgmanager.web.dto.OrganizationForm;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public final class OrganizationController {
+    private static final int MAX_PAGE_SIZE = 100;
+
     private final OrganizationService service;
 
     public OrganizationController(OrganizationService service) {
@@ -37,18 +42,16 @@ public final class OrganizationController {
     public String list(@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String sort,
-            @RequestParam(required = false) String dir,
-            @RequestParam(required = false) String filterField,
-            @RequestParam(required = false) String filterValue,
-            Model model) {
+    @RequestParam(required = false) String dir,
+    @RequestParam Optional<String> filterField,
+    @RequestParam Optional<String> filterValue,
+    Model model) {
         Pageable pageable = buildPageable(page, size, sort, dir);
-        Page<Organization> data = service.list(
-                filterField,
-                filterValue,
-                pageable);
+        OrganizationFilter filter = new OrganizationFilter(filterField, filterValue);
+        Page<Organization> data = service.list(filter, pageable);
         model.addAttribute("page", data);
-        model.addAttribute("filterField", filterField);
-        model.addAttribute("filterValue", filterValue);
+        model.addAttribute("filterField", filter.field().orElse(null));
+        model.addAttribute("filterValue", filter.value().orElse(null));
         model.addAttribute("sort", sort);
         model.addAttribute("dir", dir);
         model.addAttribute("types", OrganizationType.values());
@@ -60,17 +63,15 @@ public final class OrganizationController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) String dir,
-            @RequestParam(required = false) String filterField,
-            @RequestParam(required = false) String filterValue,
+            @RequestParam Optional<String> filterField,
+            @RequestParam Optional<String> filterValue,
             Model model) {
         Pageable pageable = buildPageable(page, size, sort, dir);
-        Page<Organization> data = service.list(
-                filterField,
-                filterValue,
-                pageable);
+        OrganizationFilter filter = new OrganizationFilter(filterField, filterValue);
+        Page<Organization> data = service.list(filter, pageable);
         model.addAttribute("page", data);
-        model.addAttribute("filterField", filterField);
-        model.addAttribute("filterValue", filterValue);
+        model.addAttribute("filterField", filter.field().orElse(null));
+        model.addAttribute("filterValue", filter.value().orElse(null));
         model.addAttribute("sort", sort);
         model.addAttribute("dir", dir);
         return "organizations/_table :: table";
@@ -146,8 +147,10 @@ public final class OrganizationController {
             int size,
             String sort,
             String dir) {
+        int safePage = Math.max(page, 0);
+        int safeSize = validatePageSize(size);
         if (sort == null || sort.isBlank()) {
-            return PageRequest.of(Math.max(page, 0), Math.max(size, 1));
+            return PageRequest.of(safePage, safeSize);
         }
         Sort.Direction direction = (dir != null && dir.equalsIgnoreCase("desc"))
                 ? Sort.Direction.DESC
@@ -162,12 +165,23 @@ public final class OrganizationController {
                 "rating",
                 "type");
         if (!allowed.contains(sort)) {
-            return PageRequest.of(Math.max(page, 0), Math.max(size, 1));
+            return PageRequest.of(safePage, safeSize);
         }
         return PageRequest.of(
-                Math.max(page, 0),
-                Math.max(size, 1),
+                safePage,
+                safeSize,
                 Sort.by(direction, sort));
+    }
+
+    private int validatePageSize(int requestedSize) {
+        if (requestedSize < 1) {
+            throw new ValidationException("Размер страницы должен быть положительным");
+        }
+        if (requestedSize > MAX_PAGE_SIZE) {
+            throw new ValidationException(
+                    "Размер страницы не может превышать " + MAX_PAGE_SIZE);
+        }
+        return requestedSize;
     }
 
     private OrganizationForm toForm(Organization org) {

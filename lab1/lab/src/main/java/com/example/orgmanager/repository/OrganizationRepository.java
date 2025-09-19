@@ -3,6 +3,7 @@ package com.example.orgmanager.repository;
 import com.example.orgmanager.model.Organization;
 import com.example.orgmanager.model.OrganizationType;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,11 +27,11 @@ public interface OrganizationRepository
 
     long countByRating(double rating);
 
-    List<Organization> findByFullNameStartingWith(String prefix);
+    Stream<Organization> streamByFullNameStartingWith(String prefix);
 
-    List<Organization> findByFullNameGreaterThan(String value);
+    Stream<Organization> streamByFullNameGreaterThan(String value);
 
     List<Organization> findTop5ByOrderByAnnualTurnoverDesc();
 
-    List<Organization> findTop10ByOrderByAnnualTurnoverDesc();
+    Stream<Organization> streamTop10ByOrderByAnnualTurnoverDesc();
 }

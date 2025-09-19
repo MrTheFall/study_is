@@ -59,8 +59,11 @@ class OrganizationRepositoryTest {
                 .name("C").fullName("Alpine LLC").rating(1.0).employees(1).turnover(5f)
                 .build());
 
-        List<Organization> list = organizationRepository
-                .findByFullNameStartingWith("Al");
+        List<Organization> list;
+        try (var stream = organizationRepository
+                .streamByFullNameStartingWith("Al")) {
+            list = stream.toList();
+        }
         assertThat(list).extracting(Organization::getFullName)
                 .containsExactlyInAnyOrder("Alpha Corp", "Alpine LLC");
     }

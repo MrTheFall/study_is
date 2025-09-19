@@ -2,6 +2,7 @@ package com.example.orgmanager.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.example.orgmanager.model.Address;
 import com.example.orgmanager.model.Coordinates;
@@ -11,6 +12,7 @@ import com.example.orgmanager.repository.AddressRepository;
 import com.example.orgmanager.repository.CoordinatesRepository;
 import com.example.orgmanager.repository.OrganizationRepository;
 import com.example.orgmanager.web.dto.OrganizationForm;
+import jakarta.validation.ValidationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +25,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -58,8 +61,8 @@ class OrganizationServiceTest {
                     : (long) (i * 10));
             top10.add(o);
         }
-        when(organizationRepository.findTop10ByOrderByAnnualTurnoverDesc())
-                .thenReturn(top10);
+        when(organizationRepository.streamTop10ByOrderByAnnualTurnoverDesc())
+                .thenReturn(top10.stream());
 
         double avg = service.averageEmployeesTop10ByTurnover();
         // employees: 0,10,20,0,40,50,0,70,80,0 -> sum=270, avg=27.0
@@ -69,12 +72,12 @@ class OrganizationServiceTest {
     @Test
     @DisplayName("list() with type filter returns empty for invalid enum")
     void listWithInvalidType() {
-        Page<?> page = service.list(
-                "type",
-                "NOT_A_TYPE",
-                PageRequest.of(0, 5));
-        assertThat(page).isNotNull();
-        assertThat(page.getContent()).isEmpty();
+        OrganizationFilter filter = new OrganizationFilter(
+                Optional.of("type"),
+                Optional.of("NOT_A_TYPE"));
+
+        assertThatThrownBy(() -> service.list(filter, PageRequest.of(0, 5)))
+                .isInstanceOf(ValidationException.class);
         verifyNoInteractions(organizationRepository);
     }
 
@@ -86,9 +89,12 @@ class OrganizationServiceTest {
         when(organizationRepository.findByName(eq("Acme"), any()))
                 .thenReturn(expected);
 
+        OrganizationFilter filter = new OrganizationFilter(
+                Optional.of("name"),
+                Optional.of("Acme"));
+
         Page<?> page = service.list(
-                "name",
-                "Acme",
+                filter,
                 PageRequest.of(0, 10));
         assertThat(page.getContent()).hasSize(1);
         verify(organizationRepository).findByName(eq("Acme"), any());

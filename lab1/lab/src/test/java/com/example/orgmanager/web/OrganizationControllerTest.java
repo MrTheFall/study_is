@@ -3,9 +3,11 @@ package com.example.orgmanager.web;
 import java.util.List;
 
 import com.example.orgmanager.model.Organization;
+import com.example.orgmanager.service.OrganizationFilter;
 import com.example.orgmanager.service.OrganizationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -15,7 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.isNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -45,7 +47,7 @@ class OrganizationControllerTest {
     @DisplayName("GET /organizations renders index view and calls service")
     void organizationsList() throws Exception {
         Page<Organization> page = new PageImpl<>(List.of());
-        given(service.list(any(), any(), any(PageRequest.class)))
+        given(service.list(any(OrganizationFilter.class), any(PageRequest.class)))
                 .willReturn(page);
 
         mockMvc.perform(get("/organizations"))
@@ -53,10 +55,14 @@ class OrganizationControllerTest {
                 .andExpect(view().name("organizations/index"))
                 .andExpect(model().attributeExists("page"));
 
+        ArgumentCaptor<OrganizationFilter> captor = ArgumentCaptor.forClass(OrganizationFilter.class);
         verify(service).list(
-                isNull(),
-                isNull(),
+                captor.capture(),
                 any(PageRequest.class));
+
+        OrganizationFilter filter = captor.getValue();
+        assertThat(filter.field()).isEmpty();
+        assertThat(filter.value()).isEmpty();
     }
 
     @Test

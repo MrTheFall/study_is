@@ -73,7 +73,6 @@ public class OrganizationEventPublisher {
         }
     }
 
-    // Periodic ping keeps SSE connection from idling out via proxies
     @Scheduled(fixedRateString = "${app.sse.heartbeat-interval-ms:15000}")
     public void heartbeat() {
         if (!heartbeatEnabled || emitters.isEmpty()) {

@@ -22,9 +22,12 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SourceType;
+import org.hibernate.type.SqlTypes;
 
 import java.util.Date;
+
 
 @Entity
 @Table(name = "organization")
@@ -98,6 +101,7 @@ public class Organization {
     private String fullName;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     private OrganizationType type; // can be null
 
     @NotNull

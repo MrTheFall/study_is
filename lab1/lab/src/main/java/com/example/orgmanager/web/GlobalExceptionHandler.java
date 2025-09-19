@@ -2,10 +2,12 @@ package com.example.orgmanager.web;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ValidationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ControllerAdvice
 public final class GlobalExceptionHandler {
@@ -17,6 +19,7 @@ public final class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public String handleValidation(ValidationException ex, Model model) {
         model.addAttribute("error", ex.getMessage());
         return "error";
