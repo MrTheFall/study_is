@@ -1,6 +1,6 @@
 package com.example.orgmanager.repository;
 
-import com.example.orgmanager.model.Coordinates;
+import com.example.orgmanager.model.AppLock;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
 import java.util.Optional;
@@ -11,17 +11,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 
-public interface CoordinatesRepository
-        extends JpaRepository<Coordinates, Long> {
-    @Modifying
-    @Query("delete from Coordinates c "
-            + "where not exists (select 1 from Organization o "
-            + "where o.coordinates = c)")
-    int deleteUnassigned();
-
+public interface AppLockRepository extends JpaRepository<AppLock, String> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "5000"))
-    @Query("select c from Coordinates c where c.id = :id")
-    Optional<Coordinates> findByIdForUpdate(@Param("id") Long id);
+    @Query("select l from AppLock l where l.name = :name")
+    Optional<AppLock> findByNameForUpdate(@Param("name") String name);
 
+    @Modifying
+    @Query(value = "insert into app_lock(name) values (:name) on conflict (name) do nothing", nativeQuery = true)
+    void insertIgnore(@Param("name") String name);
 }

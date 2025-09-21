@@ -7,14 +7,14 @@ import com.example.orgmanager.model.OrganizationType;
 import com.example.orgmanager.repository.AddressRepository;
 import com.example.orgmanager.repository.CoordinatesRepository;
 import com.example.orgmanager.repository.OrganizationRepository;
+import com.example.orgmanager.service.lock.DatabaseLockService;
 import com.example.orgmanager.web.dto.OrganizationForm;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ValidationException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -45,20 +45,23 @@ public class OrganizationService {
     private final AddressRepository addressRepository;
     private final CoordinatesRepository coordinatesRepository;
     private final OrganizationEventPublisher eventPublisher;
-    private final Lock cleanupLock = new ReentrantLock();
     private final TransactionTemplate cleanupTransaction;
+    private static final String ORPHAN_CLEANUP_LOCK = "orphan_cleanup";
+    private final DatabaseLockService databaseLockService;
 
     public OrganizationService(OrganizationRepository organizationRepository,
             AddressRepository addressRepository,
             CoordinatesRepository coordinatesRepository,
             OrganizationEventPublisher eventPublisher,
-            PlatformTransactionManager transactionManager) {
+            PlatformTransactionManager transactionManager,
+            DatabaseLockService databaseLockService) {
         this.organizationRepository = organizationRepository;
         this.addressRepository = addressRepository;
         this.coordinatesRepository = coordinatesRepository;
         this.eventPublisher = eventPublisher;
         this.cleanupTransaction = new TransactionTemplate(transactionManager);
         this.cleanupTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        this.databaseLockService = databaseLockService;
     }
 
     public Page<Organization> list(
@@ -156,12 +159,18 @@ public class OrganizationService {
     }
 
     private void cleanupOrphansInternal() {
-        cleanupLock.lock();
+        if (!databaseLockService.tryAcquire(ORPHAN_CLEANUP_LOCK)) {
+            return;
+        }
         try {
             addressRepository.deleteUnassigned();
+        } catch (DataIntegrityViolationException ex) {
+            // address gained references concurrently, safe to ignore
+        }
+        try {
             coordinatesRepository.deleteUnassigned();
-        } finally {
-            cleanupLock.unlock();
+        } catch (DataIntegrityViolationException ex) {
+            // coordinates gained references concurrently, safe to ignore
         }
     }
 
@@ -213,20 +222,17 @@ public class OrganizationService {
 
         // Coordinates
         if (form.getCoordinatesId() != null) {
-            try {
-                Coordinates existing = coordinatesRepository.getReferenceById(
-                        form.getCoordinatesId());
-                if (form.getCoordX() != null) {
-                    existing.setX(form.getCoordX());
-                }
-                if (form.getCoordY() != null) {
-                    existing.setY(form.getCoordY());
-                }
-                org.setCoordinates(existing);
-                coordinatesRepository.save(existing);
-            } catch (EntityNotFoundException ex) {
-                throw new ValidationException(COORDINATES_NOT_FOUND, ex);
+            Coordinates existing = coordinatesRepository
+                    .findByIdForUpdate(form.getCoordinatesId())
+                    .orElseThrow(() -> new ValidationException(COORDINATES_NOT_FOUND));
+            if (form.getCoordX() != null) {
+                existing.setX(form.getCoordX());
             }
+            if (form.getCoordY() != null) {
+                existing.setY(form.getCoordY());
+            }
+            org.setCoordinates(existing);
+            coordinatesRepository.save(existing);
         } else {
             if (form.getCoordX() == null || form.getCoordY() == null) {
                 throw new ValidationException(COORDINATES_REQUIRED);
@@ -240,24 +246,21 @@ public class OrganizationService {
 
         // Official address
         if (form.getOfficialAddressId() != null) {
-            try {
-                Address existing = addressRepository.getReferenceById(
-                        form.getOfficialAddressId());
-                if (form.getOfficialStreet() != null
-                        && !form.getOfficialStreet().isBlank()) {
-                    existing.setStreet(form.getOfficialStreet());
-                }
-                if (form.getOfficialZipCode() != null) {
-                    existing.setZipCode(
-                            form.getOfficialZipCode().isBlank()
-                                    ? null
-                                    : form.getOfficialZipCode());
-                }
-                org.setOfficialAddress(existing);
-                addressRepository.save(existing);
-            } catch (EntityNotFoundException ex) {
-                throw new ValidationException(OFFICIAL_ADDRESS_NOT_FOUND, ex);
+            Address existing = addressRepository
+                    .findByIdForUpdate(form.getOfficialAddressId())
+                    .orElseThrow(() -> new ValidationException(OFFICIAL_ADDRESS_NOT_FOUND));
+            if (form.getOfficialStreet() != null
+                    && !form.getOfficialStreet().isBlank()) {
+                existing.setStreet(form.getOfficialStreet());
             }
+            if (form.getOfficialZipCode() != null) {
+                existing.setZipCode(
+                        form.getOfficialZipCode().isBlank()
+                                ? null
+                                : form.getOfficialZipCode());
+            }
+            org.setOfficialAddress(existing);
+            addressRepository.save(existing);
         } else {
             if (form.getOfficialStreet() == null
                     || form.getOfficialStreet().isBlank()) {
@@ -275,24 +278,21 @@ public class OrganizationService {
             org.setPostalAddress(org.getOfficialAddress());
         } else {
             if (form.getPostalAddressId() != null) {
-                try {
-                    Address existing = addressRepository.getReferenceById(
-                            form.getPostalAddressId());
-                    if (form.getPostalStreet() != null
-                            && !form.getPostalStreet().isBlank()) {
-                        existing.setStreet(form.getPostalStreet());
-                    }
-                    if (form.getPostalZipCode() != null) {
-                        existing.setZipCode(
-                                form.getPostalZipCode().isBlank()
-                                        ? null
-                                        : form.getPostalZipCode());
-                    }
-                    org.setPostalAddress(existing);
-                    addressRepository.save(existing);
-                } catch (EntityNotFoundException ex) {
-                    throw new ValidationException(POSTAL_ADDRESS_NOT_FOUND, ex);
+                Address existing = addressRepository
+                        .findByIdForUpdate(form.getPostalAddressId())
+                        .orElseThrow(() -> new ValidationException(POSTAL_ADDRESS_NOT_FOUND));
+                if (form.getPostalStreet() != null
+                        && !form.getPostalStreet().isBlank()) {
+                    existing.setStreet(form.getPostalStreet());
                 }
+                if (form.getPostalZipCode() != null) {
+                    existing.setZipCode(
+                            form.getPostalZipCode().isBlank()
+                                    ? null
+                                    : form.getPostalZipCode());
+                }
+                org.setPostalAddress(existing);
+                addressRepository.save(existing);
             } else {
                 if (form.getPostalStreet() == null
                         || form.getPostalStreet().isBlank()) {
