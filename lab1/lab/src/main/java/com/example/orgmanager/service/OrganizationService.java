@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -155,22 +156,28 @@ public class OrganizationService {
     }
 
     private void scheduleOrphanCleanup() {
-        afterCommit(() -> cleanupTransaction.executeWithoutResult(status -> cleanupOrphansInternal()));
+        afterCommit(() -> cleanupTransaction.executeWithoutResult(this::cleanupOrphansInternal));
     }
 
-    private void cleanupOrphansInternal() {
+    private void cleanupOrphansInternal(TransactionStatus status) {
         if (!databaseLockService.tryAcquire(ORPHAN_CLEANUP_LOCK)) {
             return;
         }
-        try {
-            addressRepository.deleteUnassigned();
-        } catch (DataIntegrityViolationException ex) {
-            // address gained references concurrently, safe to ignore
+        if (!executeCleanup(addressRepository::deleteUnassigned, status)) {
+            return;
         }
+        executeCleanup(coordinatesRepository::deleteUnassigned, status);
+    }
+
+    private boolean executeCleanup(Runnable cleanupAction, TransactionStatus status) {
         try {
-            coordinatesRepository.deleteUnassigned();
+            cleanupAction.run();
+            return true;
         } catch (DataIntegrityViolationException ex) {
-            // coordinates gained references concurrently, safe to ignore
+            if (status != null) {
+                status.setRollbackOnly();
+            }
+            return false;
         }
     }
 
