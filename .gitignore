@@ -3,6 +3,7 @@
 **/target/
 **/.gradle/
 **/.gradle-dist/
+**/bin/
 
 # IDE/project files
 /.vscode/
