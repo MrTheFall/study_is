@@ -1074,3 +1074,28 @@ CRM не только ускоряет обслуживание гостей и 
   ],
   result: [качество сервиса улучшается.],
 )
+
+= #strong[Список технологий и фреймворков:]
+#strong[Технологии области представления системы]
+
+- React v19
+- Nginx v1.29.1
+
+#strong[Технологии на серверной части]
+
+- Spring Boot 4
+- Spring Security
+- PostgreSQL
+- OpenAPI
+
+#strong[Технологии для развертывания инфраструктуры]
+
+- Docker
+- Docker-compose
+
+#strong[Технологии для обеспечения качества и надежности систем]
+
+- JUnit5
+- Mockito
+- Checkstyle
+- CI/CD Github Actions
