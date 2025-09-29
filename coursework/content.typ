@@ -1099,3 +1099,6 @@ CRM не только ускоряет обслуживание гостей и 
 - Mockito
 - Checkstyle
 - CI/CD Github Actions
+
+= #strong[ER-модель:]
+#align(center)[#image("ermodel.png", width: 100%)]
