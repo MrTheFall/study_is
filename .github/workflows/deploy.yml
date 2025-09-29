@@ -25,11 +25,8 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v2
-
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v3
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
       - name: Start ssh-agent and add key
         uses: webfactory/ssh-agent@v0.9.0
