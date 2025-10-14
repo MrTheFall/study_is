@@ -1,0 +1,467 @@
+openapi: 3.1.0
+info:
+  title: OrgManager Web API
+  version: '1.0.0'
+  description: >
+    OpenAPI описание серверного интерфейса OrgManager. Приложение рендерит HTML-страницы
+    через Thymeleaf и использует формы для операций создания и редактирования
+    организаций, а также транслирует Server-Sent Events об изменениях.
+servers:
+  - url: http://localhost:13131
+    description: Локальный профиль Spring Boot.
+tags:
+  - name: Navigation
+    description: Точки входа и редиректы.
+  - name: Organizations
+    description: Страницы и формы для CRUD-операций над организациями.
+  - name: Analytics
+    description: Аналитические представления на основе организаций.
+  - name: Events
+    description: Подписки на события об организациях.
+paths:
+  /:
+    get:
+      tags:
+        - Navigation
+      summary: Редирект на список организаций
+      operationId: redirectToOrganizations
+      responses:
+        '302':
+          description: Редирект на страницу со списком организаций.
+          headers:
+            Location:
+              description: Цель редиректа, как правило `/organizations`.
+              schema:
+                type: string
+  /organizations:
+    get:
+      tags:
+        - Organizations
+      summary: Список организаций
+      description: >
+        Возвращает основную страницу со списком организаций, поддерживающую пагинацию,
+        сортировку и опциональные фильтры.
+      operationId: getOrganizationsPage
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/SortDirectionParam'
+        - $ref: '#/components/parameters/FilterFieldParam'
+        - $ref: '#/components/parameters/FilterValueParam'
+      responses:
+        '200':
+          description: HTML-страница со списком организаций.
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HtmlPage'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+    post:
+      tags:
+        - Organizations
+      summary: Создать организацию
+      description: >
+        Принимает данные формы для создания новой организации. При успешном сохранении
+        выполняется редирект на страницу карточки организации.
+      operationId: submitCreateOrganization
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrganizationForm'
+      responses:
+        '302':
+          description: Организация создана, выполнен редирект на страницу детали.
+          headers:
+            Location:
+              description: URL страницы созданной организации.
+              schema:
+                type: string
+        '200':
+          description: Форма возвращена с ошибками валидации полей.
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HtmlPage'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+  /organizations/table:
+    get:
+      tags:
+        - Organizations
+      summary: Фрагмент таблицы организаций
+      description: Возвращает только HTML-фрагмент таблицы для AJAX-обновлений.
+      operationId: getOrganizationsTableFragment
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - $ref: '#/components/parameters/SortDirectionParam'
+        - $ref: '#/components/parameters/FilterFieldParam'
+        - $ref: '#/components/parameters/FilterValueParam'
+      responses:
+        '200':
+          description: HTML-фрагмент таблицы организаций.
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HtmlPage'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+  /organizations/new:
+    get:
+      tags:
+        - Organizations
+      summary: Форма создания организации
+      operationId: getCreateOrganizationForm
+      responses:
+        '200':
+          description: HTML-страница с формой создания организации.
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HtmlPage'
+  /organizations/{id}:
+    get:
+      tags:
+        - Organizations
+      summary: Просмотр организации
+      description: >
+        Возвращает страницу карточки организации. При отсутствии записи рендерится общая
+        страница ошибки с тем же кодом ответа.
+      operationId: getOrganizationDetails
+      parameters:
+        - $ref: '#/components/parameters/OrgIdParam'
+      responses:
+        '200':
+          description: Страница карточки или общая страница ошибки.
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HtmlPage'
+    post:
+      tags:
+        - Organizations
+      summary: Обновить организацию
+      description: >
+        Принимает данные формы редактирования организации. При успехе выполняется редирект
+        обратно на страницу карточки.
+      operationId: submitEditOrganization
+      parameters:
+        - $ref: '#/components/parameters/OrgIdParam'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrganizationForm'
+      responses:
+        '302':
+          description: Организация обновлена, выполнен редирект на страницу детали.
+          headers:
+            Location:
+              description: URL страницы соответствующей организации.
+              schema:
+                type: string
+        '200':
+          description: Форма перерендерена из-за ошибок привязки или отсутствия записи.
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HtmlPage'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+  /organizations/{id}/edit:
+    get:
+      tags:
+        - Organizations
+      summary: Форма редактирования организации
+      operationId: getEditOrganizationForm
+      parameters:
+        - $ref: '#/components/parameters/OrgIdParam'
+      responses:
+        '200':
+          description: HTML-страница с формой редактирования или общая страница ошибки.
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HtmlPage'
+  /organizations/{id}/delete:
+    post:
+      tags:
+        - Organizations
+      summary: Удалить организацию
+      operationId: deleteOrganization
+      parameters:
+        - $ref: '#/components/parameters/OrgIdParam'
+      responses:
+        '302':
+          description: Редирект обратно на список организаций.
+          headers:
+            Location:
+              description: Цель редиректа, обычно `/organizations`.
+              schema:
+                type: string
+  /analytics:
+    get:
+      tags:
+        - Analytics
+      summary: Дашборд аналитики
+      description: >
+        Рендерит страницу с агрегированными показателями и списками, опционально фильтруемыми
+        по параметрам запроса.
+      operationId: getAnalyticsPage
+      parameters:
+        - $ref: '#/components/parameters/RatingEqParam'
+        - $ref: '#/components/parameters/StartsWithParam'
+        - $ref: '#/components/parameters/FullNameGtParam'
+      responses:
+        '200':
+          description: HTML-страница аналитики.
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/HtmlPage'
+  /events/organizations:
+    get:
+      tags:
+        - Events
+      summary: Подписка на обновления организаций
+      description: >
+        Устанавливает поток Server-Sent Events. Событие `org` содержит JSON по схеме
+        `SseOrganizationEvent`. При включённом heartbeat отправляются события `ping` с
+        временной меткой в текстовом формате.
+      operationId: subscribeOrganizationEvents
+      responses:
+        '200':
+          description: Поток SSE-сообщений об изменениях организаций.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: >
+                  События `org` содержат JSON вида `SseOrganizationEvent`. Heartbeat-события
+                  `ping` содержат временную метку в текстовом формате.
+              examples:
+                mutation:
+                  summary: Событие изменения
+                  value: |
+                    event: org
+                    data: {"type":"updated","id":7}
+                heartbeat:
+                  summary: Heartbeat
+                  value: |
+                    event: ping
+                    data: 2025-09-19T12:00:00Z
+        '503':
+          description: Возвращается, если запрос выполнен не из основного диспетчера (DispatcherType ≠ REQUEST).
+components:
+  schemas:
+    HtmlPage:
+      type: string
+      description: Рендеренный UTF-8 HTML (страница или фрагмент).
+    OrganizationType:
+      type: string
+      description: Тип организации.
+      enum:
+        - COMMERCIAL
+        - PUBLIC
+        - TRUST
+        - PRIVATE_LIMITED_COMPANY
+    OrganizationForm:
+      type: object
+      description: >
+        Набор полей формы для создания и редактирования организаций. Для повторного
+        использования связанных сущностей указывайте их идентификаторы; иначе заполняйте
+        поля для создания новых записей.
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: Идентификатор организации (используется при редактировании).
+        name:
+          type: string
+          description: Краткое название.
+        fullName:
+          type: string
+          description: Полное юридическое название.
+        type:
+          $ref: '#/components/schemas/OrganizationType'
+        annualTurnover:
+          type: number
+          format: float
+          description: Положительный годовой оборот.
+          exclusiveMinimum: 0
+        employeesCount:
+          type: integer
+          format: int64
+          description: Количество сотрудников (минимум 1).
+          minimum: 1
+        rating:
+          type: number
+          format: double
+          description: Положительный рейтинг.
+          exclusiveMinimum: 0
+        coordinatesId:
+          type: integer
+          format: int64
+          description: Идентификатор уже существующих координат.
+          default: ""
+        coordX:
+          type: integer
+          description: Значение X для новых координат (если не выбран `coordinatesId`).
+          minimum: -523
+        coordY:
+          type: number
+          format: float
+          description: Значение Y для новых координат (если не выбран `coordinatesId`).
+          maximum: 476
+        officialAddressId:
+          type: integer
+          format: int64
+          description: Идентификатор существующего официального адреса.
+          default: ""
+        officialStreet:
+          type: string
+          description: Улица официального адреса при создании/обновлении.
+        officialZipCode:
+          type: string
+          description: Индекс официального адреса (опционально).
+        postalAddressId:
+          type: integer
+          format: int64
+          description: Идентификатор существующего почтового адреса.
+        postalStreet:
+          type: string
+          description: Улица почтового адреса при создании/обновлении.
+        postalZipCode:
+          type: string
+          description: Индекс почтового адреса (опционально).
+        postalSameAsOfficial:
+          type: boolean
+          description: Использовать официальный адрес как почтовый.
+      required:
+        - name
+        - fullName
+        - annualTurnover
+        - employeesCount
+        - rating
+      additionalProperties: false
+    SseOrganizationEvent:
+      type: object
+      description: JSON-полезная нагрузка, отправляемая в событии `org`.
+      properties:
+        type:
+          type: string
+          description: Тип изменения, спровоцировавшего событие.
+          enum:
+            - created
+            - updated
+            - deleted
+        id:
+          type: integer
+          format: int32
+          description: Идентификатор организации, к которой относится событие.
+      required:
+        - type
+        - id
+  responses:
+    ValidationError:
+      description: Ошибка бизнес-валидации (например, несогласованные данные формы).
+      content:
+        text/html:
+          schema:
+            $ref: '#/components/schemas/HtmlPage'
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: Номер страницы (нумерация с нуля).
+      schema:
+        type: integer
+        format: int32
+        minimum: 0
+        default: 0
+    SizeParam:
+      name: size
+      in: query
+      description: Размер страницы (1–100).
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 100
+        default: 10
+    SortParam:
+      name: sort
+      in: query
+      description: Поле сортировки.
+      schema:
+        type: string
+        enum:
+          - id
+          - name
+          - fullName
+          - annualTurnover
+          - employeesCount
+          - rating
+          - type
+    SortDirectionParam:
+      name: dir
+      in: query
+      description: Направление сортировки. Любое значение, кроме `desc`, трактуется как возрастание.
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+    FilterFieldParam:
+      name: filterField
+      in: query
+      description: Поле для фильтрации.
+      schema:
+        type: string
+        enum:
+          - name
+          - fullName
+          - officialStreet
+          - postalStreet
+          - type
+    FilterValueParam:
+      name: filterValue
+      in: query
+      description: Значение фильтра. Для поля `type` используйте значения `OrganizationType`.
+      schema:
+        type: string
+    OrgIdParam:
+      name: id
+      in: path
+      required: true
+      description: Идентификатор организации.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+    RatingEqParam:
+      name: ratingEq
+      in: query
+      description: Точное значение рейтинга для подсчёта.
+      schema:
+        type: number
+        format: double
+        exclusiveMinimum: 0
+    StartsWithParam:
+      name: startsWith
+      in: query
+      description: Префикс полного названия для фильтрации (starts with).
+      schema:
+        type: string
+    FullNameGtParam:
+      name: fullNameGt
+      in: query
+      description: Нижняя граница полного названия для фильтрации (greater than).
+      schema:
+        type: string
