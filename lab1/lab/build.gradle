@@ -1,0 +1,102 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.6'
+    id 'io.spring.dependency-management' version '1.1.6'
+    id 'io.freefair.lombok' version '9.0.0-rc2'
+    id 'checkstyle'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+}
+
+ext {
+  pgContainer = System.getenv('PG_CONTAINER') ?: 'orgmgr-pg'
+  pgDb       = System.getenv('PG_DB') ?: 'studs'
+  pgUser     = System.getenv('PG_USER') ?: 'postgres'
+  pgPassword = System.getenv('PG_PASSWORD') ?: 'postgres'
+  pgPort     = System.getenv('PG_PORT') ?: '5432'
+  webPort    = System.getenv('WEB_PORT') ?: '13131'
+  pgHost     = System.getenv('PG_HOST') ?: 'localhost'
+}
+
+repositories {
+    mavenCentral()
+}
+
+checkstyle {
+    toolVersion = '10.18.1'
+    configDirectory = layout.projectDirectory.dir('config/checkstyle')
+}
+
+tasks.register('checkstyle') {
+    group = 'verification'
+    description = 'Run Checkstyle on main and test sources'
+    dependsOn 'checkstyleMain', 'checkstyleTest'
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
+
+    runtimeOnly 'org.postgresql:postgresql'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'com.h2database:h2'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:testcontainers'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+
+    // Fix warning
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    testCompileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['-parameters']
+}
+
+tasks.named('test') {
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        exceptionFormat 'short'
+    }
+}
+
+testing {
+    suites {
+        test {
+            useJUnitJupiter()
+        }
+    }
+}
+
+tasks.register('startDbDocker', Exec) {
+  group = 'dev'
+  description = 'Start local Postgres in Docker (if not running)'
+  environment 'PG_CONTAINER', pgContainer
+  environment 'PG_DB', pgDb
+  environment 'PG_USER', pgUser
+  environment 'PG_PASSWORD', pgPassword
+  environment 'PG_PORT', pgPort
+  commandLine project.file('scripts/start-db-docker.sh')
+}
+
+
+
+tasks.register('deploy', Exec) {
+  group = 'deployment'
+  description = 'Build bootJar and upload it to remote server via scp'
+  dependsOn tasks.named('bootJar')
+  environment 'DEPLOY_USER', System.getenv('DEPLOY_USER') ?: 'root'
+  environment 'DEPLOY_HOST', System.getenv('DEPLOY_HOST') ?: 'helios.cs.ifmo.ru'
+  environment 'DEPLOY_PORT', System.getenv('DEPLOY_PORT') ?: '2222'
+  commandLine project.file('scripts/deploy.sh'), '--skip-build'
+}
