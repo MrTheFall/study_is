@@ -170,10 +170,10 @@ class OrganizationServiceConcurrencyIT {
         address.setZipCode("100000");
 
         Organization org = new Organization();
-        org.setName("Org " + suffix);
-        org.setFullName("Organization " + suffix);
+        org.setName("ООО Организация " + suffix);
+        org.setFullName("ООО Организация Полное " + suffix);
         org.setType(OrganizationType.COMMERCIAL);
-        org.setAnnualTurnover(1.0f);
+        org.setAnnualTurnover(200_000f);
         org.setEmployeesCount(100L);
         org.setRating(10.0d);
         org.setCoordinates(coordinates);

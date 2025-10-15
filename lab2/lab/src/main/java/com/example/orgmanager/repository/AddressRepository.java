@@ -23,4 +23,10 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
     @Query("select a from Address a where a.id = :id")
     Optional<Address> findByIdForUpdate(@Param("id") Long id);
 
+    @Query("select a from Address a where a.street = :street "
+            + "and ((:zipCode is null and a.zipCode is null) "
+            + "or a.zipCode = :zipCode)")
+    Optional<Address> findByStreetAndZip(
+            @Param("street") String street,
+            @Param("zipCode") String zipCode);
 }

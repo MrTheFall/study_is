@@ -24,4 +24,14 @@ public interface CoordinatesRepository
     @Query("select c from Coordinates c where c.id = :id")
     Optional<Coordinates> findByIdForUpdate(@Param("id") Long id);
 
+    Optional<Coordinates> findByXAndY(int x, Float y);
+
+    @Query("select count(c) from Coordinates c "
+            + "where (:excludeId is null or c.id <> :excludeId) "
+            + "and ((c.x - :x) * (c.x - :x) + (c.y - :y) * (c.y - :y)) < :distanceSquared")
+    long countWithinDistance(
+            @Param("x") int x,
+            @Param("y") double y,
+            @Param("distanceSquared") double distanceSquared,
+            @Param("excludeId") Long excludeId);
 }

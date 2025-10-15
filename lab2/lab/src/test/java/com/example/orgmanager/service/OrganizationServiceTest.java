@@ -104,11 +104,11 @@ class OrganizationServiceTest {
     @DisplayName("create() persists new related entities and publishes event")
     void createNewFlow() {
         OrganizationForm form = new OrganizationForm();
-        form.setName("Org");
-        form.setFullName("Org Full");
+        form.setName("ПАО Ромашка");
+        form.setFullName("ПАО Ромашка Полное");
         form.setType(OrganizationType.PUBLIC);
-        form.setAnnualTurnover(100f);
-        form.setEmployeesCount(50L);
+        form.setAnnualTurnover(2_000_000f);
+        form.setEmployeesCount(500L);
         form.setRating(4.2);
         form.setCoordX(1);
         form.setCoordY(2f);
@@ -117,6 +117,8 @@ class OrganizationServiceTest {
         form.setPostalStreet("Second");
         form.setPostalZipCode("2000");
 
+        when(organizationRepository.findNamesExcludingId(null))
+                .thenReturn(List.of());
         // mock saves to return entities with ids
         when(coordinatesRepository.save(any(Coordinates.class)))
                 .thenAnswer(inv -> {

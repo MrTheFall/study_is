@@ -112,11 +112,11 @@ class OrganizationServiceCleanupRaceIT {
             String postalStreet,
             String postalZip) {
         OrganizationForm form = new OrganizationForm();
-        form.setName("Org " + nameSuffix);
-        form.setFullName("Organization " + nameSuffix);
+        form.setName("ПАО " + nameSuffix);
+        form.setFullName("ПАО Организация " + nameSuffix);
         form.setType(OrganizationType.PUBLIC);
-        form.setAnnualTurnover(1.0f);
-        form.setEmployeesCount(10L);
+        form.setAnnualTurnover(2_500_000f);
+        form.setEmployeesCount(500L);
         form.setRating(5.0);
         form.setCoordX(coordX);
         form.setCoordY(coordY);
