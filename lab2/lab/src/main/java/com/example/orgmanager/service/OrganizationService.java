@@ -17,12 +17,14 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -43,6 +45,12 @@ public class OrganizationService {
             "Выбранный почтовый адрес не найден";
     private static final String POSTAL_ADDRESS_REQUIRED =
             "Требуется указать улицу почтового адреса, если не выбран существующий";
+    private static final String NAME_ALREADY_EXISTS =
+            "Организация с именем '%s' уже существует";
+    private static final String NAME_LOCK_BUSY =
+            "Название '%s' сейчас редактируется другим пользователем. Повторите попытку позже.";
+    private static final String CONCURRENT_MODIFICATION =
+            "Операция не выполнена из-за одновременных изменений. Повторите попытку.";
     private static final int ANALYTICS_STREAM_LIMIT = 200;
     private static final double MIN_COORDINATE_DISTANCE = 1d;
     private static final double MIN_COORDINATE_DISTANCE_SQUARED =
@@ -131,37 +139,62 @@ public class OrganizationService {
         return coordinatesRepository.findAll();
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public Organization create(OrganizationForm form) {
+        String targetName = form.getName();
+        String normalizedName = normalizeName(targetName);
+        acquireNameLock(targetName, normalizedName);
+        ensureUniqueName(targetName, null);
+
         Organization org = new Organization();
-        applyForm(org, form);
-        validateBusinessRules(org, null);
-        Organization saved = organizationRepository.save(org);
-        afterCommit(() -> eventPublisher.broadcast("created", saved.getId()));
-        return saved;
+        try {
+            applyForm(org, form);
+            validateBusinessRules(org, null);
+            Organization saved = organizationRepository.save(org);
+            organizationRepository.flush();
+            afterCommit(() -> eventPublisher.broadcast("created", saved.getId()));
+            return saved;
+        } catch (DataIntegrityViolationException ex) {
+            throw new ValidationException(NAME_ALREADY_EXISTS.formatted(targetName));
+        } catch (ConcurrencyFailureException ex) {
+            throw new ValidationException(CONCURRENT_MODIFICATION);
+        }
     }
 
     @Transactional
     public Organization update(Integer id, OrganizationForm form) {
-        Organization org = organizationRepository.findById(id)
+        Organization org = organizationRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new EntityNotFoundException(
                         ORGANIZATION_NOT_FOUND));
-        applyForm(org, form);
-        validateBusinessRules(org, id);
-        Organization saved = organizationRepository.save(org);
-        organizationRepository.flush();
-        // one-shot orphan cleanup
-        scheduleOrphanCleanup();
-        afterCommit(() -> eventPublisher.broadcast("updated", saved.getId()));
-        return saved;
+        String targetName = form.getName();
+        String normalizedName = normalizeName(targetName);
+        String currentNormalizedName = normalizeName(org.getName());
+        if (!normalizedName.equals(currentNormalizedName)) {
+            acquireNameLock(targetName, normalizedName);
+        }
+        ensureUniqueName(targetName, id);
+
+        try {
+            applyForm(org, form);
+            validateBusinessRules(org, id);
+            Organization saved = organizationRepository.save(org);
+            organizationRepository.flush();
+            scheduleOrphanCleanup();
+            afterCommit(() -> eventPublisher.broadcast("updated", saved.getId()));
+            return saved;
+        } catch (DataIntegrityViolationException ex) {
+            throw new ValidationException(NAME_ALREADY_EXISTS.formatted(targetName));
+        } catch (ConcurrencyFailureException ex) {
+            throw new ValidationException(CONCURRENT_MODIFICATION);
+        }
     }
 
     @Transactional
     public void delete(Integer id) {
-        if (!organizationRepository.existsById(id)) {
-            return;
-        }
-        organizationRepository.deleteById(id);
+        Organization org = organizationRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        ORGANIZATION_NOT_FOUND));
+        organizationRepository.delete(org);
         organizationRepository.flush();
         scheduleOrphanCleanup();
         afterCommit(() -> eventPublisher.broadcast("deleted", id));
@@ -341,6 +374,29 @@ public class OrganizationService {
         boolean contains(float value) {
             return value >= min && value <= max;
         }
+    }
+
+    private void acquireNameLock(String originalName, String normalizedName) {
+        if (!databaseLockService.tryAcquire("org_name_" + normalizedName)) {
+            throw new ValidationException(NAME_LOCK_BUSY.formatted(originalName));
+        }
+    }
+
+    private void ensureUniqueName(String name, Integer currentId) {
+        if (name == null || name.isBlank()) {
+            return;
+        }
+        String trimmed = name.strip();
+        organizationRepository.findByNameIgnoreCase(trimmed)
+                .filter(existing -> currentId == null
+                        || !existing.getId().equals(currentId))
+                .ifPresent(existing -> {
+                    throw new ValidationException(NAME_ALREADY_EXISTS.formatted(trimmed));
+                });
+    }
+
+    private String normalizeName(String value) {
+        return value == null ? "" : value.strip().toUpperCase(Locale.ROOT);
     }
 
     private void afterCommit(Runnable r) {

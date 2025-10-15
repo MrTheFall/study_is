@@ -11,6 +11,7 @@ import com.example.orgmanager.model.OrganizationType;
 import com.example.orgmanager.repository.AddressRepository;
 import com.example.orgmanager.repository.CoordinatesRepository;
 import com.example.orgmanager.repository.OrganizationRepository;
+import com.example.orgmanager.service.lock.DatabaseLockService;
 import com.example.orgmanager.web.dto.OrganizationForm;
 import jakarta.validation.ValidationException;
 import org.junit.jupiter.api.DisplayName;
@@ -32,6 +33,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyString;
 
 @ExtendWith(MockitoExtension.class)
 class OrganizationServiceTest {
@@ -44,6 +46,8 @@ class OrganizationServiceTest {
     private CoordinatesRepository coordinatesRepository;
     @Mock
     private OrganizationEventPublisher eventPublisher;
+    @Mock
+    private DatabaseLockService databaseLockService;
 
     @InjectMocks
     private OrganizationService service;
@@ -117,6 +121,9 @@ class OrganizationServiceTest {
         form.setPostalStreet("Second");
         form.setPostalZipCode("2000");
 
+        when(databaseLockService.tryAcquire(anyString())).thenReturn(true);
+        when(organizationRepository.findByNameIgnoreCase("ПАО Ромашка"))
+                .thenReturn(Optional.empty());
         when(organizationRepository.findNamesExcludingId(null))
                 .thenReturn(List.of());
         // mock saves to return entities with ids

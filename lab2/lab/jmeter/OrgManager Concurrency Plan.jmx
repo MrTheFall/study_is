@@ -47,7 +47,7 @@
         <stringProp name="HTTPSampler.implementation"></stringProp>
       </ConfigTestElement>
       <hashTree/>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Setup Baseline Data" enabled="true">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Setup Baseline Data">
         <intProp name="ThreadGroup.num_threads">1</intProp>
         <intProp name="ThreadGroup.ramp_time">1</intProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
@@ -121,22 +121,26 @@
                 <stringProp name="Argument.name">officialStreet</stringProp>
                 <stringProp name="Argument.value">пр. Исследований, 10</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
               </elementProp>
               <elementProp name="officialZipCode" elementType="HTTPArgument">
                 <stringProp name="Argument.name">officialZipCode</stringProp>
                 <stringProp name="Argument.value">199000</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
               </elementProp>
               <elementProp name="postalStreet" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">true</boolProp>
                 <stringProp name="Argument.name">postalStreet</stringProp>
                 <stringProp name="Argument.value">ул. Результатов, 5</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
               </elementProp>
               <elementProp name="postalZipCode" elementType="HTTPArgument">
                 <stringProp name="Argument.name">postalZipCode</stringProp>
                 <stringProp name="Argument.value">199001</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
               </elementProp>
             </collectionProp>
           </elementProp>
@@ -166,7 +170,7 @@
           <hashTree/>
         </hashTree>
       </hashTree>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Concurrent Duplicate Creation" enabled="true">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Concurrent Duplicate Creation">
         <intProp name="ThreadGroup.num_threads">2</intProp>
         <intProp name="ThreadGroup.ramp_time">0</intProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
@@ -177,7 +181,7 @@
         </elementProp>
       </ThreadGroup>
       <hashTree>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Attempt duplicate company creation" enabled="true">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Attempt duplicate company creation">
           <stringProp name="HTTPSampler.path">/organizations</stringProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
@@ -238,49 +242,44 @@
                 <stringProp name="Argument.name">officialStreet</stringProp>
                 <stringProp name="Argument.value">ул. Параллельная, 1</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
               </elementProp>
               <elementProp name="officialZipCode" elementType="HTTPArgument">
                 <stringProp name="Argument.name">officialZipCode</stringProp>
                 <stringProp name="Argument.value">198000</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
               </elementProp>
               <elementProp name="postalStreet" elementType="HTTPArgument">
                 <stringProp name="Argument.name">postalStreet</stringProp>
                 <stringProp name="Argument.value">ул. Параллельная, 3</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
               </elementProp>
               <elementProp name="postalZipCode" elementType="HTTPArgument">
                 <stringProp name="Argument.name">postalZipCode</stringProp>
                 <stringProp name="Argument.value">198001</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
               </elementProp>
             </collectionProp>
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree>
-          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Expect redirect or uniqueness violation" enabled="true">
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Expect redirect or uniqueness violation">
             <collectionProp name="Asserion.test_strings">
-              <stringProp name="114403262">^(302|400)$</stringProp>
+              <stringProp name="50549">302</stringProp>
+              <stringProp name="51508">400</stringProp>
             </collectionProp>
             <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
             <boolProp name="Assertion.assume_success">false</boolProp>
-            <intProp name="Assertion.test_type">33</intProp>
+            <intProp name="Assertion.test_type">34</intProp>
             <stringProp name="Assertion.custom_message"></stringProp>
           </ResponseAssertion>
           <hashTree/>
-          <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Track uniqueness rejection" enabled="true">
-            <stringProp name="scriptLanguage">groovy</stringProp>
-            <stringProp name="script">if (prev.getResponseCode() == &apos;400&apos;) {
-    props.put(&quot;duplicateRejected&quot;, &quot;true&quot;)
-}</stringProp>
-            <stringProp name="filename"></stringProp>
-            <stringProp name="parameters"></stringProp>
-            <stringProp name="cacheKey">true</stringProp>
-          </JSR223PostProcessor>
-          <hashTree/>
         </hashTree>
       </hashTree>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Concurrent Update/Delete" enabled="true">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Concurrent Update/Delete">
         <intProp name="ThreadGroup.num_threads">2</intProp>
         <intProp name="ThreadGroup.ramp_time">0</intProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
@@ -291,13 +290,13 @@
         </elementProp>
       </ThreadGroup>
       <hashTree>
-        <IfController guiclass="IfControllerPanel" testclass="IfController" testname="Thread 0 Update" enabled="true">
+        <IfController guiclass="IfControllerPanel" testclass="IfController" testname="Thread 0 Update">
           <stringProp name="IfController.condition">${__groovy(ctx.getThreadNum() == 0)}</stringProp>
           <boolProp name="IfController.evaluateAll">false</boolProp>
           <boolProp name="IfController.useExpression">true</boolProp>
         </IfController>
         <hashTree>
-          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Update baseline" enabled="true">
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Update baseline">
             <stringProp name="HTTPSampler.path">/organizations/${__javaScript(props.get(&apos;baselineId&apos;))}</stringProp>
             <stringProp name="HTTPSampler.method">POST</stringProp>
             <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
@@ -355,28 +354,44 @@
                   <stringProp name="Argument.name">officialStreet</stringProp>
                   <stringProp name="Argument.value">пр. Исследований, 10</stringProp>
                   <stringProp name="Argument.metadata">=</stringProp>
+                  <boolProp name="HTTPArgument.use_equals">true</boolProp>
                 </elementProp>
                 <elementProp name="officialZipCode" elementType="HTTPArgument">
                   <stringProp name="Argument.name">officialZipCode</stringProp>
                   <stringProp name="Argument.value">199000</stringProp>
                   <stringProp name="Argument.metadata">=</stringProp>
+                  <boolProp name="HTTPArgument.use_equals">true</boolProp>
                 </elementProp>
                 <elementProp name="postalStreet" elementType="HTTPArgument">
                   <stringProp name="Argument.name">postalStreet</stringProp>
                   <stringProp name="Argument.value">ул. Результатов, 5</stringProp>
                   <stringProp name="Argument.metadata">=</stringProp>
+                  <boolProp name="HTTPArgument.use_equals">true</boolProp>
                 </elementProp>
                 <elementProp name="postalZipCode" elementType="HTTPArgument">
                   <stringProp name="Argument.name">postalZipCode</stringProp>
                   <stringProp name="Argument.value">199001</stringProp>
                   <stringProp name="Argument.metadata">=</stringProp>
+                  <boolProp name="HTTPArgument.use_equals">true</boolProp>
                 </elementProp>
               </collectionProp>
             </elementProp>
           </HTTPSamplerProxy>
-          <hashTree/>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Expect redirect or missing baseline">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="51512">404</stringProp>
+                <stringProp name="50549">302</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">34</intProp>
+              <stringProp name="Assertion.custom_message"></stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+          </hashTree>
         </hashTree>
-        <IfController guiclass="IfControllerPanel" testclass="IfController" testname="Thread 1 Delete" enabled="true">
+        <IfController guiclass="IfControllerPanel" testclass="IfController" testname="Thread 1 Delete">
           <stringProp name="IfController.condition">${__groovy(ctx.getThreadNum() == 1)}</stringProp>
           <boolProp name="IfController.evaluateAll">false</boolProp>
           <boolProp name="IfController.useExpression">true</boolProp>

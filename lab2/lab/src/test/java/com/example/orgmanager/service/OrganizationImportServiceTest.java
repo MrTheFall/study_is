@@ -87,7 +87,6 @@ class OrganizationImportServiceTest {
     }
 
     @Test
-    @DisplayName("Успешный импорт создает все организации и переиспользует вложенные сущности")
     void importFromYamlReusesNestedEntities() {
         MockMultipartFile file = testFile("import-success.yaml");
 
@@ -179,7 +178,6 @@ class OrganizationImportServiceTest {
     }
 
     @Test
-    @DisplayName("Ошибка валидации прерывает импорт и фиксируется в истории")
     void importFromYamlValidationFailure() {
         MockMultipartFile file = testFile("import-invalid.yaml");
 

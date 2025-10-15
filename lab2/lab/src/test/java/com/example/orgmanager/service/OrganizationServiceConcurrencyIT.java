@@ -76,8 +76,8 @@ class OrganizationServiceConcurrencyIT {
 
     @BeforeEach
     void setUp() {
-        orgA = createOrganization("A", 10, 10f, "Address 1");
-        orgB = createOrganization("B", 20, 20f, "Address 2");
+        orgA = createOrganization("Atlas", 10, 10f, "Address 1");
+        orgB = createOrganization("Zephyr", 20, 20f, "Address 2");
     }
 
     @AfterAll

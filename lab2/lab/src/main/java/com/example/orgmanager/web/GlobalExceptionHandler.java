@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 public final class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     public String handleNotFound(EntityNotFoundException ex, Model model) {
         model.addAttribute("error", "Объект не найден");
         return "error";
