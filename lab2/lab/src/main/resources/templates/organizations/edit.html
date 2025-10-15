@@ -67,8 +67,10 @@
           <select class="w-full border border-gray-300 rounded px-3 py-2 bg-white" th:field="*{officialAddressId}"
             id="officialAddressId">
             <option value="">Добавить новый</option>
-            <option th:each="a : ${addresses}" th:value="${a.id}" th:text="${'id='+a.id+' '+a.street+' '+a.zipCode}"
-              th:attr="data-street=${a.street},data-zip=${a.zipCode}"></option>
+            <option th:each="a : ${addresses}"
+              th:value="${a.id}"
+              th:text="${'id=' + a.id + ' ' + a.street + (a.zipCode == null ? '' : ' ' + a.zipCode)}"
+              th:attr="data-street=${a.street},data-zip=${a.zipCode == null ? '' : a.zipCode}"></option>
           </select>
         </div>
         <div>
@@ -94,8 +96,10 @@
           <select class="w-full border border-gray-300 rounded px-3 py-2 bg-white" th:field="*{postalAddressId}"
             id="postalAddressId">
             <option value="">Добавить новый</option>
-            <option th:each="a : ${addresses}" th:value="${a.id}" th:text="${'id='+a.id+' '+a.street+' '+a.zipCode}"
-              th:attr="data-street=${a.street},data-zip=${a.zipCode}"></option>
+            <option th:each="a : ${addresses}"
+              th:value="${a.id}"
+              th:text="${'id=' + a.id + ' ' + a.street + (a.zipCode == null ? '' : ' ' + a.zipCode)}"
+              th:attr="data-street=${a.street},data-zip=${a.zipCode == null ? '' : a.zipCode}"></option>
           </select>
         </div>
         <div>
