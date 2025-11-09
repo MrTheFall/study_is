@@ -1102,3 +1102,94 @@ CRM не только ускоряет обслуживание гостей и 
 
 = #strong[ER-модель:]
 #align(center)[#image("ermodel.png", width: 100%)]
+
+= #strong[Индексы и сравнительный анализ производительности:]
+
+#strong[Использованные индексы]
+
+- orders(status, created_at) - для очереди кухни (фильтр по статусам + сортировка по времени).
+- orders(client_id, created_at desc, id) - покрывающий для ленты заказов клиента (index‑only scan).
+- payments(paid_at) where success = true - частичный под отчёты по выручке (окна по времени).
+- menu_items using gin(name gin_trgm_ops) - триграммный для ILIKE '%...%'.
+
+#strong[Нагрузка и методика]
+
+- Генераторы: ~10k клиентов/меню, ~50k заказов, ~100k+ позиций, ~50k платежей (db/generate_test_data.sql).
+- Замеры: EXPLAIN ANALYZE, 3 прогона «до» и «после», усреднение.
+- Среда: PostgreSQL 16 (Docker), scripts/benchmark.py.
+
+#strong[Результаты замеров]
+
+- Очередь кухни: status IN ('confirmed','preparing') ORDER BY created_at LIMIT 5000
+  - До: 9.135 ms → После: 5.249 ms (≈1.7× быстрее)
+  - Размер индекса: 1896 kB
+- История клиента: client_id = 8471 ORDER BY created_at DESC LIMIT 1000 (covering)
+  - До: 0.122 ms → После: 0.042 ms (≈2.9× быстрее)
+  - Размер индекса: 2008 kB
+- Выручка (30 дней): success = true AND paid_at ∈ [now()-30d, now()]
+  - До: 2.823 ms → После: 2.071 ms (≈1.4× быстрее)
+  - Размер индекса: 1056 kB
+- Поиск по меню: name ILIKE '%Patty%'
+  - До: 3.094 ms → После: 1.759 ms (≈1.8× быстрее)
+  - Размер индекса: 408 kB
+
+#strong[Выводы]
+
+- Все индексы показали ускорение целевых запросов, при умеренной стоимости по памяти (сотни килобайт — единицы мегабайт).
+- Частичный индекс по payments минимизирует размер и ускоряет агрегации в окнах времени.
+- Покрывающий индекс по orders обеспечивает index‑only сканирование для ленты клиента.
+- Триграммный GIN по menu_items.name сильно ускоряет гибкий поиск, что важно для UX.
+- Итог: индексы целесообразны для заявленных бизнес‑процессов и подтверждены измерениями.
+
+= #strong[Инвентаризация индексов (SQL-запрос)]:
+
+#block(inset: 1em)[
+  #set text(font: ("DejaVu Sans Mono", "Liberation Mono", "Courier New"), size: 9pt)
+  SELECT
+    ns.nspname AS schema,
+    c.relname AS table,
+    i.relname AS index,
+    pg_get_indexdef(i.oid) AS indexdef,
+    pg_size_pretty(pg_relation_size(i.oid)) AS index_size,
+    s.idx_scan, s.idx_tup_read, s.idx_tup_fetch
+  FROM pg_class c
+  JOIN pg_index x ON c.oid = x.indrelid
+  JOIN pg_class i ON i.oid = x.indexrelid
+  JOIN pg_namespace ns ON ns.oid = c.relnamespace
+  LEFT JOIN pg_stat_all_indexes s ON s.indexrelid = i.oid
+  WHERE ns.nspname = 'public'
+  ORDER BY pg_relation_size(i.oid) DESC;
+]
+
+#strong[Результат (топ‑20 по размеру):]
+
+#block[
+  #set text(size: 10.5pt)
+  #table(
+    columns: (auto, 2fr, auto, auto, auto, auto),
+    stroke: 0.5pt + gray,
+    inset: 4pt,
+    align: left,
+    [#strong[table]], [#strong[index]], [#strong[index_size]], [#strong[idx_scan]], [#strong[idx_tup_read]], [#strong[idx_tup_fetch]],
+    [orders], [orders_pkey], [3320 kB], [300002], [626296], [300002],
+    [orders], [idx_orders_client_id], [2344 kB], [5], [50060], [0],
+    [order_items], [order_items_pkey], [2208 kB], [0], [0], [0],
+    [orders], [idx_orders_client_created_at_id], [2008 kB], [4], [60], [0],
+    [orders], [idx_orders_status_created_at], [1896 kB], [8], [50256], [0],
+    [order_items], [idx_order_items_order_id], [1848 kB], [200001], [433339], [0],
+    [orders], [idx_orders_courier_id], [1584 kB], [0], [0], [0],
+    [payments], [uq_payments_order], [1560 kB], [150001], [50000], [50000],
+    [payments], [idx_payments_order_id], [1560 kB], [0], [0], [0],
+    [order_items], [idx_order_items_menu_item_id], [1248 kB], [0], [0], [0],
+    [payments], [payments_pkey], [1112 kB], [0], [0], [0],
+    [payments], [idx_payments_paid_at_success], [1056 kB], [4], [31544], [0],
+    [clients], [uq_clients_email], [680 kB], [0], [0], [0],
+    [menu_items], [idx_menu_items_name_trgm], [408 kB], [4], [14016], [0],
+    [clients], [uq_clients_phone], [328 kB], [0], [0], [0],
+    [clients], [clients_pkey], [240 kB], [262504], [262504], [262504],
+    [menu_items], [menu_items_pkey], [240 kB], [100001], [100001], [100001],
+    [couriers], [uq_couriers_phone], [16 kB], [0], [0], [0],
+    [couriers], [couriers_pkey], [16 kB], [31853], [31853], [31853],
+    [employees], [uq_employees_login], [8192 bytes], [0], [0], [0],
+  )
+]
