@@ -1103,6 +1103,34 @@ CRM не только ускоряет обслуживание гостей и 
 = #strong[ER-модель:]
 #align(center)[#image("ermodel.png", width: 100%)]
 
+
+= #strong[Даталогическая модель и целостность данных:]
+
+Реализована даталогическая модель в PostgreSQL (db/schema.sql): таблицы clients, menu_items, recipes, ingredients, ingredient_usages, inventory_records, orders, order_items, payments, employees, roles, shifts, employee_shifts, reviews, couriers.
+
+CHECK‑ограничения: неотрицательные суммы/количества, rating 1–5, валидность статусов/типов заказа, обязательность адреса/курьера для доставки.
+
+Индексы на все FK, а также полезные составные индексы (см. раздел про бенчмарки ниже).
+
+#strong[Триггеры для обеспечения целостности]
+
+- orders.updated_at - автоматическое обновление при изменении заказа.
+- Пересчёт итоговой суммы заказа и проверка оплаты: recalc_order_total_and_validate() пересчитывает orders.total_amount и, при наличии успешного платежа, требует точного равенства суммы платежа итогу заказа.
+- order_items_default_price - подстановка текущей цены блюда при вставке позиции, если цена не передана.
+- payments_set_paid_at - BEFORE‑триггер, автоматически проставляющий paid_at при success = true.
+- inventory_touch - автообновление last_updated в записях склада.
+- employee_shifts_no_overlap - запрет пересекающихся смен у одного сотрудника в рамках даты.
+
+= #strong[PL/pgSQL‑функции и процедуры:]
+
+- place_order(client_id, type, delivery_address, items jsonb) → id заказа: создание заказа с валидацией и добавлением позиций из JSON.
+- update_order_status(order_id, new_status): допустимые переходы статусов; для доставки устанавливается delivered_at.
+- process_payment(order_id, method) → id платежа: единоразовый платёж на сумму заказа с success = true.
+- get_kitchen_queue(): очередь кухни (заказы в confirmed/preparing с агрегированным списком позиций).
+- sales_summary(from, to): выручка/средний чек за период по успешным платежам.
+- top_menu_items(from, to, limit): топ блюд по количеству и выручке.
+- low_stock(threshold_factor): ингредиенты ниже порога; restock_ingredient(id, delta): пополнение/коррекция остатков.
+
 = #strong[Индексы и сравнительный анализ производительности:]
 
 #strong[Использованные индексы]
