@@ -1,10 +1,6 @@
--- Generate large-ish test dataset
--- Assumes empty schema already created
-
 begin;
 
 -- Parameters
--- Adjust counts if needed
 \set clients 10000
 \set menu_items 10000
 \set couriers 100
