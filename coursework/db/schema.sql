@@ -341,7 +341,6 @@ create trigger payments_validate_after_del
 after delete on payments
 for each row execute function trg_payments_validate_and_bump();
 
--- BEFORE trigger: set paid_at automatically when success=true (optional convenience)
 create or replace function trg_payments_set_paid_at()
 returns trigger language plpgsql as $$
 begin
