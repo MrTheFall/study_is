@@ -1104,6 +1104,10 @@ CRM не только ускоряет обслуживание гостей и 
 #align(center)[#image("ermodel.png", width: 100%)]
 
 
+= #strong[Даталогическая модель:]
+#align(center)[#image("datamodel.png", width: 100%)]
+
+
 = #strong[Даталогическая модель и целостность данных:]
 
 Реализована даталогическая модель в PostgreSQL (db/schema.sql): таблицы clients, menu_items, recipes, ingredients, ingredient_usages, inventory_records, orders, order_items, payments, employees, roles, shifts, employee_shifts, reviews, couriers.
