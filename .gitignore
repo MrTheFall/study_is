@@ -19,3 +19,6 @@
 **/gradle-build.log
 **/run/
 
+# JMeter
+**/jmeter.log
+**/*.jtl

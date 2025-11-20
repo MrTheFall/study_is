@@ -25,12 +25,15 @@ if [[ "${SKIP_BUILD}" == "false" ]]; then
   ./gradlew bootJar
 fi
 
-# Prefer the latest non-plain boot jar built by Gradle
-jar_path=$(ls -1t build/libs/*.jar 2>/dev/null | grep -v -- '-plain\\.jar$' | head -n1 || true)
+# Prefer the latest non-plain boot jar built by Gradle (look inside modules first)
+jar_path=$(ls -1t app/build/libs/*.jar 2>/dev/null | grep -v -- '-plain\\.jar$' | head -n1 || true)
+if [[ -z "${jar_path:-}" ]]; then
+  jar_path=$(ls -1t build/libs/*.jar 2>/dev/null | grep -v -- '-plain\\.jar$' | head -n1 || true)
+fi
 popd >/dev/null
 
 if [[ -z "${jar_path:-}" ]]; then
-  echo 'Boot jar not found in build/libs' >&2
+  echo 'Boot jar not found in module build/libs directories' >&2
   exit 1
 fi
 

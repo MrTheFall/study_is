@@ -1,0 +1,29 @@
+organizations:
+  - name: "ООО Импорт Лаб"
+    fullName: "Общество с ограниченной ответственностью Импорт Лаб"
+    type: COMMERCIAL
+    annualTurnover: 410000.0
+    employeesCount: 180
+    rating: 4.7
+    coordinates:
+      x: -30
+      y: 210.0
+    officialAddress:
+      street: "пр. Импортный, 1"
+      zipCode: "190001"
+    postalAddress:
+      street: "ул. Поставок, 3"
+      zipCode: "190002"
+  - name: "ПАО Импорт Надежда"
+    fullName: "Публичное акционерное общество Импорт Надежда"
+    type: PUBLIC
+    annualTurnover: 7200000.0
+    employeesCount: 950
+    rating: 4.8
+    coordinates:
+      x: 40
+      y: 150.0
+    officialAddress:
+      street: "ул. Надежды, 7"
+      zipCode: "190100"
+    postalSameAsOfficial: true

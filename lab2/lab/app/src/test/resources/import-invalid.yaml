@@ -1,0 +1,11 @@
+organizations:
+  - fullName: "Некорректная запись без названия"
+    type: COMMERCIAL
+    annualTurnover: 150000.0
+    employeesCount: 120
+    rating: 3.0
+    coordinates:
+      x: 5
+      y: 100.0
+    officialAddress:
+      street: "ул. Ошибочная, 1"
