@@ -1,4 +1,5 @@
 plugins {
+    id("org-manager.common-conventions")
     `java-library`
 }
 
