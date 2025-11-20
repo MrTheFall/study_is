@@ -1,0 +1,29 @@
+organizations:
+  - name: "ООО Альфа"
+    fullName: "Общество с ограниченной ответственностью Альфа"
+    type: COMMERCIAL
+    annualTurnover: 250000.0
+    employeesCount: 120
+    rating: 4.5
+    coordinates:
+      x: 10
+      y: 200.0
+    officialAddress:
+      street: "ул. Ленина, 15"
+      zipCode: "197101"
+    postalAddress:
+      street: "ул. Почтовая, 8"
+      zipCode: "197198"
+  - name: "ПАО Бета"
+    fullName: "Публичное акционерное общество Бета"
+    type: PUBLIC
+    annualTurnover: 5000000.0
+    employeesCount: 800
+    rating: 4.9
+    coordinates:
+      x: 10
+      y: 200.0
+    officialAddress:
+      street: "ул. Ленина, 15"
+      zipCode: "197101"
+    postalSameAsOfficial: true

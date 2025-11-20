@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::body})}">
+
+<body>
+  <div class="mb-6">
+    <h2 class="text-2xl font-semibold">Импорт организаций</h2>
+    <p class="text-sm text-gray-600 mt-1">
+      Загрузите YAML-файл с организациями. Все записи будут импортированы одной транзакцией:
+      при ошибке ни один объект не будет создан.
+    </p>
+  </div>
+
+  <div th:if="${errorMessage}" class="mb-4 rounded border border-red-300 bg-red-50 px-4 py-3 text-red-700">
+    <span th:text="${errorMessage}"></span>
+  </div>
+  <div th:if="${successMessage}" class="mb-4 rounded border border-green-300 bg-green-50 px-4 py-3 text-green-700">
+    <span th:text="${successMessage}"></span>
+  </div>
+
+  <form method="post" th:action="@{/organizations/import}" enctype="multipart/form-data"
+        class="rounded border border-slate-200 bg-white px-4 py-5 shadow-sm flex flex-col sm:flex-row gap-4 sm:items-end">
+    <div class="flex-1">
+      <label class="block text-sm text-gray-600 mb-1" for="importFile">Файл YAML</label>
+      <input id="importFile" name="file" type="file" accept=".yaml,.yml"
+             class="w-full border border-gray-300 rounded px-3 py-2" required>
+    </div>
+    <button type="submit"
+            class="inline-flex items-center justify-center px-5 py-2.5 rounded bg-indigo-600 hover:bg-indigo-700 text-white shadow">
+      Импортировать
+    </button>
+  </form>
+
+  <section class="mt-10">
+    <h3 class="text-xl font-semibold mb-3">История импортов</h3>
+    <div th:if="${#lists.isEmpty(history)}" class="text-sm text-gray-500">
+      История пока пуста.
+    </div>
+    <div th:if="${!#lists.isEmpty(history)}" class="overflow-x-auto border border-slate-200 rounded bg-white shadow-sm">
+      <table class="min-w-full divide-y divide-slate-200">
+        <thead class="bg-slate-50">
+          <tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <th class="px-4 py-3">ID</th>
+            <th class="px-4 py-3">Статус</th>
+            <th class="px-4 py-3">Добавлено</th>
+            <th class="px-4 py-3">Создано</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
+          <tr th:each="job : ${history}" class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-mono text-xs" th:text="${job.id}"></td>
+            <td class="px-4 py-3" th:text="${statusLabels[job.status]}"></td>
+            <td class="px-4 py-3"
+                th:text="${job.status == T(com.example.orgmanager.model.ImportStatus).SUCCESS ? job.importedCount : '-'}"></td>
+            <td class="px-4 py-3 whitespace-nowrap"
+                th:text="${job.createdAt != null ? #temporals.format(job.createdAt, 'dd.MM.yyyy HH:mm') : '-'}"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="mt-10">
+    <h3 class="text-xl font-semibold mb-3">Пример структуры файла</h3>
+    <pre class="bg-slate-900 text-slate-100 text-xs rounded px-4 py-4 overflow-auto">
+organizations:
+  - name: "ООО Ромашка"
+    fullName: "Общество с ограниченной ответственностью Ромашка"
+    type: COMMERCIAL
+    annualTurnover: 1200000.5
+    employeesCount: 42
+    rating: 4.2
+    coordinates:
+      x: -10
+      y: 300.5
+    officialAddress:
+      street: "пр. Науки, 10"
+      zipCode: "197101"
+    postalAddress:
+      street: "ул. Почтовая, 5"
+      zipCode: "197198"
+  - name: "ПАО Технополис"
+    fullName: "Публичное акционерное общество Технополис"
+    type: PUBLIC
+    annualTurnover: 2500000
+    employeesCount: 650
+    rating: 5.0
+    coordinates:
+      x: 45
+      y: 120
+    officialAddress:
+      street: "ул. Сервисная, 17"
+    postalSameAsOfficial: true
+    </pre>
+  </section>
+</body>
+
+</html>
