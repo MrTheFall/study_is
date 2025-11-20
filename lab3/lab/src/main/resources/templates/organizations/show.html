@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::body})}">
+
+<body>
+  <div class="flex items-center justify-between mb-6">
+    <h2 class="text-2xl font-semibold">Организация #<span th:text="${org.id}"></span></h2>
+    <div class="flex gap-2">
+      <a class="inline-flex items-center px-4 py-2 rounded border border-indigo-500 text-indigo-600 hover:bg-indigo-50"
+        th:href="@{'/organizations/' + ${org.id} + '/edit'}">Изменить</a>
+      <a class="inline-flex items-center px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
+        href="/organizations">Список</a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div class="bg-white rounded shadow p-4">
+      <h3 class="font-medium mb-3">Основная информация</h3>
+      <p><span class="text-gray-500">Название:</span> <span th:text="${org.name}"></span></p>
+      <p><span class="text-gray-500">Полное название:</span> <span th:text="${org.fullName}"></span></p>
+      <p><span class="text-gray-500">Тип:</span> <span th:text="${org.type}"></span></p>
+      <p><span class="text-gray-500">Создано:</span> <span
+          th:text="${#dates.format(org.creationDate, 'yyyy-MM-dd HH:mm')}"></span></p>
+    </div>
+
+    <div class="bg-white rounded shadow p-4">
+      <h3 class="font-medium mb-3">Показатели</h3>
+      <p><span class="text-gray-500">Годовой оборот:</span> <span th:text="${org.annualTurnover}"></span></p>
+      <p><span class="text-gray-500">Количество сотрудников:</span> <span th:text="${org.employeesCount}"></span></p>
+      <p><span class="text-gray-500">Рейтинг:</span> <span th:text="${org.rating}"></span></p>
+    </div>
+
+    <div class="bg-white rounded shadow p-4">
+      <h3 class="font-medium mb-3">Координаты</h3>
+      <p><span class="text-gray-500">x:</span> <span th:text="${org.coordinates.x}"></span></p>
+      <p><span class="text-gray-500">y:</span> <span th:text="${org.coordinates.y}"></span></p>
+    </div>
+
+    <div class="bg-white rounded shadow p-4">
+      <h3 class="font-medium mb-3">Адреса</h3>
+      <p><span class="text-gray-500">Официальный:</span> <span th:text="${org.officialAddress.street}"></span> (<span
+          th:text="${org.officialAddress.zipCode}"></span>)</p>
+      <p><span class="text-gray-500">Почтовый:</span> <span th:text="${org.postalAddress.street}"></span> (<span
+          th:text="${org.postalAddress.zipCode}"></span>)</p>
+    </div>
+  </div>
+
+</body>
+
+</html>

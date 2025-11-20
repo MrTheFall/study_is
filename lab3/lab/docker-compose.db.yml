@@ -1,0 +1,10 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: ${PG_CONTAINER:-orgmgr-pg}
+    environment:
+      POSTGRES_DB: ${PG_DB:-studs}
+      POSTGRES_USER: ${PG_USER:-postgres}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-postgres}
+    ports:
+      - "${PG_PORT:-5432}:5432"
