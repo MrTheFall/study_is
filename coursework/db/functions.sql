@@ -145,7 +145,7 @@ begin
     return query
     select o.id,
            o.created_at,
-           o.status,
+           o.status::text,
            (
              select jsonb_agg(jsonb_build_object(
                         'menu_item_id', oi.menu_item_id,
@@ -199,7 +199,7 @@ language plpgsql as $$
 begin
     return query
     select oi.menu_item_id,
-           mi.name,
+           mi.name::text,
            sum(oi.quantity) as quantity,
            sum(oi.unit_price * oi.quantity)::numeric(14,2) as revenue
       from order_items oi
@@ -211,7 +211,7 @@ begin
      limit p_limit;
 end;$$;
 
-create or replace function low_stock(threshold_factor numeric default 1.0)
+create or replace function low_stock(threshold_factor double precision default 1.0)
 returns table (
     ingredient_id integer,
     name text,
@@ -221,7 +221,7 @@ returns table (
 language plpgsql as $$
 begin
     return query
-    select i.id, i.name, coalesce(ir.quantity, 0), i.min_threshold
+    select i.id, i.name::text, coalesce(ir.quantity, 0), i.min_threshold
       from ingredients i
  left join inventory_records ir on ir.ingredient_id = i.id
      where coalesce(ir.quantity, 0) <= i.min_threshold * threshold_factor
