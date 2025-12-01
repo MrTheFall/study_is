@@ -13,6 +13,15 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+          region:
+            factory_class: jcache
+        javax:
+          cache:
+            provider: org.ehcache.jsr107.EhcacheCachingProvider
+        generate_statistics: ${app.jpa.cache-stats-logging-enabled:false}
         format_sql: true
     show-sql: false
 
@@ -23,6 +32,8 @@ springdoc:
 
 app:
   schema-init-enabled: false
+  jpa:
+    cache-stats-logging-enabled: true
   sse:
     heartbeat-enabled: true
     heartbeat-interval-ms: 15000
