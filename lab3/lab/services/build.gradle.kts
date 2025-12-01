@@ -13,6 +13,7 @@ dependencies {
     implementation("org.hibernate.orm:hibernate-jcache")
     implementation("org.ehcache:ehcache")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
+    implementation("software.amazon.awssdk:s3:2.27.18")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }

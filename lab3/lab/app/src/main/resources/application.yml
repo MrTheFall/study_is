@@ -37,6 +37,14 @@ app:
   sse:
     heartbeat-enabled: true
     heartbeat-interval-ms: 15000
+  import-storage:
+    bucket: ${IMPORT_BUCKET:org-imports}
+    prefix: ${IMPORT_PREFIX:imports}
+    endpoint: ${IMPORT_S3_ENDPOINT:http://localhost:9000}
+    access-key: ${IMPORT_S3_ACCESS_KEY:minioadmin}
+    secret-key: ${IMPORT_S3_SECRET_KEY:minioadmin}
+    region: ${IMPORT_S3_REGION:us-east-1}
+    path-style-access: true
 
 logging:
   level:
