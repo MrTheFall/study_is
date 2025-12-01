@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -99,6 +100,7 @@ public class OrganizationImportService {
                         file.getOriginalFilename(),
                         content);
                 importItems(items);
+                //if (3==1+2) throw new RuntimeException("demo fail");
                 return staged;
             });
             job.setStatus(ImportStatus.SUCCESS);
@@ -129,18 +131,21 @@ public class OrganizationImportService {
     }
 
     public ImportFileData openImportFile(Long jobId) {
-        ImportJob job = importJobRepository.findById(jobId)
-                .orElseThrow(() -> new ValidationException("Задача импорта не найдена"));
-        if (job.getFileBucket() == null || job.getFileObjectKey() == null) {
-            throw new ValidationException("Для этой задачи нет сохраненного файла импорта");
+        return openImportFileFromStorage(jobId);
+    }
+
+    public ImportFileData openImportFileFromStorage(Long jobId) {
+        StoredImportFile fileMeta = importStorageService.locateByJobId(jobId);
+        if (fileMeta == null) {
+            throw new ValidationException("Файл импорта не найден");
         }
-        String fileName = job.getFileName() != null
-                ? job.getFileName()
-                : "import-%d.yaml".formatted(job.getId());
+        String fileName = fileMeta.getFileName() != null
+                ? fileMeta.getFileName()
+                : "import-%d.yaml".formatted(jobId);
         InputStream stream = importStorageService.openStream(
-                job.getFileBucket(),
-                job.getFileObjectKey());
-        return new ImportFileData(fileName, job.getFileSize(), "application/x-yaml", stream);
+                fileMeta.getBucket(),
+                fileMeta.getObjectKey());
+        return new ImportFileData(fileName, fileMeta.getContentLength(), fileMeta.getContentType(), stream);
     }
 
     private void importItems(List<OrganizationImportItem> items) {

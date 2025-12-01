@@ -14,6 +14,7 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 public class S3ImportStorageService implements ImportStorageService {
@@ -77,6 +78,35 @@ public class S3ImportStorageService implements ImportStorageService {
         }
     }
 
+    @Override
+    public StoredImportFile locateByJobId(Long jobId) {
+        ensureBucketExists();
+        String prefix = "%s/jobs/%d/".formatted(properties.getPrefix(), jobId);
+        try {
+            var request = ListObjectsV2Request.builder()
+                    .bucket(properties.getBucket())
+                    .prefix(prefix)
+                    .maxKeys(1)
+                    .build();
+            var response = s3Client.listObjectsV2(request);
+            if (response.contents().isEmpty()) {
+                return null;
+            }
+            var object = response.contents().getFirst();
+            String key = object.key();
+            String fileName = extractFileName(key);
+            return StoredImportFile.builder()
+                    .bucket(properties.getBucket())
+                    .objectKey(key)
+                    .fileName(fileName)
+                    .contentLength(object.size())
+                    .contentType(YAML_CONTENT_TYPE)
+                    .build();
+        } catch (SdkException ex) {
+            throw new ImportStorageException("Не удалось найти файл импорта", ex);
+        }
+    }
+
     private void ensureBucketExists() {
         if (bucketReady.get()) {
             return;
@@ -121,6 +151,11 @@ public class S3ImportStorageService implements ImportStorageService {
             normalized = normalized.substring(normalized.length() - 120);
         }
         return normalized.isBlank() ? "import.yaml" : normalized;
+    }
+
+    private String extractFileName(String key) {
+        int idx = key.lastIndexOf('/');
+        return idx >= 0 && idx + 1 < key.length() ? key.substring(idx + 1) : key;
     }
 
     private record S3StagedImportFile(

@@ -8,6 +8,9 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://pg:5432/studs}
     username: ${SPRING_DATASOURCE_USERNAME:student}
     password: ${SPRING_DATASOURCE_PASSWORD:student}
+    hikari:
+      connection-timeout: 2000
+      validation-timeout: 2000
   jpa:
     hibernate:
       ddl-auto: update

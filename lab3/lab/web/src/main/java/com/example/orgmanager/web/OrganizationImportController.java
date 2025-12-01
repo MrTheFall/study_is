@@ -69,7 +69,7 @@ public class OrganizationImportController {
             @PathVariable("jobId") Long jobId) {
         ImportFileData fileData;
         try {
-            fileData = importService.openImportFile(jobId);
+            fileData = importService.openImportFileFromStorage(jobId);
         } catch (ValidationException ex) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
         } catch (ImportStorageException ex) {
