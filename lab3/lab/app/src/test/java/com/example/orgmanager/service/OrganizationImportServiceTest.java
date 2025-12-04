@@ -7,6 +7,9 @@ import com.example.orgmanager.repository.AddressRepository;
 import com.example.orgmanager.repository.CoordinatesRepository;
 import com.example.orgmanager.repository.ImportJobRepository;
 import com.example.orgmanager.service.dto.OrganizationForm;
+import com.example.orgmanager.storage.ImportStorageService;
+import com.example.orgmanager.storage.StoredImportFile;
+import com.example.orgmanager.storage.TransactionalImportStorage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +38,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -54,6 +59,10 @@ class OrganizationImportServiceTest {
     private AddressRepository addressRepository;
     @Mock
     private CoordinatesRepository coordinatesRepository;
+    @Mock
+    private TransactionalImportStorage transactionalImportStorage;
+    @Mock
+    private ImportStorageService importStorageService;
 
     private Validator validator;
     private OrganizationImportService importService;
@@ -71,11 +80,21 @@ class OrganizationImportServiceTest {
             savedJobs.add(snapshot(job));
             return job;
         });
+        lenient().when(transactionalImportStorage.storeWithTransaction(anyLong(), anyString(), any()))
+                .thenAnswer(inv -> StoredImportFile.builder()
+                        .bucket("bucket")
+                        .objectKey("key-" + inv.getArgument(0))
+                        .fileName(inv.getArgument(1))
+                        .contentLength(((byte[]) inv.getArgument(2)).length)
+                        .contentType("application/x-yaml")
+                        .build());
         importService = new OrganizationImportService(
                 organizationService,
                 importJobRepository,
                 addressRepository,
                 coordinatesRepository,
+                transactionalImportStorage,
+                importStorageService,
                 validator,
                 TRANSACTION_MANAGER);
     }
@@ -155,7 +174,13 @@ class OrganizationImportServiceTest {
                 .containsExactly(
                         com.example.orgmanager.model.ImportStatus.IN_PROGRESS,
                         com.example.orgmanager.model.ImportStatus.SUCCESS);
+        ImportJob finished = savedJobs.get(savedJobs.size() - 1);
+        assertThat(finished.getFileBucket()).isEqualTo("bucket");
+        assertThat(finished.getFileObjectKey()).isEqualTo("key-1");
+        assertThat(finished.getFileName()).isEqualTo("import-success.yaml");
+        assertThat(finished.getFileSize()).isGreaterThan(0);
 
+        verify(transactionalImportStorage).storeWithTransaction(anyLong(), anyString(), any());
         verify(organizationService, org.mockito.Mockito.times(2)).create(captor.capture());
 
         List<OrganizationForm> forms = captor.getAllValues();
@@ -188,6 +213,7 @@ class OrganizationImportServiceTest {
                 .containsExactly(
                         com.example.orgmanager.model.ImportStatus.IN_PROGRESS,
                         com.example.orgmanager.model.ImportStatus.FAILED);
+        verify(transactionalImportStorage, never()).storeWithTransaction(anyLong(), anyString(), any());
         verify(organizationService, never()).create(any());
     }
 
@@ -197,6 +223,10 @@ class OrganizationImportServiceTest {
         copy.setStatus(source.getStatus());
         copy.setImportedCount(source.getImportedCount());
         copy.setErrorMessage(source.getErrorMessage());
+        copy.setFileBucket(source.getFileBucket());
+        copy.setFileObjectKey(source.getFileObjectKey());
+        copy.setFileName(source.getFileName());
+        copy.setFileSize(source.getFileSize());
         return copy;
     }
 

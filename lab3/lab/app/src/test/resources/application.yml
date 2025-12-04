@@ -10,8 +10,19 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+          region:
+            factory_class: jcache
+        javax:
+          cache:
+            provider: org.ehcache.jsr107.EhcacheCachingProvider
+        generate_statistics: ${app.jpa.cache-stats-logging-enabled:false}
     show-sql: false
 
 app:
   sse:
     heartbeat-enabled: false
+  jpa:
+    cache-stats-logging-enabled: false
