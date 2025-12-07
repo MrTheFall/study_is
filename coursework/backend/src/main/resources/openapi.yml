@@ -1,0 +1,1475 @@
+openapi: 3.0.3
+info:
+  title: Krusty Crab CRM API
+  description: |
+    API для системы управления рестораном "Красти Крабс"
+    
+    Система предназначена для автоматизации бизнес-процессов ресторана:
+    - Управление заказами и клиентами
+    - Контроль меню и ингредиентов
+    - Управление сотрудниками и рабочими сменами
+    - Финансовый учет и отчётность
+    - Программы лояльности
+    - Мониторинг качества обслуживания
+  version: 1.0.0
+  contact:
+    name: Krusty Crab Support
+
+servers:
+  - url: http://localhost:13228/api
+    description: Local development server
+
+tags:
+  - name: clients
+    description: Управление клиентами
+  - name: menu
+    description: Управление меню
+  - name: orders
+    description: Управление заказами
+  - name: payments
+    description: Обработка платежей
+  - name: reviews
+    description: Отзывы клиентов
+  - name: inventory
+    description: Управление складом ингредиентов
+  - name: employees
+    description: Управление персоналом
+  - name: shifts
+    description: Управление рабочими сменами
+  - name: kitchen
+    description: Очередь заказов для кухни
+  - name: analytics
+    description: Аналитика и отчеты
+
+paths:
+  # ========== CLIENTS ==========
+  /clients:
+    post:
+      tags:
+        - clients
+      summary: Регистрация нового клиента
+      description: Создание нового клиента в системе (FR-005, FR-006)
+      operationId: registerClient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientRegistrationRequest'
+      responses:
+        '201':
+          description: Клиент успешно зарегистрирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Клиент с таким email или телефоном уже существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - clients
+      summary: Получить список клиентов
+      description: Получение списка всех клиентов (только для управляющего)
+      operationId: getAllClients
+      responses:
+        '200':
+          description: Список клиентов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+
+  /clients/{clientId}:
+    get:
+      tags:
+        - clients
+      summary: Получить информацию о клиенте
+      description: Получение информации о клиенте по ID
+      operationId: getClientById
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      responses:
+        '200':
+          description: Информация о клиенте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - clients
+      summary: Обновить данные клиента
+      description: Обновление персональных данных клиента (FR-006)
+      operationId: updateClient
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientUpdateRequest'
+      responses:
+        '200':
+          description: Данные клиента обновлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clients/{clientId}/orders:
+    get:
+      tags:
+        - clients
+      summary: Получить историю заказов клиента
+      description: Получение истории заказов клиента (FR-007)
+      operationId: getClientOrders
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      responses:
+        '200':
+          description: История заказов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+
+  # ========== MENU ==========
+  /menu:
+    get:
+      tags:
+        - menu
+      summary: Получить меню
+      description: Получение актуального меню с ценами и составом блюд (FR-002)
+      operationId: getMenu
+      parameters:
+        - name: available
+          in: query
+          description: Показать только доступные блюда
+          schema:
+            type: boolean
+            default: false
+        - name: search
+          in: query
+          description: Поиск по названию
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Список блюд меню
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MenuItem'
+
+    post:
+      tags:
+        - menu
+      summary: Создать новое блюдо
+      description: Создание нового блюда в меню (FR-016, только для управляющего)
+      operationId: createMenuItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MenuItemCreateRequest'
+      responses:
+        '201':
+          description: Блюдо создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /menu/{menuItemId}:
+    get:
+      tags:
+        - menu
+      summary: Получить информацию о блюде
+      description: Получение детальной информации о блюде
+      operationId: getMenuItemById
+      parameters:
+        - $ref: '#/components/parameters/MenuItemId'
+      responses:
+        '200':
+          description: Информация о блюде
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - menu
+      summary: Обновить блюдо
+      description: Обновление информации о блюде (FR-016, только для управляющего)
+      operationId: updateMenuItem
+      parameters:
+        - $ref: '#/components/parameters/MenuItemId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MenuItemCreateRequest'
+      responses:
+        '200':
+          description: Блюдо обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuItem'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - menu
+      summary: Удалить блюдо
+      description: Удаление блюда из меню (FR-016, только для управляющего)
+      operationId: deleteMenuItem
+      parameters:
+        - $ref: '#/components/parameters/MenuItemId'
+      responses:
+        '204':
+          description: Блюдо удалено
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ========== ORDERS ==========
+  /orders:
+    post:
+      tags:
+        - orders
+      summary: Создать заказ
+      description: Создание нового заказа (FR-001, FR-008)
+      operationId: placeOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceOrderRequest'
+      responses:
+        '201':
+          description: Заказ создан
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: integer
+                    description: ID созданного заказа
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    get:
+      tags:
+        - orders
+      summary: Получить список заказов
+      description: Получение списка заказов (для управляющего)
+      operationId: getAllOrders
+      parameters:
+        - name: status
+          in: query
+          description: Фильтр по статусу
+          schema:
+            $ref: '#/components/schemas/OrderStatus'
+        - name: clientId
+          in: query
+          description: Фильтр по клиенту
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список заказов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+
+  /orders/{orderId}:
+    get:
+      tags:
+        - orders
+      summary: Получить информацию о заказе
+      description: Получение детальной информации о заказе (FR-003)
+      operationId: getOrderById
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Информация о заказе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - orders
+      summary: Обновить статус заказа
+      description: Обновление статуса заказа (FR-008, FR-010, FR-013)
+      operationId: updateOrderStatus
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  $ref: '#/components/schemas/OrderStatus'
+      responses:
+        '200':
+          description: Статус заказа обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ========== PAYMENTS ==========
+  /payments:
+    post:
+      tags:
+        - payments
+      summary: Обработать платеж
+      description: Обработка платежа за заказ (FR-019)
+      operationId: processPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '201':
+          description: Платеж обработан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /payments/cash:
+    post:
+      tags:
+        - payments
+      summary: Обработать наличный платеж с расчетом сдачи
+      description: Обработка наличного платежа с расчетом и отображением сдачи (FR-019)
+      operationId: processCashPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashPaymentRequest'
+      responses:
+        '200':
+          description: Платеж обработан, возвращена информация о сдаче
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /payments/order/{orderId}:
+    get:
+      tags:
+        - payments
+      summary: Получить информацию о платеже по заказу
+      description: Получение информации о платеже для заказа
+      operationId: getPaymentByOrderId
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Информация о платеже
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ========== REVIEWS ==========
+  /reviews:
+    post:
+      tags:
+        - reviews
+      summary: Создать отзыв
+      description: Создание отзыва о заказе (FR-004)
+      operationId: createReview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewCreateRequest'
+      responses:
+        '201':
+          description: Отзыв создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    get:
+      tags:
+        - reviews
+      summary: Получить список отзывов
+      description: Получение списка отзывов (FR-018, FR-020, для управляющего)
+      operationId: getAllReviews
+      parameters:
+        - name: clientId
+          in: query
+          description: Фильтр по клиенту
+          schema:
+            type: integer
+        - name: orderId
+          in: query
+          description: Фильтр по заказу
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список отзывов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+
+  /reviews/{reviewId}:
+    get:
+      tags:
+        - reviews
+      summary: Получить отзыв по ID
+      description: Получение информации об отзыве
+      operationId: getReviewById
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Информация об отзыве
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ========== INVENTORY ==========
+  /inventory:
+    get:
+      tags:
+        - inventory
+      summary: Получить информацию о складе
+      description: Получение информации о складских остатках (FR-015)
+      operationId: getInventory
+      parameters:
+        - name: lowStock
+          in: query
+          description: Показать только ингредиенты с низким остатком
+          schema:
+            type: boolean
+            default: false
+        - name: thresholdFactor
+          in: query
+          description: Коэффициент порога для определения низкого остатка
+          schema:
+            type: number
+            format: double
+            default: 1.0
+      responses:
+        '200':
+          description: Информация о складе
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InventoryRecord'
+
+  /inventory/{ingredientId}:
+    patch:
+      tags:
+        - inventory
+      summary: Обновить остаток ингредиента
+      description: Обновление остатка ингредиента на складе (FR-009)
+      operationId: updateInventory
+      parameters:
+        - name: ingredientId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InventoryUpdateRequest'
+      responses:
+        '200':
+          description: Остаток обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryRecord'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /inventory/low-stock:
+    get:
+      tags:
+        - inventory
+      summary: Получить ингредиенты с низким остатком
+      description: Получение списка ингредиентов с остатком ниже порога (FR-015)
+      operationId: getLowStock
+      parameters:
+        - name: thresholdFactor
+          in: query
+          description: Коэффициент порога
+          schema:
+            type: number
+            format: double
+            default: 1.0
+      responses:
+        '200':
+          description: Список ингредиентов с низким остатком
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LowStockItem'
+
+  # ========== EMPLOYEES ==========
+  /employees:
+    get:
+      tags:
+        - employees
+      summary: Получить список сотрудников
+      description: Получение списка всех сотрудников (FR-017, для управляющего)
+      operationId: getAllEmployees
+      responses:
+        '200':
+          description: Список сотрудников
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Employee'
+
+    post:
+      tags:
+        - employees
+      summary: Создать сотрудника
+      description: Создание нового сотрудника (FR-017, только для управляющего)
+      operationId: createEmployee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeCreateRequest'
+      responses:
+        '201':
+          description: Сотрудник создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /employees/{employeeId}:
+    get:
+      tags:
+        - employees
+      summary: Получить информацию о сотруднике
+      description: Получение информации о сотруднике
+      operationId: getEmployeeById
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Информация о сотруднике
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - employees
+      summary: Обновить информацию о сотруднике
+      description: Обновление информации о сотруднике (FR-017, только для управляющего)
+      operationId: updateEmployee
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeCreateRequest'
+      responses:
+        '200':
+          description: Информация о сотруднике обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - employees
+      summary: Удалить сотрудника
+      description: Удаление сотрудника (FR-017, только для управляющего)
+      operationId: deleteEmployee
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Сотрудник удален
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /employees/{employeeId}/shifts:
+    get:
+      tags:
+        - employees
+      summary: Получить смены сотрудника
+      description: Получение расписания смен сотрудника (FR-011)
+      operationId: getEmployeeShifts
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список смен сотрудника
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmployeeShift'
+
+  # ========== SHIFTS ==========
+  /shifts:
+    get:
+      tags:
+        - shifts
+      summary: Получить список смен
+      description: Получение списка всех смен (FR-011, FR-017)
+      operationId: getAllShifts
+      parameters:
+        - name: date
+          in: query
+          description: Фильтр по дате
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Список смен
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Shift'
+
+    post:
+      tags:
+        - shifts
+      summary: Создать смену
+      description: Создание новой смены (FR-017, только для управляющего)
+      operationId: createShift
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftCreateRequest'
+      responses:
+        '201':
+          description: Смена создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shift'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /shifts/{shiftId}:
+    get:
+      tags:
+        - shifts
+      summary: Получить информацию о смене
+      description: Получение информации о смене
+      operationId: getShiftById
+      parameters:
+        - name: shiftId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Информация о смене
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shift'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - shifts
+      summary: Обновить смену
+      description: Обновление информации о смене (FR-017, только для управляющего)
+      operationId: updateShift
+      parameters:
+        - name: shiftId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftCreateRequest'
+      responses:
+        '200':
+          description: Смена обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shift'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - shifts
+      summary: Удалить смену
+      description: Удаление смены (FR-017, только для управляющего)
+      operationId: deleteShift
+      parameters:
+        - name: shiftId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Смена удалена
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /shifts/{shiftId}/assign:
+    post:
+      tags:
+        - shifts
+      summary: Назначить сотрудника на смену
+      description: Назначение сотрудника на смену (FR-017, только для управляющего)
+      operationId: assignEmployeeToShift
+      parameters:
+        - name: shiftId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - employeeId
+              properties:
+                employeeId:
+                  type: integer
+      responses:
+        '201':
+          description: Сотрудник назначен на смену
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeShift'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ========== KITCHEN ==========
+  /kitchen/queue:
+    get:
+      tags:
+        - kitchen
+      summary: Получить очередь заказов для кухни
+      description: Получение очереди заказов для кухни (FR-013)
+      operationId: getKitchenQueue
+      responses:
+        '200':
+          description: Очередь заказов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/KitchenQueueItem'
+
+  # ========== ANALYTICS ==========
+  /analytics/sales:
+    get:
+      tags:
+        - analytics
+      summary: Получить сводку по продажам
+      description: Получение сводки по продажам за период (FR-014, FR-020, для управляющего)
+      operationId: getSalesSummary
+      parameters:
+        - name: from
+          in: query
+          description: Начало периода
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: Конец периода
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Сводка по продажам
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesSummary'
+
+  /analytics/top-menu-items:
+    get:
+      tags:
+        - analytics
+      summary: Получить топ блюд
+      description: Получение топ блюд по количеству и выручке (FR-012, FR-020, для управляющего)
+      operationId: getTopMenuItems
+      parameters:
+        - name: from
+          in: query
+          description: Начало периода
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: Конец периода
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          description: Количество записей
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Топ блюд
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TopMenuItem'
+
+components:
+  parameters:
+    ClientId:
+      name: clientId
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: ID клиента
+
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: ID заказа
+
+    MenuItemId:
+      name: menuItemId
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: ID блюда
+
+  responses:
+    BadRequest:
+      description: Некорректный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    Client:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        defaultAddress:
+          type: string
+        registeredAt:
+          type: string
+          format: date
+        loyaltyPoints:
+          type: integer
+          minimum: 0
+
+    ClientRegistrationRequest:
+      type: object
+      required:
+        - name
+        - phone
+        - email
+        - password
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        defaultAddress:
+          type: string
+
+    ClientUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        defaultAddress:
+          type: string
+
+    MenuItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: decimal
+        available:
+          type: boolean
+        prepTimeMinutes:
+          type: integer
+          minimum: 0
+
+    MenuItemCreateRequest:
+      type: object
+      required:
+        - name
+        - price
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+        available:
+          type: boolean
+        prepTimeMinutes:
+          type: integer
+          minimum: 0
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+        clientId:
+          type: integer
+        type:
+          $ref: '#/components/schemas/OrderType'
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        totalAmount:
+          type: number
+          format: decimal
+        courierId:
+          type: integer
+          nullable: true
+        deliveredAt:
+          type: string
+          format: date-time
+          nullable: true
+        deliveryAddress:
+          type: string
+          nullable: true
+
+    OrderType:
+      type: string
+      enum:
+        - dine_in
+        - takeout
+        - delivery
+
+    OrderStatus:
+      type: string
+      enum:
+        - pending
+        - confirmed
+        - preparing
+        - ready
+        - delivering
+        - delivered
+        - completed
+        - cancelled
+
+    PlaceOrderRequest:
+      type: object
+      required:
+        - clientId
+        - type
+        - items
+      properties:
+        clientId:
+          type: integer
+        type:
+          $ref: '#/components/schemas/OrderType'
+        deliveryAddress:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemRequest'
+
+    OrderItemRequest:
+      type: object
+      required:
+        - menuItemId
+        - quantity
+      properties:
+        menuItemId:
+          type: integer
+        quantity:
+          type: integer
+          minimum: 1
+        unitPrice:
+          type: number
+          format: decimal
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+        orderId:
+          type: integer
+        method:
+          $ref: '#/components/schemas/PaymentMethod'
+        amount:
+          type: number
+          format: decimal
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+        success:
+          type: boolean
+
+    PaymentMethod:
+      type: string
+      enum:
+        - cash
+        - card
+        - online
+
+    PaymentRequest:
+      type: object
+      required:
+        - orderId
+        - method
+      properties:
+        orderId:
+          type: integer
+        method:
+          $ref: '#/components/schemas/PaymentMethod'
+
+    CashPaymentRequest:
+      type: object
+      required:
+        - orderId
+        - amountReceived
+      properties:
+        orderId:
+          type: integer
+        amountReceived:
+          type: number
+          format: decimal
+          minimum: 0
+
+    ChangeResponse:
+      type: object
+      properties:
+        orderTotal:
+          type: number
+          format: decimal
+        amountReceived:
+          type: number
+          format: decimal
+        change:
+          type: number
+          format: decimal
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+        orderId:
+          type: integer
+        clientId:
+          type: integer
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    ReviewCreateRequest:
+      type: object
+      required:
+        - orderId
+        - clientId
+        - rating
+      properties:
+        orderId:
+          type: integer
+        clientId:
+          type: integer
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+
+    InventoryRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        ingredientId:
+          type: integer
+        quantity:
+          type: number
+          format: decimal
+        lastUpdated:
+          type: string
+          format: date-time
+
+    InventoryUpdateRequest:
+      type: object
+      required:
+        - delta
+      properties:
+        delta:
+          type: number
+          format: double
+
+    LowStockItem:
+      type: object
+      properties:
+        ingredientId:
+          type: integer
+        name:
+          type: string
+        quantity:
+          type: number
+          format: decimal
+        minThreshold:
+          type: number
+          format: decimal
+
+    Employee:
+      type: object
+      properties:
+        id:
+          type: integer
+        fullName:
+          type: string
+        login:
+          type: string
+        roleId:
+          type: integer
+        salary:
+          type: number
+          format: decimal
+        contactPhone:
+          type: string
+        hiredAt:
+          type: string
+          format: date-time
+
+    EmployeeCreateRequest:
+      type: object
+      required:
+        - fullName
+        - login
+        - password
+        - roleId
+      properties:
+        fullName:
+          type: string
+        login:
+          type: string
+        password:
+          type: string
+        roleId:
+          type: integer
+        salary:
+          type: number
+          format: decimal
+        contactPhone:
+          type: string
+
+    Shift:
+      type: object
+      properties:
+        id:
+          type: integer
+        shiftDate:
+          type: string
+          format: date
+        startTime:
+          type: string
+          format: time
+        endTime:
+          type: string
+          format: time
+        note:
+          type: string
+
+    ShiftCreateRequest:
+      type: object
+      required:
+        - shiftDate
+        - startTime
+        - endTime
+      properties:
+        shiftDate:
+          type: string
+          format: date
+        startTime:
+          type: string
+          format: time
+        endTime:
+          type: string
+          format: time
+        note:
+          type: string
+
+    EmployeeShift:
+      type: object
+      properties:
+        id:
+          type: integer
+        employeeId:
+          type: integer
+        shiftId:
+          type: integer
+        status:
+          type: string
+
+    KitchenQueueItem:
+      type: object
+      properties:
+        orderId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemInfo'
+
+    OrderItemInfo:
+      type: object
+      properties:
+        menuItemId:
+          type: integer
+        name:
+          type: string
+        quantity:
+          type: integer
+        note:
+          type: string
+
+    SalesSummary:
+      type: object
+      properties:
+        fromTs:
+          type: string
+          format: date-time
+        toTs:
+          type: string
+          format: date-time
+        ordersCnt:
+          type: integer
+        revenue:
+          type: number
+          format: decimal
+        avgTicket:
+          type: number
+          format: decimal
+
+    TopMenuItem:
+      type: object
+      properties:
+        menuItemId:
+          type: integer
+        name:
+          type: string
+        quantity:
+          type: integer
+        revenue:
+          type: number
+          format: decimal
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+
