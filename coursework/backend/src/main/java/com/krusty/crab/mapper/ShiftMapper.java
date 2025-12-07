@@ -10,11 +10,13 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 public interface ShiftMapper {
     
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "employeeShifts", ignore = true)
     com.krusty.crab.entity.Shift toEntity(ShiftCreateRequest request);
     
     com.krusty.crab.dto.generated.Shift toDto(com.krusty.crab.entity.Shift entity);
     
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "employeeShifts", ignore = true)
     void updateEntityFromRequest(ShiftCreateRequest request, @MappingTarget com.krusty.crab.entity.Shift entity);
     
     @Mapping(target = "employeeId", expression = "java(entity.getEmployee() != null ? entity.getEmployee().getId() : null)")

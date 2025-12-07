@@ -7,6 +7,10 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface ReviewMapper {
     
@@ -20,7 +24,12 @@ public interface ReviewMapper {
     @Mapping(target = "orderId", expression = "java(entity.getOrder() != null ? entity.getOrder().getId() : null)")
     @Mapping(target = "clientId", expression = "java(entity.getClient() != null ? entity.getClient().getId() : null)")
     @Mapping(target = "rating", expression = "java(entity.getRating() != null ? entity.getRating().getValue() : null)")
+    @Mapping(target = "createdAt", expression = "java(mapDateTime(entity.getCreatedAt()))")
     com.krusty.crab.dto.generated.Review toDto(com.krusty.crab.entity.Review entity);
+    
+    default OffsetDateTime mapDateTime(LocalDateTime value) {
+        return value != null ? value.atOffset(ZoneOffset.UTC) : null;
+    }
     
     default com.krusty.crab.entity.Review toEntityWithRelations(
             ReviewCreateRequest request, 
