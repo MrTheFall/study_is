@@ -21,5 +21,7 @@ public interface MenuMapper {
     @Mapping(target = "recipe", ignore = true)
     @Mapping(target = "orderItems", ignore = true)
     void updateEntityFromRequest(MenuItemCreateRequest request, @MappingTarget MenuItem entity);
+    
+    java.util.List<com.krusty.crab.dto.generated.MenuItem> toDtoList(java.util.List<MenuItem> entities);
 }
 

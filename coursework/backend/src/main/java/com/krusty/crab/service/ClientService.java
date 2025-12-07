@@ -32,6 +32,10 @@ public class ClientService {
             .orElseThrow(() -> new EntityNotFoundException("Client", "email", email));
     }
     
+    public List<Client> getAllClients() {
+        return clientRepository.findAll();
+    }
+    
     @Transactional
     public Client createClient(Client client) {
         if (clientRepository.existsByEmail(client.getEmail())) {

@@ -1,10 +1,12 @@
 package com.krusty.crab.service;
 
 import com.krusty.crab.entity.Employee;
+import com.krusty.crab.entity.Role;
 import com.krusty.crab.exception.DuplicateEntityException;
 import com.krusty.crab.exception.EntityNotFoundException;
 import com.krusty.crab.repository.EmployeeRepository;
 import com.krusty.crab.repository.RoleRepository;
+import com.krusty.crab.util.PasswordUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,17 +37,27 @@ public class EmployeeService {
     }
     
     @Transactional
-    public Employee createEmployee(Employee employee) {
+    public Employee createEmployee(Employee employee, String password) {
         if (employeeRepository.existsByLogin(employee.getLogin())) {
             throw new DuplicateEntityException("Employee", "login", employee.getLogin());
         }
-        // Проверяем, что роль существует
-        roleRepository.findById(employee.getRole().getId())
+
+        Role role = roleRepository.findById(employee.getRole().getId())
             .orElseThrow(() -> new EntityNotFoundException("Role", employee.getRole().getId()));
+        employee.setRole(role);
+        
+        if (employee.getPasswordHash() == null && password != null && !password.isEmpty()) {
+            employee.setPasswordHash(PasswordUtil.encode(password));
+        }
         
         Employee saved = employeeRepository.save(employee);
         log.info("Employee created with ID: {}", saved.getId());
         return saved;
+    }
+    
+    @Transactional
+    public Employee createEmployee(Employee employee) {
+        return createEmployee(employee, null);
     }
     
     @Transactional

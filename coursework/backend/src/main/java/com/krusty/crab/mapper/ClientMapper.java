@@ -29,5 +29,7 @@ public interface ClientMapper {
     @Mapping(target = "orders", ignore = true)
     @Mapping(target = "reviews", ignore = true)
     void updateEntityFromRequest(ClientUpdateRequest request, @MappingTarget Client entity);
+    
+    java.util.List<com.krusty.crab.dto.generated.Client> toDtoList(java.util.List<Client> entities);
 }
 

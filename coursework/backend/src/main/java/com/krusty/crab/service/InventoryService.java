@@ -1,6 +1,7 @@
 package com.krusty.crab.service;
 
 import com.krusty.crab.dto.generated.LowStockItem;
+import com.krusty.crab.entity.InventoryRecord;
 import com.krusty.crab.exception.EntityNotFoundException;
 import com.krusty.crab.exception.InventoryException;
 import com.krusty.crab.repository.IngredientRepository;
@@ -53,6 +54,21 @@ public class InventoryService {
         } catch (Exception e) {
             throw new InventoryException("Failed to restock ingredient: " + e.getMessage(), e);
         }
+    }
+    
+    public List<InventoryRecord> getAllInventoryRecords() {
+        return inventoryRepository.findAll();
+    }
+    
+    public InventoryRecord getInventoryRecordByIngredientId(Integer ingredientId) {
+        return inventoryRepository.findByIngredientId(ingredientId)
+            .orElseThrow(() -> new EntityNotFoundException("InventoryRecord", "ingredientId", ingredientId));
+    }
+    
+    @Transactional
+    public InventoryRecord updateInventory(Integer ingredientId, Double delta) {
+        restockIngredient(ingredientId, delta);
+        return getInventoryRecordByIngredientId(ingredientId);
     }
 }
 

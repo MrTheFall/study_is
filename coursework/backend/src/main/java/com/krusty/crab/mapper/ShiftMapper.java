@@ -20,5 +20,8 @@ public interface ShiftMapper {
     @Mapping(target = "employeeId", expression = "java(entity.getEmployee() != null ? entity.getEmployee().getId() : null)")
     @Mapping(target = "shiftId", expression = "java(entity.getShift() != null ? entity.getShift().getId() : null)")
     com.krusty.crab.dto.generated.EmployeeShift toDto(com.krusty.crab.entity.EmployeeShift entity);
+    
+    java.util.List<com.krusty.crab.dto.generated.Shift> toDtoList(java.util.List<com.krusty.crab.entity.Shift> entities);
+    java.util.List<com.krusty.crab.dto.generated.EmployeeShift> toEmployeeShiftDtoList(java.util.List<com.krusty.crab.entity.EmployeeShift> entities);
 }
 

@@ -12,7 +12,7 @@ public interface PaymentMapper {
     
     @Mapping(target = "method", expression = "java(entity.getMethod() != null ? entity.getMethod().getValue() : null)")
     @Mapping(target = "orderId", expression = "java(entity.getOrder() != null ? entity.getOrder().getId() : null)")
-    Payment toDto(com.krusty.crab.entity.Payment entity);
+    com.krusty.crab.dto.generated.Payment toDto(com.krusty.crab.entity.Payment entity);
     
     default com.krusty.crab.dto.generated.ChangeResponse toChangeResponse(BigDecimal orderTotal, BigDecimal amountReceived) {
         BigDecimal change = amountReceived.subtract(orderTotal);

@@ -21,5 +21,17 @@ public interface ReviewMapper {
     @Mapping(target = "clientId", expression = "java(entity.getClient() != null ? entity.getClient().getId() : null)")
     @Mapping(target = "rating", expression = "java(entity.getRating() != null ? entity.getRating().getValue() : null)")
     com.krusty.crab.dto.generated.Review toDto(com.krusty.crab.entity.Review entity);
+    
+    default com.krusty.crab.entity.Review toEntityWithRelations(
+            ReviewCreateRequest request, 
+            com.krusty.crab.entity.Order order, 
+            com.krusty.crab.entity.Client client) {
+        com.krusty.crab.entity.Review review = toEntity(request);
+        review.setOrder(order);
+        review.setClient(client);
+        return review;
+    }
+    
+    java.util.List<com.krusty.crab.dto.generated.Review> toDtoList(java.util.List<com.krusty.crab.entity.Review> entities);
 }
 

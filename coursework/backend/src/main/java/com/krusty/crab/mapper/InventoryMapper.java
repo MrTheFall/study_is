@@ -9,7 +9,7 @@ public interface InventoryMapper {
     
     @Mapping(target = "ingredientId", expression = "java(entity.getIngredient() != null ? entity.getIngredient().getId() : null)")
     com.krusty.crab.dto.generated.InventoryRecord toDto(com.krusty.crab.entity.InventoryRecord entity);
-    
 
+    java.util.List<com.krusty.crab.dto.generated.InventoryRecord> toDtoList(java.util.List<com.krusty.crab.entity.InventoryRecord> entities);
 }
 

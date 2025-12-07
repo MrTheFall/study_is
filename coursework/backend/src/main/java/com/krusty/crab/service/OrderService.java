@@ -132,4 +132,22 @@ public class OrderService {
         return orderRepository.findById(orderId)
             .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
     }
+    
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
+    }
+    
+    public List<Order> getOrdersByStatus(String status) {
+        return orderRepository.findByStatus(status);
+    }
+    
+    public List<Order> getOrdersByClient(Integer clientId) {
+        return orderRepository.findByClientId(clientId);
+    }
+    
+    public List<Order> getOrdersByStatusAndClient(String status, Integer clientId) {
+        return orderRepository.findByClientId(clientId).stream()
+            .filter(order -> order.getStatus() != null && order.getStatus().getValue().equals(status))
+            .collect(java.util.stream.Collectors.toList());
+    }
 }
