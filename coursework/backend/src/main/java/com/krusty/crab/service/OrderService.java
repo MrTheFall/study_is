@@ -3,8 +3,9 @@ package com.krusty.crab.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.krusty.crab.dto.KitchenQueueItem;
-import com.krusty.crab.dto.PlaceOrderRequest;
+import com.krusty.crab.dto.generated.KitchenQueueItem;
+import com.krusty.crab.dto.generated.OrderItemInfo;
+import com.krusty.crab.dto.generated.PlaceOrderRequest;
 import com.krusty.crab.entity.Order;
 import com.krusty.crab.entity.enums.OrderStatus;
 import com.krusty.crab.exception.EntityNotFoundException;
@@ -35,7 +36,7 @@ public class OrderService {
     public Integer placeOrder(PlaceOrderRequest request) {
         try {
             List<Map<String, Object>> itemsJson = new ArrayList<>();
-            for (PlaceOrderRequest.OrderItemRequest item : request.getItems()) {
+            for (com.krusty.crab.dto.generated.OrderItemRequest item : request.getItems()) {
                 Map<String, Object> itemMap = new java.util.HashMap<>();
                 itemMap.put("menu_item_id", item.getMenuItemId());
                 itemMap.put("quantity", item.getQuantity());
@@ -49,7 +50,7 @@ public class OrderService {
             
             Integer orderId = orderRepository.callPlaceOrder(
                 request.getClientId(),
-                request.getType().getValue(),
+                request.getType() != null ? request.getType().getValue() : null,
                 request.getDeliveryAddress(),
                 itemsJsonb
             );
@@ -82,14 +83,13 @@ public class OrderService {
                 String status = (String) row[2];
                 String itemsJson = (String) row[3];
                 
-                List<KitchenQueueItem.OrderItemInfo> items = parseItemsJson(itemsJson);
+                List<OrderItemInfo> items = parseItemsJson(itemsJson);
                 
-                KitchenQueueItem item = KitchenQueueItem.builder()
-                    .orderId(orderId)
-                    .createdAt(createdAt != null ? createdAt.toLocalDateTime() : null)
-                    .status(status)
-                    .items(items)
-                    .build();
+                KitchenQueueItem item = new KitchenQueueItem();
+                item.setOrderId(orderId);
+                item.setCreatedAt(createdAt != null ? createdAt.toLocalDateTime().atOffset(java.time.ZoneOffset.UTC) : null);
+                item.setStatus(status);
+                item.setItems(items);
                 
                 queue.add(item);
             } catch (Exception e) {
@@ -100,7 +100,7 @@ public class OrderService {
         return queue;
     }
     
-    private List<KitchenQueueItem.OrderItemInfo> parseItemsJson(String itemsJson) {
+    private List<OrderItemInfo> parseItemsJson(String itemsJson) {
         try {
             if (itemsJson == null || itemsJson.trim().isEmpty() || itemsJson.equals("null")) {
                 return new ArrayList<>();
@@ -111,14 +111,13 @@ public class OrderService {
                 new TypeReference<List<Map<String, Object>>>() {}
             );
             
-            List<KitchenQueueItem.OrderItemInfo> items = new ArrayList<>();
+            List<OrderItemInfo> items = new ArrayList<>();
             for (Map<String, Object> itemMap : itemsList) {
-                KitchenQueueItem.OrderItemInfo itemInfo = KitchenQueueItem.OrderItemInfo.builder()
-                    .menuItemId(((Number) itemMap.get("menu_item_id")).intValue())
-                    .name((String) itemMap.get("name"))
-                    .quantity(((Number) itemMap.get("quantity")).intValue())
-                    .note((String) itemMap.get("note"))
-                    .build();
+                OrderItemInfo itemInfo = new OrderItemInfo();
+                itemInfo.setMenuItemId(((Number) itemMap.get("menu_item_id")).intValue());
+                itemInfo.setName((String) itemMap.get("name"));
+                itemInfo.setQuantity(((Number) itemMap.get("quantity")).intValue());
+                itemInfo.setNote((String) itemMap.get("note"));
                 items.add(itemInfo);
             }
             

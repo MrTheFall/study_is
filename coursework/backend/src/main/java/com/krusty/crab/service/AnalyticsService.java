@@ -1,7 +1,7 @@
 package com.krusty.crab.service;
 
-import com.krusty.crab.dto.SalesSummary;
-import com.krusty.crab.dto.TopMenuItem;
+import com.krusty.crab.dto.generated.SalesSummary;
+import com.krusty.crab.dto.generated.TopMenuItem;
 import com.krusty.crab.repository.AnalyticsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,23 +24,23 @@ public class AnalyticsService {
         List<Object[]> results = analyticsRepository.callSalesSummary(from, to);
         
         if (results.isEmpty()) {
-            return SalesSummary.builder()
-                .fromTs(from)
-                .toTs(to)
-                .ordersCnt(0)
-                .revenue(BigDecimal.ZERO)
-                .avgTicket(BigDecimal.ZERO)
-                .build();
+            SalesSummary summary = new SalesSummary();
+            summary.setFromTs(from != null ? from.atOffset(ZoneOffset.UTC) : null);
+            summary.setToTs(to != null ? to.atOffset(ZoneOffset.UTC) : null);
+            summary.setOrdersCnt(0);
+            summary.setRevenue(BigDecimal.ZERO);
+            summary.setAvgTicket(BigDecimal.ZERO);
+            return summary;
         }
         
         Object[] row = results.get(0);
-        return SalesSummary.builder()
-            .fromTs((LocalDateTime) row[0])
-            .toTs((LocalDateTime) row[1])
-            .ordersCnt(((Number) row[2]).intValue())
-            .revenue((BigDecimal) row[3])
-            .avgTicket((BigDecimal) row[4])
-            .build();
+        SalesSummary summary = new SalesSummary();
+        summary.setFromTs(((LocalDateTime) row[0]).atOffset(ZoneOffset.UTC));
+        summary.setToTs(((LocalDateTime) row[1]).atOffset(ZoneOffset.UTC));
+        summary.setOrdersCnt(((Number) row[2]).intValue());
+        summary.setRevenue((BigDecimal) row[3]);
+        summary.setAvgTicket((BigDecimal) row[4]);
+        return summary;
     }
     
     public List<TopMenuItem> getTopMenuItems(LocalDateTime from, LocalDateTime to, Integer limit) {
@@ -47,12 +48,11 @@ public class AnalyticsService {
         List<TopMenuItem> items = new ArrayList<>();
         
         for (Object[] row : results) {
-            TopMenuItem item = TopMenuItem.builder()
-                .menuItemId(((Number) row[0]).intValue())
-                .name((String) row[1])
-                .quantity(((Number) row[2]).longValue())
-                .revenue((BigDecimal) row[3])
-                .build();
+            TopMenuItem item = new TopMenuItem();
+            item.setMenuItemId(((Number) row[0]).intValue());
+            item.setName((String) row[1]);
+            item.setQuantity(((Number) row[2]).intValue());
+            item.setRevenue((BigDecimal) row[3]);
             items.add(item);
         }
         
