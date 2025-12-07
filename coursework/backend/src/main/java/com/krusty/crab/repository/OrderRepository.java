@@ -17,7 +17,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     
     List<Order> findByStatus(String status);
     
-    @Query(value = "SELECT place_order(:clientId, :type, :deliveryAddress, :items::jsonb)", nativeQuery = true)
+    @Query(value = "SELECT place_order(:clientId, :type, :deliveryAddress, CAST(:items AS jsonb))", nativeQuery = true)
     Integer callPlaceOrder(
         @Param("clientId") Integer clientId,
         @Param("type") String type,

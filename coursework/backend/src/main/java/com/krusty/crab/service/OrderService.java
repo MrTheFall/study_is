@@ -13,6 +13,7 @@ import com.krusty.crab.exception.OrderException;
 import com.krusty.crab.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,8 +69,33 @@ public class OrderService {
     
     @Transactional
     public void updateOrderStatus(Integer orderId, OrderStatus newStatus) {
-        orderRepository.callUpdateOrderStatus(orderId, newStatus.getValue());
-        log.info("Order {} status updated to {}", orderId, newStatus);
+        try {
+            orderRepository.callUpdateOrderStatus(orderId, newStatus.getValue());
+            log.info("Order {} status updated to {}", orderId, newStatus);
+        } catch (org.springframework.dao.DataAccessException e) {
+            String errorMessage = e.getMessage();
+            if (errorMessage != null) {
+                if (errorMessage.contains("transition") && errorMessage.contains("is not allowed")) {
+                    String message = "Status transition is not allowed";
+                    if (errorMessage.contains("->")) {
+                        message = "Cannot change order status: " + errorMessage.substring(
+                            errorMessage.indexOf("transition") + "transition ".length(),
+                            errorMessage.indexOf(" is not allowed")
+                        ).trim();
+                    }
+                    throw new OrderException(message);
+                } else if (errorMessage.contains("not found")) {
+                    throw new EntityNotFoundException("Order", orderId);
+                } else if (errorMessage.contains("only for delivery orders")) {
+                    throw new OrderException("Statuses 'delivering' and 'delivered' can only be used for delivery orders");
+                }
+            }
+            log.error("Error updating order status", e);
+            throw new OrderException("Failed to update order status: " + (errorMessage != null ? errorMessage : e.getMessage()), e);
+        } catch (Exception e) {
+            log.error("Error updating order status", e);
+            throw new OrderException("Failed to update order status: " + e.getMessage(), e);
+        }
     }
     
     public List<KitchenQueueItem> getKitchenQueue() {

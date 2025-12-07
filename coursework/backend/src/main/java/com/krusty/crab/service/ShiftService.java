@@ -44,8 +44,13 @@ public class ShiftService {
                 throw new ShiftException("Start time must be before end time");
             }
         }
+        Shift newShift = new Shift();
+        newShift.setShiftDate(shift.getShiftDate());
+        newShift.setStartTime(shift.getStartTime());
+        newShift.setEndTime(shift.getEndTime());
+        newShift.setNote(shift.getNote());
         try {
-            Shift saved = shiftRepository.save(shift);
+            Shift saved = shiftRepository.save(newShift);
             log.info("Shift created with ID: {}", saved.getId());
             return saved;
         } catch (Exception e) {
@@ -109,11 +114,10 @@ public class ShiftService {
         }
         
         try {
-            EmployeeShift employeeShift = EmployeeShift.builder()
-                .employee(employeeRepository.getReferenceById(employeeId))
-                .shift(shift)
-                .status("assigned")
-                .build();
+            EmployeeShift employeeShift = new EmployeeShift();
+            employeeShift.setEmployee(employeeRepository.getReferenceById(employeeId));
+            employeeShift.setShift(shift);
+            employeeShift.setStatus("assigned");
             
             EmployeeShift saved = employeeShiftRepository.save(employeeShift);
             log.info("Employee {} assigned to shift {}", employeeId, shiftId);

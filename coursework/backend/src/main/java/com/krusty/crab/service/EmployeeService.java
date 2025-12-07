@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -44,13 +45,19 @@ public class EmployeeService {
 
         Role role = roleRepository.findById(employee.getRole().getId())
             .orElseThrow(() -> new EntityNotFoundException("Role", employee.getRole().getId()));
-        employee.setRole(role);
         
-        if (employee.getPasswordHash() == null && password != null && !password.isEmpty()) {
-            employee.setPasswordHash(PasswordUtil.encode(password));
-        }
+        Employee newEmployee = new Employee();
+        newEmployee.setFullName(employee.getFullName());
+        newEmployee.setLogin(employee.getLogin());
+        newEmployee.setRole(role);
+        newEmployee.setSalary(employee.getSalary() != null ? employee.getSalary() : java.math.BigDecimal.ZERO);
+        newEmployee.setContactPhone(employee.getContactPhone());
+        newEmployee.setHiredAt(employee.getHiredAt() != null ? employee.getHiredAt() : LocalDateTime.now());
+        newEmployee.setPasswordHash(password != null && !password.isEmpty() 
+            ? PasswordUtil.encode(password) 
+            : employee.getPasswordHash());
         
-        Employee saved = employeeRepository.save(employee);
+        Employee saved = employeeRepository.save(newEmployee);
         log.info("Employee created with ID: {}", saved.getId());
         return saved;
     }

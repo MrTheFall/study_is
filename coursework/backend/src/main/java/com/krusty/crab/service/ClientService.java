@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -44,7 +45,15 @@ public class ClientService {
         if (clientRepository.existsByPhone(client.getPhone())) {
             throw new DuplicateEntityException("Client", "phone", client.getPhone());
         }
-        Client saved = clientRepository.save(client);
+        Client newClient = new Client();
+        newClient.setName(client.getName());
+        newClient.setPhone(client.getPhone());
+        newClient.setEmail(client.getEmail());
+        newClient.setPasswordHash(client.getPasswordHash());
+        newClient.setDefaultAddress(client.getDefaultAddress());
+        newClient.setRegisteredAt(client.getRegisteredAt() != null ? client.getRegisteredAt() : LocalDate.now());
+        newClient.setLoyaltyPoints(client.getLoyaltyPoints() != null ? client.getLoyaltyPoints() : 0);
+        Client saved = clientRepository.save(newClient);
         log.info("Client created with ID: {}", saved.getId());
         return saved;
     }

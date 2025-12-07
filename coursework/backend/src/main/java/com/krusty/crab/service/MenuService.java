@@ -40,8 +40,14 @@ public class MenuService {
         if (menuItem.getPrice() == null || menuItem.getPrice().signum() < 0) {
             throw new MenuException("Price must be non-negative");
         }
+        MenuItem newItem = new MenuItem();
+        newItem.setName(menuItem.getName());
+        newItem.setDescription(menuItem.getDescription());
+        newItem.setPrice(menuItem.getPrice());
+        newItem.setAvailable(menuItem.getAvailable() != null ? menuItem.getAvailable() : true);
+        newItem.setPrepTimeMinutes(menuItem.getPrepTimeMinutes() != null ? menuItem.getPrepTimeMinutes() : 0);
         try {
-            MenuItem saved = menuItemRepository.save(menuItem);
+            MenuItem saved = menuItemRepository.save(newItem);
             log.info("MenuItem created with ID: {}", saved.getId());
             return saved;
         } catch (Exception e) {

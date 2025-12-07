@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -47,7 +48,14 @@ public class ReviewService {
             throw new ReviewException("Review already exists for this order and client");
         }
         
-        Review saved = reviewRepository.save(review);
+        Review newReview = new Review();
+        newReview.setOrder(review.getOrder());
+        newReview.setClient(review.getClient());
+        newReview.setRating(review.getRating());
+        newReview.setComment(review.getComment());
+        newReview.setCreatedAt(LocalDateTime.now());
+        
+        Review saved = reviewRepository.save(newReview);
         log.info("Review created with ID: {} for order: {}", saved.getId(), review.getOrder().getId());
         return saved;
     }
