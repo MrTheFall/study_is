@@ -13,6 +13,8 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     
     List<Order> findByClientId(Integer clientId);
     
+    List<Order> findByClientIdOrderByCreatedAtDesc(Integer clientId);
+    
     List<Order> findByStatus(String status);
     
     @Query(value = "SELECT place_order(:clientId, :type, :deliveryAddress, :items::jsonb)", nativeQuery = true)

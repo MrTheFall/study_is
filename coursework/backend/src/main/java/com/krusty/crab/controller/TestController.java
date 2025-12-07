@@ -1,9 +1,9 @@
 package com.krusty.crab.controller;
 
-import com.krusty.crab.dto.KitchenQueueItem;
-import com.krusty.crab.dto.LowStockItem;
-import com.krusty.crab.dto.SalesSummary;
-import com.krusty.crab.dto.TopMenuItem;
+import com.krusty.crab.dto.generated.KitchenQueueItem;
+import com.krusty.crab.dto.generated.LowStockItem;
+import com.krusty.crab.dto.generated.SalesSummary;
+import com.krusty.crab.dto.generated.TopMenuItem;
 import com.krusty.crab.entity.Order;
 import com.krusty.crab.service.AnalyticsService;
 import com.krusty.crab.service.InventoryService;
