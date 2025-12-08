@@ -5,7 +5,9 @@ plugins {
 
 dependencies {
     api(project(":domain"))
-    api("org.springframework.boot:spring-boot-starter-data-jpa")
+    api("org.springframework.boot:spring-boot-starter-data-jpa") {
+        exclude(group = "com.zaxxer", module = "HikariCP")
+    }
     api("org.springframework.boot:spring-boot-starter-validation")
     api("org.springframework.boot:spring-boot-starter-web")
 

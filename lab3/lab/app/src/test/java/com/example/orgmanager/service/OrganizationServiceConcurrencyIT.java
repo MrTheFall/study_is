@@ -56,7 +56,7 @@ class OrganizationServiceConcurrencyIT {
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
-        registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.PostgreSQL95Dialect");
+        registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.PostgreSQLDialect");
     }
 
     @Autowired
@@ -78,6 +78,7 @@ class OrganizationServiceConcurrencyIT {
     void setUp() {
         orgA = createOrganization("Atlas", 10, 10f, "Address 1");
         orgB = createOrganization("Zephyr", 20, 20f, "Address 2");
+        organizationRepository.flush();
     }
 
     @AfterAll

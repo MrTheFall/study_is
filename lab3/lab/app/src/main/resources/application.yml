@@ -8,9 +8,19 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://pg:5432/studs}
     username: ${SPRING_DATASOURCE_USERNAME:student}
     password: ${SPRING_DATASOURCE_PASSWORD:student}
-    hikari:
-      connection-timeout: 2000
-      validation-timeout: 2000
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initial-size: 2
+      min-idle: 2
+      max-active: 16
+      max-wait: 2000
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
+      validation-query: SELECT 1
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+      keep-alive: true
   jpa:
     hibernate:
       ddl-auto: update

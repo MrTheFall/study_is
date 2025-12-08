@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     implementation(project(":web"))
+    implementation("com.alibaba:druid-spring-boot-3-starter:1.2.23")
 
     runtimeOnly("org.postgresql:postgresql")
 
