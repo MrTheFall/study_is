@@ -41,6 +41,7 @@
           <tr class="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
             <th class="px-4 py-3">ID</th>
             <th class="px-4 py-3">Статус</th>
+            <th class="px-4 py-3">Файл</th>
             <th class="px-4 py-3">Добавлено</th>
             <th class="px-4 py-3">Создано</th>
           </tr>
@@ -49,6 +50,13 @@
           <tr th:each="job : ${history}" class="hover:bg-slate-50">
             <td class="px-4 py-3 font-mono text-xs" th:text="${job.id}"></td>
             <td class="px-4 py-3" th:text="${statusLabels[job.status]}"></td>
+            <td class="px-4 py-3">
+              <a th:if="${job.fileObjectKey != null}"
+                 th:href="@{|/organizations/import/${job.id}/file|}"
+                 class="text-indigo-600 hover:text-indigo-800 hover:underline"
+                 th:text="${job.fileName != null ? job.fileName : 'Скачать'}"></a>
+              <span th:if="${job.fileObjectKey == null}" class="text-slate-400">-</span>
+            </td>
             <td class="px-4 py-3"
                 th:text="${job.status == T(com.example.orgmanager.model.ImportStatus).SUCCESS ? job.importedCount : '-'}"></td>
             <td class="px-4 py-3 whitespace-nowrap"

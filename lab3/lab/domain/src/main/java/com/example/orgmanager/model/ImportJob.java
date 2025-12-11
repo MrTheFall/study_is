@@ -21,6 +21,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 public class ImportJob {
     private static final int STATUS_LENGTH = 32;
     private static final int ERROR_MESSAGE_LENGTH = 1000;
+    private static final int STORAGE_FIELD_LENGTH = 255;
+    private static final int OBJECT_KEY_LENGTH = 512;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,6 +37,18 @@ public class ImportJob {
 
     @Column(name = "error_message", length = ERROR_MESSAGE_LENGTH)
     private String errorMessage;
+
+    @Column(name = "file_bucket", length = STORAGE_FIELD_LENGTH)
+    private String fileBucket;
+
+    @Column(name = "file_object_key", length = OBJECT_KEY_LENGTH)
+    private String fileObjectKey;
+
+    @Column(name = "file_name", length = STORAGE_FIELD_LENGTH)
+    private String fileName;
+
+    @Column(name = "file_size")
+    private Long fileSize;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
