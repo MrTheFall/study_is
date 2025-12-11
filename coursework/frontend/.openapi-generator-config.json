@@ -1,0 +1,12 @@
+{
+  "generatorName": "typescript-axios",
+  "inputSpec": "../backend/src/main/resources/openapi.yml",
+  "outputDir": "src/api/generated",
+  "additionalProperties": {
+    "supportsES6": true,
+    "withInterfaces": true,
+    "typescriptThreePlus": true,
+    "enumPropertyNaming": "original"
+  }
+}
+
