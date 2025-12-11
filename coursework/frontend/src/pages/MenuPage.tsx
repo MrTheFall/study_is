@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { menuApi, ordersApi } from '@/api/client';
+import { menuApi, ordersApi, authApi } from '@/api/client';
 import { MenuItem, OrderType } from '@/api/generated/api';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/Button';
@@ -82,9 +82,23 @@ export function MenuPage() {
 
     setIsPlacingOrder(true);
     try {
-      const user = useAuthStore.getState().user;
-      if (!user?.userId) {
-        throw new Error('Пользователь не найден');
+      let user = useAuthStore.getState().user;
+      
+      if (!user) {
+        throw new Error('Пользователь не найден. Пожалуйста, войдите заново.');
+      }
+
+      if (!user.userId) {
+        try {
+          const userResponse = await authApi.getCurrentUser();
+          useAuthStore.getState().setAuth(useAuthStore.getState().token || '', userResponse.data);
+          user = userResponse.data;
+          if (!user.userId) {
+            throw new Error('ID пользователя не найден. Пожалуйста, войдите заново.');
+          }
+        } catch (err: any) {
+          throw new Error('Не удалось загрузить информацию о пользователе. Пожалуйста, войдите заново.');
+        }
       }
 
       const items = Array.from(cart.entries()).map(([menuItemId, quantity]) => ({
@@ -92,17 +106,26 @@ export function MenuPage() {
         quantity,
       }));
 
-      await ordersApi.placeOrder({
+      const requestData: any = {
         clientId: user.userId,
         type: orderType,
         items,
-        deliveryAddress: orderType === OrderType.Delivery ? deliveryAddress : undefined,
-      });
+      };
+
+      if (orderType === OrderType.Delivery && deliveryAddress) {
+        requestData.deliveryAddress = deliveryAddress;
+      }
+
+      console.log('Placing order with data:', requestData);
+
+      await ordersApi.placeOrder(requestData);
 
       setCart(new Map());
       navigate(`/orders`);
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Ошибка создания заказа');
+      console.error('Order placement error:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Ошибка создания заказа';
+      alert(errorMessage);
     } finally {
       setIsPlacingOrder(false);
     }
