@@ -42,14 +42,15 @@ export function LoginPage() {
       const response = await authApi.loginClient({ email: data.email, password: data.password });
       const token = response.data.token!;
       
-      // Получаем информацию о пользователе
+      localStorage.setItem('token', token);
+      
       const userResponse = await authApi.getCurrentUser();
       setAuth(token, userResponse.data);
       
-      // Используем window.location для надежного редиректа
-      window.location.href = '/';
+      navigate('/', { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Ошибка входа');
+      localStorage.removeItem('token');
     }
   };
 
@@ -59,14 +60,14 @@ export function LoginPage() {
       const response = await authApi.loginEmployee({ login: data.login, password: data.password });
       const token = response.data.token!;
       
-      // Получаем информацию о пользователе
+      localStorage.setItem('token', token);
       const userResponse = await authApi.getCurrentUser();
       setAuth(token, userResponse.data);
       
-      // Используем window.location для надежного редиректа
-      window.location.href = '/';
+      navigate('/', { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Ошибка входа');
+      localStorage.removeItem('token');
     }
   };
 

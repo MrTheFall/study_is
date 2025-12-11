@@ -5,6 +5,7 @@ import { MenuItem, OrderType } from '@/api/generated/api';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { formatCurrency } from '@/lib/utils';
 
 export function MenuPage() {
@@ -16,6 +17,8 @@ export function MenuPage() {
   const [orderType, setOrderType] = useState<OrderType>(OrderType.DELIVERY);
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [showAddressDialog, setShowAddressDialog] = useState(false);
 
   useEffect(() => {
     loadMenu();
@@ -70,14 +73,12 @@ export function MenuPage() {
     
     // Проверяем авторизацию перед оформлением заказа
     if (!isAuthenticated) {
-      if (confirm('Для оформления заказа необходимо войти в систему. Перейти на страницу входа?')) {
-        navigate('/login');
-      }
+      setShowLoginDialog(true);
       return;
     }
     
     if (orderType === OrderType.DELIVERY && !deliveryAddress.trim()) {
-      alert('Укажите адрес доставки');
+      setShowAddressDialog(true);
       return;
     }
 
@@ -214,6 +215,46 @@ export function MenuPage() {
             </div>
           </div>
         )}
+
+        {/* Диалог для входа */}
+        <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Требуется вход</DialogTitle>
+              <DialogDescription>
+                Для оформления заказа необходимо войти в систему.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowLoginDialog(false)}>
+                Отмена
+              </Button>
+              <Button onClick={() => {
+                setShowLoginDialog(false);
+                navigate('/login');
+              }}>
+                Войти
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Диалог для адреса доставки */}
+        <Dialog open={showAddressDialog} onOpenChange={setShowAddressDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Укажите адрес доставки</DialogTitle>
+              <DialogDescription>
+                Для заказа с доставкой необходимо указать адрес.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddressDialog(false)}>
+                Закрыть
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
