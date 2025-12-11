@@ -14,7 +14,7 @@ export function MenuPage() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<Map<number, number>>(new Map());
-  const [orderType, setOrderType] = useState<OrderType>(OrderType.DELIVERY);
+  const [orderType, setOrderType] = useState<OrderType>(OrderType.Delivery);
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
@@ -60,7 +60,7 @@ export function MenuPage() {
     let total = 0;
     cart.forEach((quantity, itemId) => {
       const item = menuItems.find((i) => i.id === itemId);
-      if (item) {
+      if (item && item.price) {
         total += item.price * quantity;
       }
     });
@@ -75,22 +75,28 @@ export function MenuPage() {
       return;
     }
     
-    if (orderType === OrderType.DELIVERY && !deliveryAddress.trim()) {
+    if (orderType === OrderType.Delivery && !deliveryAddress.trim()) {
       setShowAddressDialog(true);
       return;
     }
 
     setIsPlacingOrder(true);
     try {
+      const user = useAuthStore.getState().user;
+      if (!user?.userId) {
+        throw new Error('Пользователь не найден');
+      }
+
       const items = Array.from(cart.entries()).map(([menuItemId, quantity]) => ({
         menuItemId,
         quantity,
       }));
 
-      const response = await ordersApi.placeOrder({
+      await ordersApi.placeOrder({
+        clientId: user.userId,
+        type: orderType,
         items,
-        orderType,
-        deliveryAddress: orderType === OrderType.DELIVERY ? deliveryAddress : undefined,
+        deliveryAddress: orderType === OrderType.Delivery ? deliveryAddress : undefined,
       });
 
       setCart(new Map());
@@ -126,31 +132,31 @@ export function MenuPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex justify-between items-center mb-4">
-                  <span className="text-2xl font-bold">{formatCurrency(item.price)}</span>
+                  <span className="text-2xl font-bold">{formatCurrency(item.price || 0)}</span>
                   <span className="text-sm text-gray-500">
                     {item.available ? 'В наличии' : 'Нет в наличии'}
                   </span>
                 </div>
                 <div className="flex gap-2">
-                  {cart.has(item.id) && (
+                  {item.id && cart.has(item.id) && (
                     <Button
                       variant="outline"
-                      onClick={() => removeFromCart(item.id!)}
+                      onClick={() => item.id && removeFromCart(item.id)}
                     >
                       -
                     </Button>
                   )}
                   <Button
-                    onClick={() => addToCart(item.id!)}
-                    disabled={!item.available}
+                    onClick={() => item.id && addToCart(item.id)}
+                    disabled={!item.available || !item.id}
                     className="flex-1"
                   >
-                    {cart.has(item.id) ? `В корзине: ${cart.get(item.id)}` : 'Добавить'}
+                    {item.id && cart.has(item.id) ? `В корзине: ${cart.get(item.id)}` : 'Добавить'}
                   </Button>
-                  {cart.has(item.id) && (
+                  {item.id && cart.has(item.id) && (
                     <Button
                       variant="outline"
-                      onClick={() => addToCart(item.id!)}
+                      onClick={() => item.id && addToCart(item.id)}
                     >
                       +
                     </Button>
@@ -168,29 +174,32 @@ export function MenuPage() {
                 <label className="flex items-center gap-2">
                   <input
                     type="radio"
-                    checked={orderType === OrderType.DELIVERY}
-                    onChange={() => setOrderType(OrderType.DELIVERY)}
+                    name="orderType"
+                    checked={orderType === OrderType.Delivery}
+                    onChange={() => setOrderType(OrderType.Delivery)}
                   />
                   Доставка
                 </label>
                 <label className="flex items-center gap-2">
                   <input
                     type="radio"
-                    checked={orderType === OrderType.TAKEOUT}
-                    onChange={() => setOrderType(OrderType.TAKEOUT)}
+                    name="orderType"
+                    checked={orderType === OrderType.Takeout}
+                    onChange={() => setOrderType(OrderType.Takeout)}
                   />
                   На вынос
                 </label>
                 <label className="flex items-center gap-2">
                   <input
                     type="radio"
-                    checked={orderType === OrderType.DINE_IN}
-                    onChange={() => setOrderType(OrderType.DINE_IN)}
+                    name="orderType"
+                    checked={orderType === OrderType.DineIn}
+                    onChange={() => setOrderType(OrderType.DineIn)}
                   />
                   В зале
                 </label>
               </div>
-              {orderType === OrderType.DELIVERY && (
+              {orderType === OrderType.Delivery && (
                 <input
                   type="text"
                   placeholder="Адрес доставки"
