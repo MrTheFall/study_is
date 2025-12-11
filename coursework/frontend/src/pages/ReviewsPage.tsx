@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { reviewsApi } from '@/api/client';
 import { Review } from '@/api/generated/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { formatDate } from '@/lib/utils';
+import { useAuthStore } from '@/store/authStore';
 
 export function ReviewsPage() {
+  const navigate = useNavigate();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -31,7 +34,13 @@ export function ReviewsPage() {
 
   const submitReview = async () => {
     try {
+      const user = useAuthStore.getState().user;
+      if (!user?.userId) {
+        alert('Пользователь не найден');
+        return;
+      }
       await reviewsApi.createReview({
+        clientId: user.userId,
         orderId: parseInt(orderId),
         rating: rating,
         comment: comment,
@@ -53,7 +62,12 @@ export function ReviewsPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Отзывы</h1>
+          <div className="flex items-center gap-4">
+            <Button variant="outline" onClick={() => navigate('/')}>
+              ← На главную
+            </Button>
+            <h1 className="text-3xl font-bold">Отзывы</h1>
+          </div>
           <Button onClick={() => setShowForm(!showForm)}>
             {showForm ? 'Отмена' : 'Оставить отзыв'}
           </Button>

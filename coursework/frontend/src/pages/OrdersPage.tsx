@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ordersApi, authApi } from '@/api/client';
 import { Order } from '@/api/generated/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
 
 export function OrdersPage() {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const { isClient } = useAuthStore();
@@ -52,7 +55,12 @@ export function OrdersPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold mb-8">Заказы</h1>
+        <div className="flex items-center gap-4 mb-8">
+          <Button variant="outline" onClick={() => navigate('/')}>
+            ← На главную
+          </Button>
+          <h1 className="text-3xl font-bold">Заказы</h1>
+        </div>
         <div className="space-y-4">
           {orders.length === 0 ? (
             <Card>
