@@ -1,12 +1,11 @@
-import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import { GetCurrentUser200Response, GetCurrentUser200ResponseUserTypeEnum } from '@/api/generated/api';
+import { GetCurrentUser200ResponseUserTypeEnum } from '@/api/generated/api';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 
 export function HomePage() {
-  const { user, isClient, isEmployee, isManager, clearAuth } = useAuthStore();
+  const { user, isClient, isEmployee, isManager, isCashier, isCook, clearAuth } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -28,7 +27,9 @@ export function HomePage() {
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">
-                {user.username} ({user.userType === GetCurrentUser200ResponseUserTypeEnum.Client ? 'Клиент' : 'Сотрудник'})
+                {user.username} {user.userType === GetCurrentUser200ResponseUserTypeEnum.Client 
+                  ? '(Клиент)' 
+                  : `(Сотрудник: ${user.role === 'Manager' ? 'Менеджер' : user.role === 'Cashier' ? 'Кассир' : user.role === 'Cook' ? 'Повар' : user.role || 'Сотрудник'})`}
               </span>
               <Button variant="outline" onClick={handleLogout}>
                 Выйти
@@ -64,24 +65,6 @@ export function HomePage() {
 
         {isEmployee() && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/kitchen')}>
-              <CardHeader>
-                <CardTitle>Кухня</CardTitle>
-                <CardDescription>Очередь заказов для кухни</CardDescription>
-              </CardHeader>
-            </Card>
-            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/orders')}>
-              <CardHeader>
-                <CardTitle>Заказы</CardTitle>
-                <CardDescription>Управление заказами</CardDescription>
-              </CardHeader>
-            </Card>
-            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/inventory')}>
-              <CardHeader>
-                <CardTitle>Инвентарь</CardTitle>
-                <CardDescription>Управление складом</CardDescription>
-              </CardHeader>
-            </Card>
             {isManager() && (
               <>
                 <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/employees')}>
@@ -96,10 +79,60 @@ export function HomePage() {
                     <CardDescription>Отчеты и статистика</CardDescription>
                   </CardHeader>
                 </Card>
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/payments')}>
+                  <CardHeader>
+                    <CardTitle>Платежи</CardTitle>
+                    <CardDescription>Обработка платежей</CardDescription>
+                  </CardHeader>
+                </Card>
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/inventory')}>
+                  <CardHeader>
+                    <CardTitle>Инвентарь</CardTitle>
+                    <CardDescription>Управление складом</CardDescription>
+                  </CardHeader>
+                </Card>
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/orders')}>
+                  <CardHeader>
+                    <CardTitle>Заказы</CardTitle>
+                    <CardDescription>Управление заказами</CardDescription>
+                  </CardHeader>
+                </Card>
                 <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/shifts')}>
                   <CardHeader>
                     <CardTitle>Смены</CardTitle>
                     <CardDescription>Управление рабочими сменами</CardDescription>
+                  </CardHeader>
+                </Card>
+              </>
+            )}
+            {isCashier() && (
+              <>
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/orders')}>
+                  <CardHeader>
+                    <CardTitle>Заказы</CardTitle>
+                    <CardDescription>Просмотр и управление заказами</CardDescription>
+                  </CardHeader>
+                </Card>
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/payments')}>
+                  <CardHeader>
+                    <CardTitle>Платежи</CardTitle>
+                    <CardDescription>Обработка платежей</CardDescription>
+                  </CardHeader>
+                </Card>
+              </>
+            )}
+            {isCook() && (
+              <>
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/kitchen')}>
+                  <CardHeader>
+                    <CardTitle>Кухня</CardTitle>
+                    <CardDescription>Очередь заказов для кухни</CardDescription>
+                  </CardHeader>
+                </Card>
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/orders')}>
+                  <CardHeader>
+                    <CardTitle>Заказы</CardTitle>
+                    <CardDescription>Просмотр заказов</CardDescription>
                   </CardHeader>
                 </Card>
               </>

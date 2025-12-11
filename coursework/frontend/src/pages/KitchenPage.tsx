@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
-import { kitchenApi } from '@/api/client';
-import { KitchenQueueItem } from '@/api/generated/api';
+import { useNavigate } from 'react-router-dom';
+import { kitchenApi, ordersApi } from '@/api/client';
+import { KitchenQueueItem, OrderStatus } from '@/api/generated/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { formatDate } from '@/lib/utils';
 
 export function KitchenPage() {
+  const navigate = useNavigate();
   const [queue, setQueue] = useState<KitchenQueueItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadQueue();
-    const interval = setInterval(loadQueue, 5000); // Обновляем каждые 5 секунд
+    const interval = setInterval(loadQueue, 5000); 
     return () => clearInterval(interval);
   }, []);
 
@@ -26,12 +28,13 @@ export function KitchenPage() {
     }
   };
 
-  const updateStatus = async (orderId: number, status: string) => {
+  const updateStatus = async (orderId: number, status: OrderStatus) => {
     try {
-      await kitchenApi.updateOrderStatus(orderId, { status: status as any });
+      await ordersApi.updateOrderStatus(orderId, { status });
       loadQueue();
     } catch (error) {
       console.error('Ошибка обновления статуса:', error);
+      alert('Ошибка обновления статуса заказа');
     }
   };
 
@@ -42,7 +45,12 @@ export function KitchenPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold mb-8">Очередь кухни</h1>
+        <div className="flex items-center gap-4 mb-8">
+          <Button variant="outline" onClick={() => navigate('/')}>
+            ← На главную
+          </Button>
+          <h1 className="text-3xl font-bold">Очередь кухни</h1>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {queue.map((item) => (
             <Card key={item.orderId} className={
@@ -60,19 +68,19 @@ export function KitchenPage() {
                 <div className="space-y-2 mb-4">
                   {item.items?.map((orderItem, idx) => (
                     <div key={idx} className="flex justify-between">
-                      <span>{orderItem.menuItemName}</span>
+                      <span>{orderItem.name || `Позиция #${orderItem.menuItemId}`}</span>
                       <span className="font-semibold">x{orderItem.quantity}</span>
                     </div>
                   ))}
                 </div>
                 <div className="flex gap-2">
                   {item.status === 'CONFIRMED' && (
-                    <Button onClick={() => updateStatus(item.orderId!, 'PREPARING')}>
+                    <Button onClick={() => updateStatus(item.orderId!, OrderStatus.Preparing)}>
                       Начать готовить
                     </Button>
                   )}
                   {item.status === 'PREPARING' && (
-                    <Button onClick={() => updateStatus(item.orderId!, 'READY')}>
+                    <Button onClick={() => updateStatus(item.orderId!, OrderStatus.Ready)}>
                       Готово
                     </Button>
                   )}

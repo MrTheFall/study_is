@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { analyticsApi } from '@/api/client';
 import { SalesSummary, TopMenuItem } from '@/api/generated/api';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { formatCurrency } from '@/lib/utils';
 
 export function AnalyticsPage() {
+  const navigate = useNavigate();
   const [salesSummary, setSalesSummary] = useState<SalesSummary | null>(null);
   const [topItems, setTopItems] = useState<TopMenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +44,12 @@ export function AnalyticsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold mb-8">Аналитика</h1>
+        <div className="flex items-center gap-4 mb-8">
+          <Button variant="outline" onClick={() => navigate('/')}>
+            ← На главную
+          </Button>
+          <h1 className="text-3xl font-bold">Аналитика</h1>
+        </div>
 
         <div className="mb-8 flex gap-4">
           <input
@@ -71,7 +79,7 @@ export function AnalyticsPage() {
                 <CardTitle>Общая выручка</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{formatCurrency(salesSummary.totalRevenue!)}</p>
+                <p className="text-3xl font-bold">{formatCurrency(salesSummary.revenue!)}</p>
               </CardContent>
             </Card>
             <Card>
@@ -79,7 +87,7 @@ export function AnalyticsPage() {
                 <CardTitle>Количество заказов</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{salesSummary.totalOrders}</p>
+                <p className="text-3xl font-bold">{salesSummary.ordersCnt || 0}</p>
               </CardContent>
             </Card>
             <Card>
@@ -88,7 +96,7 @@ export function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold">
-                  {formatCurrency(salesSummary.averageOrderValue!)}
+                  {formatCurrency(salesSummary.avgTicket!)}
                 </p>
               </CardContent>
             </Card>
@@ -101,16 +109,20 @@ export function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {topItems.map((item, idx) => (
-                <div key={idx} className="flex justify-between items-center p-4 border rounded-md">
-                  <div>
-                    <p className="font-semibold">{item.menuItemName}</p>
-                    <p className="text-sm text-gray-500">
-                      Заказов: {item.orderCount} | Выручка: {formatCurrency(item.revenue!)}
-                    </p>
+              {topItems.length === 0 ? (
+                <p className="text-center text-gray-500">Нет данных</p>
+              ) : (
+                topItems.map((item, idx) => (
+                  <div key={idx} className="flex justify-between items-center p-4 border rounded-md">
+                    <div>
+                      <p className="font-semibold">{item.name || `Блюдо #${item.menuItemId}`}</p>
+                      <p className="text-sm text-gray-500">
+                        Количество: {item.quantity || 0} | Выручка: {formatCurrency(item.revenue!)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

@@ -10,6 +10,8 @@ interface AuthState {
   isClient: () => boolean;
   isEmployee: () => boolean;
   isManager: () => boolean;
+  isCashier: () => boolean;
+  isCook: () => boolean;
 }
 
 const getStoredUser = () => {
@@ -45,7 +47,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       },
   isManager: () => {
     const user = get().user;
-    return user?.role === 'MANAGER';
+    return user?.role === 'Manager' || user?.role === 'MANAGER';
+  },
+  isCashier: () => {
+    const user = get().user;
+    return user?.role === 'Cashier' || user?.role === 'CASHIER';
+  },
+  isCook: () => {
+    const user = get().user;
+    return user?.role === 'Cook' || user?.role === 'COOK';
   },
 }));
 

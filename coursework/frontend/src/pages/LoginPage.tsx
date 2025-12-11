@@ -77,15 +77,23 @@ export function LoginPage() {
       
       localStorage.setItem('token', token);
       
-      const tempUser = {
-        userId: undefined,
-        username: data.login,
-        userType: 'EMPLOYEE' as any,
-        role: null,
-      };
+      try {
+        const userResponse = await authApi.getCurrentUser();
+        setAuth(token, userResponse.data);
+      } catch (err) {
+        console.error('Failed to load user info:', err);
+        const tempUser = {
+          userId: undefined,
+          username: data.login,
+          userType: 'EMPLOYEE' as any,
+          role: null,
+        };
+        setAuth(token, tempUser);
+      }
       
-      setAuth(token, tempUser);
-      navigate('/', { replace: true });
+      setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 100);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Ошибка входа');
       localStorage.removeItem('token');

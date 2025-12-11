@@ -13,6 +13,7 @@ import { KitchenPage } from './pages/KitchenPage';
 import { InventoryPage } from './pages/InventoryPage';
 import { EmployeesPage } from './pages/EmployeesPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
+import { PaymentsPage } from './pages/PaymentsPage';
 import { ShiftsPage } from './pages/ShiftsPage';
 import { GetCurrentUser200ResponseUserTypeEnum } from './api/generated/api';
 
@@ -38,9 +39,8 @@ function App() {
         if (storedUser) {
           try {
             const user = JSON.parse(storedUser);
-            if (user.username) {
+            if (user.username && user.role !== null && user.role !== undefined) {
               setAuth(storedToken, user);
-              loadUserInfo(storedToken).catch(() => {});
             } else {
               loadUserInfo(storedToken);
             }
@@ -50,6 +50,8 @@ function App() {
         } else {
           loadUserInfo(storedToken);
         }
+      } else if (currentUser && (!currentUser.role || currentUser.role === null)) {
+        loadUserInfo(storedToken);
       }
     }
   }, [setAuth]);
@@ -99,9 +101,7 @@ function App() {
         <Route
           path="/inventory"
           element={
-            <ProtectedRoute
-              allowedRoles={[GetCurrentUser200ResponseUserTypeEnum.Employee]}
-            >
+            <ProtectedRoute requireManager>
               <InventoryPage />
             </ProtectedRoute>
           }
@@ -119,6 +119,16 @@ function App() {
           element={
             <ProtectedRoute requireManager>
               <AnalyticsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payments"
+          element={
+            <ProtectedRoute
+              allowedRoles={[GetCurrentUser200ResponseUserTypeEnum.Employee]}
+            >
+              <PaymentsPage />
             </ProtectedRoute>
           }
         />

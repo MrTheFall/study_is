@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ordersApi, authApi } from '@/api/client';
-import { Order } from '@/api/generated/api';
+import { ordersApi, authApi, paymentsApi } from '@/api/client';
+import { Order, OrderStatus, PaymentMethod } from '@/api/generated/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import { Input } from '@/components/ui/Input';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
 
@@ -11,7 +13,11 @@ export function OrdersPage() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isClient } = useAuthStore();
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
+  const [amountReceived, setAmountReceived] = useState('');
+  const { isClient, isCashier, isManager } = useAuthStore();
 
   useEffect(() => {
     loadOrders();
@@ -48,6 +54,47 @@ export function OrdersPage() {
     }
   };
 
+  const handleProcessPayment = async () => {
+    if (!selectedOrder?.id) return;
+    
+    try {
+      if (paymentMethod === 'cash') {
+        if (!amountReceived) {
+          alert('Введите полученную сумму');
+          return;
+        }
+        const response = await paymentsApi.processCashPayment({
+          orderId: selectedOrder.id,
+          amountReceived: parseFloat(amountReceived),
+        });
+        alert(`Платеж обработан. Сдача: ${formatCurrency(response.data.change!)}`);
+      } else {
+        await paymentsApi.processPayment({
+          orderId: selectedOrder.id,
+          method: paymentMethod,
+        });
+        alert('Платеж обработан успешно');
+      }
+      setShowPaymentDialog(false);
+      setSelectedOrder(null);
+      setAmountReceived('');
+      loadOrders();
+    } catch (error: any) {
+      console.error('Ошибка обработки платежа:', error);
+      alert(error.response?.data?.message || 'Ошибка обработки платежа');
+    }
+  };
+
+  const handleUpdateStatus = async (orderId: number, status: OrderStatus) => {
+    try {
+      await ordersApi.updateOrderStatus(orderId, { status });
+      loadOrders();
+    } catch (error: any) {
+      console.error('Ошибка обновления статуса:', error);
+      alert(error.response?.data?.message || 'Ошибка обновления статуса');
+    }
+  };
+
   if (loading) {
     return <div className="p-8 text-center">Загрузка заказов...</div>;
   }
@@ -69,39 +116,127 @@ export function OrdersPage() {
               </CardContent>
             </Card>
           ) : (
-            orders.map((order) => (
-              <Card key={order.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle>Заказ #{order.id}</CardTitle>
-                      <CardDescription>
-                        {formatDate(order.createdAt!)}
-                      </CardDescription>
+            orders.map((order) => {
+              const statusValue = typeof order.status === 'string' 
+                ? order.status 
+                : (order.status as any)?.value || 'pending';
+              const statusStr = String(statusValue);
+              const canProcessPayment = isCashier() && statusStr !== 'cancelled' && statusStr !== 'delivered';
+              const canUpdateStatus = (isCashier() || isManager()) && statusStr !== 'cancelled' && statusStr !== 'delivered';
+              
+              return (
+                <Card key={order.id}>
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle>Заказ #{order.id}</CardTitle>
+                        <CardDescription>
+                          {formatDate(order.createdAt!)}
+                        </CardDescription>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold">{formatCurrency(order.totalAmount!)}</div>
+                        <span className={`inline-block px-2 py-1 rounded text-sm ${
+                          statusStr === 'delivered' || statusStr === 'completed' ? 'bg-green-100 text-green-800' :
+                          statusStr === 'cancelled' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {statusStr}
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold">{formatCurrency(order.totalAmount!)}</div>
-                      <span className={`inline-block px-2 py-1 rounded text-sm ${
-                        order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {order.status}
-                      </span>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p><strong>Тип:</strong> {order.type || 'Не указан'}</p>
+                      <p><strong>Адрес:</strong> {order.deliveryAddress || 'В ресторане'}</p>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <p><strong>Тип:</strong> {order.type || 'Не указан'}</p>
-                    <p><strong>Адрес:</strong> {order.deliveryAddress || 'В ресторане'}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                    {(canProcessPayment || canUpdateStatus) && (
+                      <div className="mt-4 flex gap-2">
+                        {canProcessPayment && (
+                          <Button onClick={() => {
+                            setSelectedOrder(order);
+                            setShowPaymentDialog(true);
+                          }}>
+                            Обработать платеж
+                          </Button>
+                        )}
+                        {canUpdateStatus && statusStr === 'ready' && (
+                          <Button variant="outline" onClick={() => handleUpdateStatus(order.id!, OrderStatus.Delivered)}>
+                            Отметить как доставлен
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </div>
       </div>
+
+      {showPaymentDialog && selectedOrder && (
+        <Dialog
+          open={showPaymentDialog}
+          onOpenChange={(open) => {
+            if (!open) {
+              setShowPaymentDialog(false);
+              setSelectedOrder(null);
+              setAmountReceived('');
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Обработка платежа</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p><strong>Заказ #{selectedOrder.id}</strong></p>
+              <p>Сумма: {formatCurrency(selectedOrder.totalAmount!)}</p>
+              <div>
+                <label className="block text-sm font-medium mb-1">Способ оплаты</label>
+                <select
+                  className="w-full h-10 rounded-md border border-gray-300 px-3"
+                  value={paymentMethod}
+                  onChange={(e) => {
+                    setPaymentMethod(e.target.value as PaymentMethod);
+                    setAmountReceived('');
+                  }}
+                >
+                  <option value="card">Карта</option>
+                  <option value="cash">Наличные</option>
+                  <option value="online">Онлайн</option>
+                </select>
+              </div>
+              {paymentMethod === 'cash' && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">Полученная сумма</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={amountReceived}
+                    onChange={(e) => setAmountReceived(e.target.value)}
+                    placeholder="Введите сумму"
+                  />
+                </div>
+              )}
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => {
+                  setShowPaymentDialog(false);
+                  setSelectedOrder(null);
+                  setAmountReceived('');
+                }}>
+                  Отмена
+                </Button>
+                <Button onClick={handleProcessPayment}>
+                  Обработать
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
