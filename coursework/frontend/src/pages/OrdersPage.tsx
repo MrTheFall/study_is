@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ordersApi } from '@/api/client';
+import { ordersApi, authApi } from '@/api/client';
 import { Order } from '@/api/generated/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -17,17 +17,29 @@ export function OrdersPage() {
   const loadOrders = async () => {
     try {
       if (isClient()) {
-        const user = useAuthStore.getState().user;
+        let user = useAuthStore.getState().user;
+        if (!user?.userId) {
+          try {
+            const userResponse = await authApi.getCurrentUser();
+            useAuthStore.getState().setAuth(useAuthStore.getState().token || '', userResponse.data);
+            user = userResponse.data;
+          } catch (err) {
+            console.error('Failed to load user info:', err);
+            return;
+          }
+        }
+        
         if (user?.userId) {
-          const response = await ordersApi.getClientOrders(user.userId);
-          setOrders(response.data);
+          const response = await ordersApi.getAllOrders(undefined, user.userId);
+          setOrders(response.data || []);
         }
       } else {
         const response = await ordersApi.getAllOrders();
-        setOrders(response.data);
+        setOrders(response.data || []);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Ошибка загрузки заказов:', error);
+      console.error('Error details:', error.response?.data);
     } finally {
       setLoading(false);
     }
@@ -62,8 +74,8 @@ export function OrdersPage() {
                     <div className="text-right">
                       <div className="text-2xl font-bold">{formatCurrency(order.totalAmount!)}</div>
                       <span className={`inline-block px-2 py-1 rounded text-sm ${
-                        order.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                        order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                        order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                         'bg-yellow-100 text-yellow-800'
                       }`}>
                         {order.status}
@@ -73,20 +85,8 @@ export function OrdersPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <p><strong>Тип:</strong> {order.orderType}</p>
+                    <p><strong>Тип:</strong> {order.type || 'Не указан'}</p>
                     <p><strong>Адрес:</strong> {order.deliveryAddress || 'В ресторане'}</p>
-                    {order.items && order.items.length > 0 && (
-                      <div>
-                        <strong>Блюда:</strong>
-                        <ul className="list-disc list-inside ml-4">
-                          {order.items.map((item, idx) => (
-                            <li key={idx}>
-                              {item.menuItemName} x{item.quantity} - {formatCurrency(item.price! * item.quantity!)}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
                   </div>
                 </CardContent>
               </Card>
