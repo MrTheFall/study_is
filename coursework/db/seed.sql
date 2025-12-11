@@ -10,16 +10,16 @@ on conflict do nothing;
 -- Employees
 insert into employees (id, full_name, login, password_hash, role_id, salary, contact_phone)
 values
-  (1, 'Eugene Krabs',   'krabs',  'hash(krabs)', 1, 100000.00, '+1-000-111-2222'),
-  (2, 'SpongeBob',      'spongeb', 'hash(sb)',   3,  40000.00, '+1-000-333-4444'),
-  (3, 'Squidward Tentacles', 'squid', 'hash(sq)', 2, 35000.00, '+1-000-555-6666')
+  (1, 'Eugene Krabs',   'krabs',  '$2a$12$HqFpO5lLdX5ly7cX3BVSw.uHIcXa/QchVDpBhHE45rspEU6GN1VR2', 1, 100000.00, '+1-000-111-2222'),
+  (2, 'SpongeBob',      'spongeb', '$2a$12$iHPWDpiJLMa7ZLJRA1ftW.kjsZ.8Q7PuU4cgL4sf6/MYmxcIu8b6O',   3,  40000.00, '+1-000-333-4444'),
+  (3, 'Squidward Tentacles', 'squid', '$2a$12$R2V18.LlW4hWbZcBQ4aovuedcm0jEiavnYsYed9t4zkIvtfqYKXoO', 2, 35000.00, '+1-000-555-6666')
 on conflict do nothing;
 
 -- Clients
 insert into clients (id, name, phone, email, password_hash, default_address, loyalty_points)
 values
-  (1, 'Patrick Star', '+1-100-200-3000', 'patrick@example.com', 'hash(patrick)', 'Rock St. 1', 10),
-  (2, 'Sandy Cheeks', '+1-100-200-3001', 'sandy@example.com',   'hash(sandy)',   'Dome Ave. 7', 25)
+  (1, 'Patrick Star', '+1-100-200-3000', 'patrick@example.com', '$2a$12$ujmowcxLII.cASD/ug63PufQbYkyPWsa2c.JMuE/y9Lz86Rm21xVK', 'Rock St. 1', 10),
+  (2, 'Sandy Cheeks', '+1-100-200-3001', 'sandy@example.com',   '$2a$12$HGWkQ3lJnd6J3ethqBJW.u.PyOje1ZarhMpjlhPZBf2gos/E6K0MK',   'Dome Ave. 7', 25)
 on conflict do nothing;
 
 -- Couriers
