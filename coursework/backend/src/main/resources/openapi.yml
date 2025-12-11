@@ -20,6 +20,8 @@ servers:
     description: Local development server
 
 tags:
+  - name: auth
+    description: Аутентификация и авторизация
   - name: clients
     description: Управление клиентами
   - name: menu
@@ -42,13 +44,149 @@ tags:
     description: Аналитика и отчеты
 
 paths:
+  # ========== AUTH ==========
+  /auth/login/client:
+    post:
+      tags:
+        - auth
+      summary: Вход клиента
+      description: Аутентификация клиента по email и паролю
+      operationId: loginClient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT токен доступа
+                  userType:
+                    type: string
+                    enum: [CLIENT]
+        '401':
+          description: Неверные учетные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Клиент не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login/employee:
+    post:
+      tags:
+        - auth
+      summary: Вход сотрудника
+      description: Аутентификация сотрудника по логину и паролю
+      operationId: loginEmployee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - login
+                - password
+              properties:
+                login:
+                  type: string
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT токен доступа
+                  userType:
+                    type: string
+                    enum: [EMPLOYEE]
+        '401':
+          description: Неверные учетные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Сотрудник не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/me:
+    get:
+      tags:
+        - auth
+      summary: Получить информацию о текущем пользователе
+      description: Получение информации о текущем аутентифицированном пользователе
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Информация о пользователе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: integer
+                  username:
+                    type: string
+                  userType:
+                    type: string
+                    enum: [CLIENT, EMPLOYEE]
+                  role:
+                    type: string
+                    nullable: true
+                    description: Роль сотрудника (только для EMPLOYEE)
+        '401':
+          description: Не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ========== CLIENTS ==========
   # ========== CLIENTS ==========
   /clients:
     post:
       tags:
         - clients
       summary: Регистрация нового клиента
-      description: Создание нового клиента в системе (FR-005, FR-006)
+      description: Создание нового клиента в системе (FR-005, FR-006). Публичный эндпоинт, не требует аутентификации.
       operationId: registerClient
       requestBody:
         required: true
@@ -78,6 +216,8 @@ paths:
       summary: Получить список клиентов
       description: Получение списка всех клиентов (только для управляющего)
       operationId: getAllClients
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: Список клиентов
@@ -95,6 +235,8 @@ paths:
       summary: Получить информацию о клиенте
       description: Получение информации о клиенте по ID
       operationId: getClientById
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/ClientId'
       responses:
@@ -113,6 +255,8 @@ paths:
       summary: Обновить данные клиента
       description: Обновление персональных данных клиента (FR-006)
       operationId: updateClient
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/ClientId'
       requestBody:
@@ -140,6 +284,8 @@ paths:
       summary: Получить историю заказов клиента
       description: Получение истории заказов клиента (FR-007)
       operationId: getClientOrders
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/ClientId'
       responses:
@@ -188,6 +334,8 @@ paths:
       summary: Создать новое блюдо
       description: Создание нового блюда в меню (FR-016, только для управляющего)
       operationId: createMenuItem
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -229,6 +377,8 @@ paths:
       summary: Обновить блюдо
       description: Обновление информации о блюде (FR-016, только для управляющего)
       operationId: updateMenuItem
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/MenuItemId'
       requestBody:
@@ -255,6 +405,8 @@ paths:
       summary: Удалить блюдо
       description: Удаление блюда из меню (FR-016, только для управляющего)
       operationId: deleteMenuItem
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/MenuItemId'
       responses:
@@ -271,6 +423,8 @@ paths:
       summary: Создать заказ
       description: Создание нового заказа (FR-001, FR-008)
       operationId: placeOrder
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -297,6 +451,8 @@ paths:
       summary: Получить список заказов
       description: Получение списка заказов (для управляющего)
       operationId: getAllOrders
+      security:
+        - bearerAuth: []
       parameters:
         - name: status
           in: query
@@ -325,6 +481,8 @@ paths:
       summary: Получить информацию о заказе
       description: Получение детальной информации о заказе (FR-003)
       operationId: getOrderById
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/OrderId'
       responses:
@@ -343,6 +501,8 @@ paths:
       summary: Обновить статус заказа
       description: Обновление статуса заказа (FR-008, FR-010, FR-013)
       operationId: updateOrderStatus
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/OrderId'
       requestBody:
@@ -376,6 +536,8 @@ paths:
       summary: Обработать платеж
       description: Обработка платежа за заказ (FR-019)
       operationId: processPayment
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -399,6 +561,8 @@ paths:
       summary: Обработать наличный платеж с расчетом сдачи
       description: Обработка наличного платежа с расчетом и отображением сдачи (FR-019)
       operationId: processCashPayment
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -422,6 +586,8 @@ paths:
       summary: Получить информацию о платеже по заказу
       description: Получение информации о платеже для заказа
       operationId: getPaymentByOrderId
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/OrderId'
       responses:
@@ -442,6 +608,8 @@ paths:
       summary: Создать отзыв
       description: Создание отзыва о заказе (FR-004)
       operationId: createReview
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -464,6 +632,8 @@ paths:
       summary: Получить список отзывов
       description: Получение списка отзывов (FR-018, FR-020, для управляющего)
       operationId: getAllReviews
+      security:
+        - bearerAuth: []
       parameters:
         - name: clientId
           in: query
@@ -492,6 +662,8 @@ paths:
       summary: Получить отзыв по ID
       description: Получение информации об отзыве
       operationId: getReviewById
+      security:
+        - bearerAuth: []
       parameters:
         - name: reviewId
           in: path
@@ -516,6 +688,8 @@ paths:
       summary: Получить информацию о складе
       description: Получение информации о складских остатках (FR-015)
       operationId: getInventory
+      security:
+        - bearerAuth: []
       parameters:
         - name: lowStock
           in: query
@@ -547,6 +721,8 @@ paths:
       summary: Обновить остаток ингредиента
       description: Обновление остатка ингредиента на складе (FR-009)
       operationId: updateInventory
+      security:
+        - bearerAuth: []
       parameters:
         - name: ingredientId
           in: path
@@ -578,6 +754,8 @@ paths:
       summary: Получить ингредиенты с низким остатком
       description: Получение списка ингредиентов с остатком ниже порога (FR-015)
       operationId: getLowStock
+      security:
+        - bearerAuth: []
       parameters:
         - name: thresholdFactor
           in: query
@@ -604,6 +782,8 @@ paths:
       summary: Получить список сотрудников
       description: Получение списка всех сотрудников (FR-017, для управляющего)
       operationId: getAllEmployees
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: Список сотрудников
@@ -620,6 +800,8 @@ paths:
       summary: Создать сотрудника
       description: Создание нового сотрудника (FR-017, только для управляющего)
       operationId: createEmployee
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -643,6 +825,8 @@ paths:
       summary: Получить информацию о сотруднике
       description: Получение информации о сотруднике
       operationId: getEmployeeById
+      security:
+        - bearerAuth: []
       parameters:
         - name: employeeId
           in: path
@@ -665,6 +849,8 @@ paths:
       summary: Обновить информацию о сотруднике
       description: Обновление информации о сотруднике (FR-017, только для управляющего)
       operationId: updateEmployee
+      security:
+        - bearerAuth: []
       parameters:
         - name: employeeId
           in: path
@@ -695,6 +881,8 @@ paths:
       summary: Удалить сотрудника
       description: Удаление сотрудника (FR-017, только для управляющего)
       operationId: deleteEmployee
+      security:
+        - bearerAuth: []
       parameters:
         - name: employeeId
           in: path
@@ -714,6 +902,8 @@ paths:
       summary: Получить смены сотрудника
       description: Получение расписания смен сотрудника (FR-011)
       operationId: getEmployeeShifts
+      security:
+        - bearerAuth: []
       parameters:
         - name: employeeId
           in: path
@@ -738,6 +928,8 @@ paths:
       summary: Получить список смен
       description: Получение списка всех смен (FR-011, FR-017)
       operationId: getAllShifts
+      security:
+        - bearerAuth: []
       parameters:
         - name: date
           in: query
@@ -761,6 +953,8 @@ paths:
       summary: Создать смену
       description: Создание новой смены (FR-017, только для управляющего)
       operationId: createShift
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -784,6 +978,8 @@ paths:
       summary: Получить информацию о смене
       description: Получение информации о смене
       operationId: getShiftById
+      security:
+        - bearerAuth: []
       parameters:
         - name: shiftId
           in: path
@@ -806,6 +1002,8 @@ paths:
       summary: Обновить смену
       description: Обновление информации о смене (FR-017, только для управляющего)
       operationId: updateShift
+      security:
+        - bearerAuth: []
       parameters:
         - name: shiftId
           in: path
@@ -836,6 +1034,8 @@ paths:
       summary: Удалить смену
       description: Удаление смены (FR-017, только для управляющего)
       operationId: deleteShift
+      security:
+        - bearerAuth: []
       parameters:
         - name: shiftId
           in: path
@@ -855,6 +1055,8 @@ paths:
       summary: Назначить сотрудника на смену
       description: Назначение сотрудника на смену (FR-017, только для управляющего)
       operationId: assignEmployeeToShift
+      security:
+        - bearerAuth: []
       parameters:
         - name: shiftId
           in: path
@@ -892,6 +1094,8 @@ paths:
       summary: Получить очередь заказов для кухни
       description: Получение очереди заказов для кухни (FR-013)
       operationId: getKitchenQueue
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: Очередь заказов
@@ -910,6 +1114,8 @@ paths:
       summary: Получить сводку по продажам
       description: Получение сводки по продажам за период (FR-014, FR-020, для управляющего)
       operationId: getSalesSummary
+      security:
+        - bearerAuth: []
       parameters:
         - name: from
           in: query
@@ -938,6 +1144,8 @@ paths:
       summary: Получить топ блюд
       description: Получение топ блюд по количеству и выручке (FR-012, FR-020, для управляющего)
       operationId: getTopMenuItems
+      security:
+        - bearerAuth: []
       parameters:
         - name: from
           in: query
@@ -968,6 +1176,13 @@ paths:
                   $ref: '#/components/schemas/TopMenuItem'
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен доступа. Получите токен через /auth/login/client или /auth/login/employee
+
   parameters:
     ClientId:
       name: clientId
