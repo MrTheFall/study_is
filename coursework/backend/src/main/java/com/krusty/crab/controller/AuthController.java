@@ -1,80 +1,65 @@
 package com.krusty.crab.controller;
 
-import com.krusty.crab.security.UserPrincipal;
+import com.krusty.crab.api.AuthApi;
+import com.krusty.crab.dto.generated.GetCurrentUser200Response;
+import com.krusty.crab.dto.generated.LoginClient200Response;
+import com.krusty.crab.dto.generated.LoginClientRequest;
+import com.krusty.crab.dto.generated.LoginEmployee200Response;
+import com.krusty.crab.dto.generated.LoginEmployeeRequest;
 import com.krusty.crab.service.AuthService;
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.Data;
+import com.krusty.crab.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Slf4j
-public class AuthController {
+public class AuthController implements AuthApi {
 
     private final AuthService authService;
 
-    @PostMapping("/login/client")
-    public ResponseEntity<LoginResponse> loginClient(@RequestBody ClientLoginRequest request) {
-        String token = authService.loginClient(request.getEmail(), request.getPassword());
-        return ResponseEntity.ok(new LoginResponse(token, "CLIENT"));
-    }
-
-    @PostMapping("/login/employee")
-    public ResponseEntity<LoginResponse> loginEmployee(@RequestBody EmployeeLoginRequest request) {
-        String token = authService.loginEmployee(request.getLogin(), request.getPassword());
-        return ResponseEntity.ok(new LoginResponse(token, "EMPLOYEE"));
-    }
-
-    @GetMapping("/me")
-    public ResponseEntity<UserInfoResponse> getCurrentUser(HttpServletRequest request) {
-        UserPrincipal userPrincipal = (UserPrincipal) request.getAttribute("userPrincipal");
-        if (userPrincipal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        UserInfoResponse response = new UserInfoResponse();
-        response.setUserId(userPrincipal.getUserId());
-        response.setUsername(userPrincipal.getUsername());
-        response.setUserType(userPrincipal.getUserType());
-        response.setRole(userPrincipal.getRole());
-
+    @Override
+    public ResponseEntity<LoginClient200Response> loginClient(LoginClientRequest loginClientRequest) {
+        log.info("Client login attempt for email: {}", loginClientRequest.getEmail());
+        String token = authService.loginClient(loginClientRequest.getEmail(), loginClientRequest.getPassword());
+        
+        LoginClient200Response response = new LoginClient200Response();
+        response.setToken(token);
+        response.setUserType(LoginClient200Response.UserTypeEnum.CLIENT);
+        
         return ResponseEntity.ok(response);
     }
 
-    @Data
-    public static class ClientLoginRequest {
-        private String email;
-        private String password;
+    @Override
+    public ResponseEntity<LoginEmployee200Response> loginEmployee(LoginEmployeeRequest loginEmployeeRequest) {
+        log.info("Employee login attempt for login: {}", loginEmployeeRequest.getLogin());
+        String token = authService.loginEmployee(loginEmployeeRequest.getLogin(), loginEmployeeRequest.getPassword());
+        
+        LoginEmployee200Response response = new LoginEmployee200Response();
+        response.setToken(token);
+        response.setUserType(LoginEmployee200Response.UserTypeEnum.EMPLOYEE);
+        
+        return ResponseEntity.ok(response);
     }
 
-    @Data
-    public static class EmployeeLoginRequest {
-        private String login;
-        private String password;
-    }
+    @Override
+    public ResponseEntity<GetCurrentUser200Response> getCurrentUser() {
+        try {
+            com.krusty.crab.security.UserPrincipal userPrincipal = SecurityUtil.getCurrentUser();
+            
+            GetCurrentUser200Response response = new GetCurrentUser200Response();
+            response.setUserId(userPrincipal.getUserId());
+            response.setUsername(userPrincipal.getUsername());
+            response.setUserType(GetCurrentUser200Response.UserTypeEnum.fromValue(userPrincipal.getUserType()));
+            response.setRole(userPrincipal.getRole());
 
-    @Data
-    public static class LoginResponse {
-        private String token;
-        private String userType;
-
-        public LoginResponse(String token, String userType) {
-            this.token = token;
-            this.userType = userType;
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.warn("Unauthorized access attempt to /auth/me");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
-
-    @Data
-    public static class UserInfoResponse {
-        private Integer userId;
-        private String username;
-        private String userType;
-        private String role;
-    }
 }
-

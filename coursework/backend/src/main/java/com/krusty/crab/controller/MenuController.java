@@ -5,6 +5,7 @@ import com.krusty.crab.dto.generated.MenuItemCreateRequest;
 import com.krusty.crab.entity.MenuItem;
 import com.krusty.crab.mapper.MenuMapper;
 import com.krusty.crab.service.MenuService;
+import com.krusty.crab.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -45,6 +46,7 @@ public class MenuController implements MenuApi {
     
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.MenuItem> createMenuItem(MenuItemCreateRequest menuItemCreateRequest) {
+        SecurityUtil.requireRole("Manager");
         log.info("Creating menu item: {}", menuItemCreateRequest.getName());
         MenuItem item = menuMapper.toEntity(menuItemCreateRequest);
         MenuItem saved = menuService.createMenuItem(item);
@@ -54,6 +56,7 @@ public class MenuController implements MenuApi {
     
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.MenuItem> updateMenuItem(Integer menuItemId, MenuItemCreateRequest menuItemCreateRequest) {
+        SecurityUtil.requireRole("Manager");
         log.info("Updating menu item with ID: {}", menuItemId);
         MenuItem item = menuService.getMenuItemById(menuItemId);
         menuMapper.updateEntityFromRequest(menuItemCreateRequest, item);
@@ -64,6 +67,7 @@ public class MenuController implements MenuApi {
     
     @Override
     public ResponseEntity<Void> deleteMenuItem(Integer menuItemId) {
+        SecurityUtil.requireRole("Manager");
         log.info("Deleting menu item with ID: {}", menuItemId);
         menuService.deleteMenuItem(menuItemId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

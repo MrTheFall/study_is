@@ -7,6 +7,7 @@ import com.krusty.crab.mapper.EmployeeMapper;
 import com.krusty.crab.mapper.ShiftMapper;
 import com.krusty.crab.service.EmployeeService;
 import com.krusty.crab.service.ShiftService;
+import com.krusty.crab.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,7 @@ public class EmployeesController implements EmployeesApi {
     
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.Employee> createEmployee(EmployeeCreateRequest employeeCreateRequest) {
+        SecurityUtil.requireRole("Manager");
         log.info("Creating employee: {}", employeeCreateRequest.getLogin());
         Employee employee = employeeMapper.toEntityWithPassword(employeeCreateRequest, employeeCreateRequest.getPassword());
         Employee saved = employeeService.createEmployee(employee);
@@ -51,6 +53,7 @@ public class EmployeesController implements EmployeesApi {
     
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.Employee> updateEmployee(Integer employeeId, EmployeeCreateRequest employeeCreateRequest) {
+        SecurityUtil.requireRole("Manager");
         log.info("Updating employee with ID: {}", employeeId);
         Employee employee = employeeService.getEmployeeById(employeeId);
         employeeMapper.updateEntityWithPassword(employeeCreateRequest, employee);
@@ -61,6 +64,7 @@ public class EmployeesController implements EmployeesApi {
     
     @Override
     public ResponseEntity<Void> deleteEmployee(Integer employeeId) {
+        SecurityUtil.requireRole("Manager");
         log.info("Deleting employee with ID: {}", employeeId);
         employeeService.deleteEmployee(employeeId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
