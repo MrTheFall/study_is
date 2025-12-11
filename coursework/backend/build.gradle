@@ -1,0 +1,95 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '4.0.0'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.openapi.generator' version '7.5.0'
+}
+
+group = 'com.krusty.crab'
+version = '0.0.1-SNAPSHOT'
+description = 'Krusty Crab Restaurant Management System'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation('com.fasterxml.jackson.core:jackson-databind:2.20.1')
+	implementation('com.fasterxml.jackson.core:jackson-core:2.20.1')
+	implementation('com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.1')
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+	runtimeOnly 'org.postgresql:postgresql'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+	annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'com.h2database:h2'
+	testImplementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+	testImplementation 'io.jsonwebtoken:jjwt-impl:0.12.5'
+	testImplementation 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+openApiGenerate {
+	generatorName = "spring"
+	inputSpec = "$projectDir/src/main/resources/openapi.yml"
+	outputDir = "$buildDir/generated"
+	apiPackage = "com.krusty.crab.api"
+	modelPackage = "com.krusty.crab.dto.generated"
+	invokerPackage = "com.krusty.crab.invoker"
+	configOptions = [
+		dateLibrary: "java8",
+		java8: "true",
+		interfaceOnly: "true",
+		useSpringBoot3: "false",
+		library: "spring-boot",
+		serializationLibrary: "jackson",
+		useJakartaEe: "true",
+		hideGenerationTimestamp: "true",
+		openApiNullable: "false",
+		useTags: "true",
+		documentationProvider: "none"
+	]
+	globalProperties = [
+		models: "",
+		apis: "",
+		supportingFiles: ""
+	]
+}
+
+sourceSets {
+	main {
+		java {
+			srcDirs += "$buildDir/generated/src/main/java"
+		}
+	}
+}
+
+compileJava.dependsOn tasks.named('openApiGenerate')

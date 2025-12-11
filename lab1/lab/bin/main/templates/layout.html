@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(content)">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${title} ?: 'Менеджер организаций'"></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      html, body { height: 100%; }
+    </style>
+  </head>
+  <body class="bg-gray-50 text-gray-900">
+    <header class="fixed top-0 inset-x-0 z-50 bg-slate-800 text-white shadow">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+        <a href="/" class="font-semibold tracking-wide">Менеджер организаций</a>
+        <nav class="flex items-center gap-6 text-sm">
+          <a href="/organizations" class="hover:text-indigo-300">Организации</a>
+          <a href="/analytics" class="hover:text-indigo-300">Аналитика</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-10">
+      <th:block th:replace="${content}"></th:block>
+      <script src="/js/app.js"></script>
+    </main>
+  </body>
+  </html>
