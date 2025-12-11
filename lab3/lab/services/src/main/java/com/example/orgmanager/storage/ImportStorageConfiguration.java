@@ -14,7 +14,7 @@ import software.amazon.awssdk.services.s3.S3Configuration;
 @Configuration
 @EnableConfigurationProperties(ImportStorageProperties.class)
 public class ImportStorageConfiguration {
-    @Bean
+    @Bean(destroyMethod = "close")
     public S3Client s3Client(ImportStorageProperties properties) {
         var serviceConfig = S3Configuration.builder()
                 .pathStyleAccessEnabled(properties.isPathStyleAccess())

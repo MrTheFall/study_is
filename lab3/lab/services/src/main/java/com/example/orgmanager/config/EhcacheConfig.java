@@ -27,7 +27,7 @@ public class EhcacheConfig implements HibernatePropertiesCustomizer {
     @Bean(destroyMethod = "close")
     public CacheManager cacheManager() {
         CachingProvider cachingProvider = Caching.getCachingProvider(
-                "org.ehcache.jsr107.EhcacheCachingProvider");
+                EhcacheCachingProvider.class.getName());
         EhcacheCachingProvider ehcacheProvider =
                 (EhcacheCachingProvider) cachingProvider;
 

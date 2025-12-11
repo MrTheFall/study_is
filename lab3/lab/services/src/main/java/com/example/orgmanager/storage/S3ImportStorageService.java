@@ -24,6 +24,7 @@ public class S3ImportStorageService implements ImportStorageService {
     private final S3Client s3Client;
     private final ImportStorageProperties properties;
     private final AtomicBoolean bucketReady = new AtomicBoolean(false);
+    private final Object bucketLock = new Object();
 
     public S3ImportStorageService(S3Client s3Client, ImportStorageProperties properties) {
         this.s3Client = s3Client;
@@ -111,7 +112,7 @@ public class S3ImportStorageService implements ImportStorageService {
         if (bucketReady.get()) {
             return;
         }
-        synchronized (bucketReady) {
+        synchronized (bucketLock) {
             if (bucketReady.get()) {
                 return;
             }
