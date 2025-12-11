@@ -42,11 +42,21 @@ export function LoginPage() {
       const response = await authApi.loginClient({ email: data.email, password: data.password });
       const token = response.data.token!;
       
+      if (!token) {
+        setError('Токен не получен');
+        return;
+      }
+      
       localStorage.setItem('token', token);
       
-      const userResponse = await authApi.getCurrentUser();
-      setAuth(token, userResponse.data);
+      const tempUser = {
+        userId: undefined,
+        username: data.email,
+        userType: 'CLIENT' as any,
+        role: null,
+      };
       
+      setAuth(token, tempUser);
       navigate('/', { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Ошибка входа');
@@ -60,10 +70,21 @@ export function LoginPage() {
       const response = await authApi.loginEmployee({ login: data.login, password: data.password });
       const token = response.data.token!;
       
-      localStorage.setItem('token', token);
-      const userResponse = await authApi.getCurrentUser();
-      setAuth(token, userResponse.data);
+      if (!token) {
+        setError('Токен не получен');
+        return;
+      }
       
+      localStorage.setItem('token', token);
+      
+      const tempUser = {
+        userId: undefined,
+        username: data.login,
+        userType: 'EMPLOYEE' as any,
+        role: null,
+      };
+      
+      setAuth(token, tempUser);
       navigate('/', { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Ошибка входа');

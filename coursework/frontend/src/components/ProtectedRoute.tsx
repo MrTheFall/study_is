@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import { GetCurrentUser200Response, GetCurrentUser200ResponseUserTypeEnum } from '@/api/generated/api';
+import { GetCurrentUser200ResponseUserTypeEnum } from '@/api/generated/api';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,6 +10,11 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children, allowedRoles, requireManager }: ProtectedRouteProps) {
   const { isAuthenticated, user, isManager } = useAuthStore();
+  const hasToken = localStorage.getItem('token');
+
+  if (!hasToken) {
+    return <Navigate to="/login" replace />;
+  }
 
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
@@ -19,7 +24,7 @@ export function ProtectedRoute({ children, allowedRoles, requireManager }: Prote
     return <Navigate to="/" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.userType)) {
+  if (allowedRoles && user.userType && !allowedRoles.includes(user.userType)) {
     return <Navigate to="/" replace />;
   }
 

@@ -17,14 +17,12 @@ export function OrdersPage() {
   const loadOrders = async () => {
     try {
       if (isClient()) {
-        // Для клиента - получить его заказы
         const user = useAuthStore.getState().user;
         if (user?.userId) {
           const response = await ordersApi.getClientOrders(user.userId);
           setOrders(response.data);
         }
       } else {
-        // Для сотрудника - все заказы
         const response = await ordersApi.getAllOrders();
         setOrders(response.data);
       }

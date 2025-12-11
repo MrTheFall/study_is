@@ -17,27 +17,42 @@ import { ShiftsPage } from './pages/ShiftsPage';
 import { GetCurrentUser200ResponseUserTypeEnum } from './api/generated/api';
 
 function App() {
-  const { token, setAuth, isAuthenticated } = useAuthStore();
+  const { setAuth } = useAuthStore();
 
   useEffect(() => {
-    // Проверяем токен при загрузке приложения
-    const storedUser = localStorage.getItem('user');
-    if (token && storedUser && !isAuthenticated) {
+    const loadUserInfo = async (token: string) => {
       try {
-        const user = JSON.parse(storedUser);
-        setAuth(token, user);
-      } catch {
-        // Если не удалось распарсить, запрашиваем заново
-        authApi.getCurrentUser()
-          .then((response) => {
-            setAuth(token, response.data);
-          })
-          .catch(() => {
-            useAuthStore.getState().clearAuth();
-          });
+        const response = await authApi.getCurrentUser();
+        setAuth(token, response.data);
+      } catch (err) {
+        useAuthStore.getState().clearAuth();
+      }
+    };
+
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    const currentUser = useAuthStore.getState().user;
+    
+    if (storedToken) {
+      if (!currentUser) {
+        if (storedUser) {
+          try {
+            const user = JSON.parse(storedUser);
+            if (user.username) {
+              setAuth(storedToken, user);
+              loadUserInfo(storedToken).catch(() => {});
+            } else {
+              loadUserInfo(storedToken);
+            }
+          } catch {
+            loadUserInfo(storedToken);
+          }
+        } else {
+          loadUserInfo(storedToken);
+        }
       }
     }
-  }, [token, isAuthenticated, setAuth]);
+  }, [setAuth]);
 
   return (
     <BrowserRouter>

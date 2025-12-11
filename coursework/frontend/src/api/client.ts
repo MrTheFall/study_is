@@ -4,7 +4,6 @@ import * as api from './generated';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:13228';
 
-// Создаем axios instance с базовой конфигурацией
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -12,7 +11,6 @@ const axiosInstance: AxiosInstance = axios.create({
   },
 });
 
-// Интерцептор для добавления JWT токена
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -26,12 +24,10 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Интерцептор для обработки ошибок
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Токен истек или невалиден
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
@@ -40,14 +36,10 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-// Создаем конфигурацию для OpenAPI клиента
 const configuration = new Configuration({
   basePath: API_BASE_URL,
   accessToken: () => localStorage.getItem('token') || '',
 });
-
-// Создаем API клиенты
-// Используем axiosInstance напрямую через параметр axios
 export const authApi = new api.AuthApi(configuration, API_BASE_URL, axiosInstance as any);
 export const clientsApi = new api.ClientsApi(configuration, API_BASE_URL, axiosInstance as any);
 export const menuApi = new api.MenuApi(configuration, API_BASE_URL, axiosInstance as any);

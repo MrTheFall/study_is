@@ -26,7 +26,6 @@ export function MenuPage() {
 
   const loadMenu = async () => {
     try {
-      // Передаем available=false чтобы показать все блюда (включая недоступные)
       const response = await menuApi.getMenu(false);
       setMenuItems(response.data);
     } catch (error) {
@@ -71,7 +70,6 @@ export function MenuPage() {
   const placeOrder = async () => {
     if (cart.size === 0) return;
     
-    // Проверяем авторизацию перед оформлением заказа
     if (!isAuthenticated) {
       setShowLoginDialog(true);
       return;
@@ -216,7 +214,6 @@ export function MenuPage() {
           </div>
         )}
 
-        {/* Диалог для входа */}
         <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
           <DialogContent>
             <DialogHeader>
@@ -239,7 +236,6 @@ export function MenuPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Диалог для адреса доставки */}
         <Dialog open={showAddressDialog} onOpenChange={setShowAddressDialog}>
           <DialogContent>
             <DialogHeader>

@@ -12,9 +12,18 @@ interface AuthState {
   isManager: () => boolean;
 }
 
+const getStoredUser = () => {
+  try {
+    const stored = localStorage.getItem('user');
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+};
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   token: localStorage.getItem('token'),
-  user: null,
+  user: getStoredUser(),
   isAuthenticated: !!localStorage.getItem('token'),
   setAuth: (token: string, user: GetCurrentUser200Response) => {
     localStorage.setItem('token', token);
