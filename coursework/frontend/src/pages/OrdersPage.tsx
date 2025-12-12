@@ -373,8 +373,8 @@ export function OrdersPage() {
                 ? order.status 
                 : (order.status as any)?.value || 'pending';
               const statusStr = String(statusValue);
-              const canProcessPayment = isCashier() && statusStr !== 'cancelled' && statusStr !== 'delivered';
-              const canUpdateStatus = (isCashier() || isManager()) && statusStr !== 'cancelled' && statusStr !== 'delivered';
+              const canProcessPayment = isCashier() && statusStr === 'pending';
+              const canUpdateStatus = (isCashier() || isManager()) && statusStr !== 'cancelled' && statusStr !== 'delivered' && statusStr !== 'completed';
               const isDeliveryOrder = order.type === OrderType.Delivery;
               
               return (
@@ -420,11 +420,11 @@ export function OrdersPage() {
                             onClick={() =>
                               handleUpdateStatus(
                                 order.id!,
-                                isDeliveryOrder ? OrderStatus.Delivering : OrderStatus.Delivered
+                                isDeliveryOrder ? OrderStatus.Delivering : OrderStatus.Completed
                               )
                             }
                           >
-                            {isDeliveryOrder ? 'Передать в доставку' : 'Отметить как доставлен'}
+                            {isDeliveryOrder ? 'Передать в доставку' : 'Отметить как выдан'}
                           </Button>
                         )}
                         {canUpdateStatus && isDeliveryOrder && statusStr === 'delivering' && (
