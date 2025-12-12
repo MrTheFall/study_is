@@ -12,3 +12,4 @@ public class UserPrincipal {
     private String role; // Role name for employees, null for clients
 }
 
+

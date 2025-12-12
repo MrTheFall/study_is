@@ -17,7 +17,11 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -104,26 +108,39 @@ public class OrderService {
         
         for (Object[] row : results) {
             try {
-                Integer orderId = (Integer) row[0];
-                java.sql.Timestamp createdAt = (java.sql.Timestamp) row[1];
-                String status = (String) row[2];
-                String itemsJson = (String) row[3];
+                Integer orderId = row[0] != null ? ((Number) row[0]).intValue() : null;
+                OffsetDateTime createdAt = extractCreatedAt(row[1]);
+                String status = row[2] != null ? row[2].toString() : null;
+                String itemsJson = row[3] != null ? row[3].toString() : null;
                 
                 List<OrderItemInfo> items = parseItemsJson(itemsJson);
                 
                 KitchenQueueItem item = new KitchenQueueItem();
                 item.setOrderId(orderId);
-                item.setCreatedAt(createdAt != null ? createdAt.toLocalDateTime().atOffset(java.time.ZoneOffset.UTC) : null);
+                item.setCreatedAt(createdAt);
                 item.setStatus(status);
                 item.setItems(items);
                 
                 queue.add(item);
             } catch (Exception e) {
-                log.error("Error parsing kitchen queue item", e);
+                log.error("Error parsing kitchen queue item: {}", Arrays.toString(row), e);
             }
         }
         
         return queue;
+    }
+
+    private OffsetDateTime extractCreatedAt(Object value) {
+        if (value instanceof java.sql.Timestamp ts) {
+            return ts.toInstant().atOffset(ZoneOffset.UTC);
+        }
+        if (value instanceof OffsetDateTime odt) {
+            return odt;
+        }
+        if (value instanceof LocalDateTime ldt) {
+            return ldt.atOffset(ZoneOffset.UTC);
+        }
+        return null;
     }
     
     private List<OrderItemInfo> parseItemsJson(String itemsJson) {

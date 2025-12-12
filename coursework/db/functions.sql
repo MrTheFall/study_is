@@ -130,6 +130,12 @@ begin
     values (p_order_id, lower(p_method), v_amount, true)
     returning id into v_payment_id;
 
+    -- После успешной оплаты переводим заказ в статус confirmed, чтобы он попал на кухню
+    update orders
+       set status = 'confirmed',
+           updated_at = now()
+     where id = p_order_id;
+
     return v_payment_id;
 end;$$;
 
@@ -156,9 +162,9 @@ begin
                from order_items oi
                join menu_items mi on mi.id = oi.menu_item_id
               where oi.order_id = o.id
-           ) as items
+          ) as items
       from orders o
-     where lower(o.status) in ('confirmed','preparing')
+     where lower(o.status) in ('confirmed','preparing','ready')
      order by o.created_at asc;
 end;$$;
 
@@ -246,4 +252,3 @@ begin
         values(p_ingredient_id, greatest(0, p_delta));
     end if;
 end;$$;
-
