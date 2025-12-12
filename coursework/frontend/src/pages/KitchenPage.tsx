@@ -54,8 +54,8 @@ export function KitchenPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {queue.map((item) => (
             <Card key={item.orderId} className={
-              item.status === 'PREPARING' ? 'border-yellow-500' :
-              item.status === 'READY' ? 'border-green-500' :
+              item.status?.toLowerCase() === 'preparing' ? 'border-yellow-500' :
+              item.status?.toLowerCase() === 'ready' ? 'border-green-500' :
               'border-gray-300'
             }>
               <CardHeader>
@@ -74,12 +74,12 @@ export function KitchenPage() {
                   ))}
                 </div>
                 <div className="flex gap-2">
-                  {item.status === 'CONFIRMED' && (
+                  {item.status?.toLowerCase() === 'confirmed' && (
                     <Button onClick={() => updateStatus(item.orderId!, OrderStatus.Preparing)}>
                       Начать готовить
                     </Button>
                   )}
-                  {item.status === 'PREPARING' && (
+                  {item.status?.toLowerCase() === 'preparing' && (
                     <Button onClick={() => updateStatus(item.orderId!, OrderStatus.Ready)}>
                       Готово
                     </Button>
@@ -93,4 +93,3 @@ export function KitchenPage() {
     </div>
   );
 }
-

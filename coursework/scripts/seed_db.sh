@@ -31,4 +31,10 @@ docker compose -f "$DC_FILE" exec -T \
   db psql -h 127.0.0.1 -p 5432 -U "${PGUSER:-postgres}" \
   -v ON_ERROR_STOP=1 -d "$DB_NAME" -f - < "$ROOT_DIR/db/seed.sql"
 
+echo "[seed_db] syncing sequences"
+docker compose -f "$DC_FILE" exec -T \
+  -e PGPASSWORD="${PGPASSWORD:-postgres}" \
+  db psql -h 127.0.0.1 -p 5432 -U "${PGUSER:-postgres}" \
+  -v ON_ERROR_STOP=1 -d "$DB_NAME" -f - < "$ROOT_DIR/db/sync_sequences.sql"
+
 echo "[seed_db] done"

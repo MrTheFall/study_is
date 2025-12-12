@@ -1,6 +1,5 @@
 import { HTMLAttributes, ReactNode, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
-import { Button } from './Button';
 
 interface DialogProps {
   open: boolean;
@@ -89,4 +88,3 @@ const DialogFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
 DialogFooter.displayName = 'DialogFooter';
 
 export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter };
-

@@ -12,7 +12,8 @@ insert into employees (id, full_name, login, password_hash, role_id, salary, con
 values
   (1, 'Eugene Krabs',   'krabs',  '$2a$12$HqFpO5lLdX5ly7cX3BVSw.uHIcXa/QchVDpBhHE45rspEU6GN1VR2', 1, 100000.00, '+1-000-111-2222'),
   (2, 'SpongeBob',      'spongeb', '$2a$12$iHPWDpiJLMa7ZLJRA1ftW.kjsZ.8Q7PuU4cgL4sf6/MYmxcIu8b6O',   3,  40000.00, '+1-000-333-4444'),
-  (3, 'Squidward Tentacles', 'squid', '$2a$12$R2V18.LlW4hWbZcBQ4aovuedcm0jEiavnYsYed9t4zkIvtfqYKXoO', 2, 35000.00, '+1-000-555-6666')
+  (3, 'Squidward Tentacles', 'squid', '$2a$12$R2V18.LlW4hWbZcBQ4aovuedcm0jEiavnYsYed9t4zkIvtfqYKXoO', 2, 35000.00, '+1-000-555-6666'),
+  (10001, 'Admin Manager', 'admin', '$2b$12$TTNHxfAOco6gkzPrewfSIus/zjrWZzf1s59Si/Q6ik86Rife5GLZG', 1, 100000.00, '+1-999-000-0000')
 on conflict do nothing;
 
 -- Clients
@@ -121,5 +122,55 @@ values
   (2, 2, 2, 4, 'Fast delivery, tasty patty')
 on conflict do nothing;
 
-commit;
+-- Sync sequences to the highest seeded ids to avoid collisions on insert
+do $$
+declare
+    max_id integer;
+begin
+    select coalesce(max(id), 0) into max_id from clients;
+    perform setval('clients_id_seq', max_id + 1, false);
 
+    select coalesce(max(id), 0) into max_id from roles;
+    perform setval('roles_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from employees;
+    perform setval('employees_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from shifts;
+    perform setval('shifts_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from employee_shifts;
+    perform setval('employee_shifts_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from couriers;
+    perform setval('couriers_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from menu_items;
+    perform setval('menu_items_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from recipes;
+    perform setval('recipes_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from ingredients;
+    perform setval('ingredients_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from ingredient_usages;
+    perform setval('ingredient_usages_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from inventory_records;
+    perform setval('inventory_records_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from orders;
+    perform setval('orders_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from order_items;
+    perform setval('order_items_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from payments;
+    perform setval('payments_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from reviews;
+    perform setval('reviews_id_seq', max_id + 1, false);
+end $$;
+
+commit;

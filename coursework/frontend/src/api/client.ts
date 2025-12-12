@@ -2,7 +2,22 @@ import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { Configuration } from './generated/configuration';
 import * as api from './generated';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:13228';
+const resolveApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname } = window.location;
+    const port = import.meta.env.VITE_API_PORT || '13228';
+    const portSegment = port ? `:${port}` : '';
+    return `${protocol}//${hostname}${portSegment}`;
+  }
+
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+
+  return 'http://localhost:13228';
+};
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -54,4 +69,3 @@ export const analyticsApi = new api.AnalyticsApi(configuration, API_BASE_URL, ax
 
 export { axiosInstance };
 export type { AxiosRequestConfig };
-
