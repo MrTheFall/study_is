@@ -56,7 +56,7 @@ class OrganizationServiceConcurrencyIT {
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
-        registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.PostgreSQL95Dialect");
+        registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.PostgreSQLDialect");
     }
 
     @Autowired
@@ -76,8 +76,17 @@ class OrganizationServiceConcurrencyIT {
 
     @BeforeEach
     void setUp() {
+        resetData();
+    }
+
+    private void resetData() {
+        organizationRepository.deleteAll();
+        addressRepository.deleteAll();
+        coordinatesRepository.deleteAll();
+        organizationRepository.flush();
         orgA = createOrganization("Atlas", 10, 10f, "Address 1");
         orgB = createOrganization("Zephyr", 20, 20f, "Address 2");
+        organizationRepository.flush();
     }
 
     @AfterAll
@@ -88,6 +97,7 @@ class OrganizationServiceConcurrencyIT {
     @Test
     void concurrentUpdatesSwapReferencesDoNotLoseRelations() throws Exception {
         for (int i = 0; i < STRESS_RUNS; i++) {
+            resetData();
             Organization currentA = organizationRepository.findById(orgA.getId()).orElseThrow();
             Organization currentB = organizationRepository.findById(orgB.getId()).orElseThrow();
 
@@ -101,18 +111,18 @@ class OrganizationServiceConcurrencyIT {
 
             runConcurrently(() -> organizationService.update(currentA.getId(), formForA),
                     () -> organizationService.update(currentB.getId(), formForB));
+
+            Organization reloadedA = organizationRepository.findById(orgA.getId()).orElseThrow();
+            Organization reloadedB = organizationRepository.findById(orgB.getId()).orElseThrow();
+
+            assertThat(reloadedA.getOfficialAddress()).isNotNull();
+            assertThat(reloadedA.getCoordinates()).isNotNull();
+            assertThat(reloadedB.getOfficialAddress()).isNotNull();
+            assertThat(reloadedB.getCoordinates()).isNotNull();
+
+            assertThat(addressRepository.count()).isEqualTo(2);
+            assertThat(coordinatesRepository.count()).isEqualTo(2);
         }
-
-        Organization reloadedA = organizationRepository.findById(orgA.getId()).orElseThrow();
-        Organization reloadedB = organizationRepository.findById(orgB.getId()).orElseThrow();
-
-        assertThat(reloadedA.getOfficialAddress()).isNotNull();
-        assertThat(reloadedA.getCoordinates()).isNotNull();
-        assertThat(reloadedB.getOfficialAddress()).isNotNull();
-        assertThat(reloadedB.getCoordinates()).isNotNull();
-
-        assertThat(addressRepository.count()).isEqualTo(2);
-        assertThat(coordinatesRepository.count()).isEqualTo(2);
     }
 
     private void runConcurrently(Runnable first, Runnable second)

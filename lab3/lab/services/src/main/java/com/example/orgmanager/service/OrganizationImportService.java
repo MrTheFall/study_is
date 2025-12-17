@@ -10,6 +10,10 @@ import com.example.orgmanager.repository.AddressRepository;
 import com.example.orgmanager.repository.CoordinatesRepository;
 import com.example.orgmanager.repository.ImportJobRepository;
 import com.example.orgmanager.service.dto.OrganizationForm;
+import com.example.orgmanager.service.dto.ImportFileData;
+import com.example.orgmanager.storage.ImportStorageService;
+import com.example.orgmanager.storage.StoredImportFile;
+import com.example.orgmanager.storage.TransactionalImportStorage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import jakarta.validation.ConstraintViolation;
@@ -34,6 +38,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -48,6 +53,8 @@ public class OrganizationImportService {
     private final ImportJobRepository importJobRepository;
     private final AddressRepository addressRepository;
     private final CoordinatesRepository coordinatesRepository;
+    private final TransactionalImportStorage transactionalImportStorage;
+    private final ImportStorageService importStorageService;
     private final Validator validator;
     private final TransactionTemplate transactionTemplate;
     private final ObjectMapper yamlMapper;
@@ -56,12 +63,16 @@ public class OrganizationImportService {
             ImportJobRepository importJobRepository,
             AddressRepository addressRepository,
             CoordinatesRepository coordinatesRepository,
+            TransactionalImportStorage transactionalImportStorage,
+            ImportStorageService importStorageService,
             Validator validator,
             PlatformTransactionManager transactionManager) {
         this.organizationService = organizationService;
         this.importJobRepository = importJobRepository;
         this.addressRepository = addressRepository;
         this.coordinatesRepository = coordinatesRepository;
+        this.transactionalImportStorage = transactionalImportStorage;
+        this.importStorageService = importStorageService;
         this.validator = validator;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.yamlMapper = new ObjectMapper(new YAMLFactory());
@@ -76,42 +87,31 @@ public class OrganizationImportService {
         ImportJob job = new ImportJob();
         job.setStatus(ImportStatus.IN_PROGRESS);
         job = importJobRepository.save(job);
+        final Long jobId = job.getId();
 
         try {
-            OrganizationImportPayload payload = readPayload(file);
+            byte[] content = readContent(file);
+            OrganizationImportPayload payload = readPayload(content);
             validatePayload(payload);
             List<OrganizationImportItem> items = payload.getOrganizations();
-            transactionTemplate.executeWithoutResult(status -> {
-                Map<CoordinateKey, Long> coordinatesCache = new HashMap<>();
-                Map<AddressKey, Long> addressCache = new HashMap<>();
-                for (OrganizationImportItem item : items) {
-                    CoordinatesImport coords = item.getCoordinates();
-                    CoordinateKey key = new CoordinateKey(coords.getX(), coords.getY());
-                    Long coordinatesId = coordinatesCache.get(key);
-                    if (coordinatesId == null) {
-                        coordinatesId = lookupExistingCoordinatesId(key);
-                        if (coordinatesId != null) {
-                            coordinatesCache.put(key, coordinatesId);
-                        }
-                    }
-                    OrganizationForm form = toForm(item, coordinatesId, addressCache);
-                    Organization saved = organizationService.create(form);
-                    if (coordinatesId == null && saved.getCoordinates() != null) {
-                        coordinatesCache.putIfAbsent(key, saved.getCoordinates().getId());
-                    }
-                    if (saved.getOfficialAddress() != null) {
-                        AddressKey officialKey = buildAddressKey(saved.getOfficialAddress());
-                        addressCache.putIfAbsent(officialKey, saved.getOfficialAddress().getId());
-                    }
-                    if (saved.getPostalAddress() != null) {
-                        AddressKey postalKey = buildAddressKey(saved.getPostalAddress());
-                        addressCache.putIfAbsent(postalKey, saved.getPostalAddress().getId());
-                    }
-                }
+            StoredImportFile storedFile = transactionTemplate.execute(status -> {
+                StoredImportFile staged = transactionalImportStorage.storeWithTransaction(
+                        jobId,
+                        file.getOriginalFilename(),
+                        content);
+                importItems(items);
+                //if (3==1+2) throw new RuntimeException("demo fail");
+                return staged;
             });
             job.setStatus(ImportStatus.SUCCESS);
             job.setImportedCount(items.size());
             job.setErrorMessage(null);
+            if (storedFile != null) {
+                job.setFileBucket(storedFile.getBucket());
+                job.setFileObjectKey(storedFile.getObjectKey());
+                job.setFileName(storedFile.getFileName());
+                job.setFileSize(storedFile.getContentLength());
+            }
             return importJobRepository.save(job);
         } catch (ValidationException ex) {
             job.setStatus(ImportStatus.FAILED);
@@ -130,14 +130,73 @@ public class OrganizationImportService {
         return importJobRepository.findAllByOrderByCreatedAtDesc();
     }
 
-    private OrganizationImportPayload readPayload(MultipartFile file) {
-        try (InputStream input = file.getInputStream()) {
+    public ImportFileData openImportFile(Long jobId) {
+        return openImportFileFromStorage(jobId);
+    }
+
+    public ImportFileData openImportFileFromStorage(Long jobId) {
+        StoredImportFile fileMeta = importStorageService.locateByJobId(jobId);
+        if (fileMeta == null) {
+            throw new ValidationException("Файл импорта не найден");
+        }
+        String fileName = fileMeta.getFileName() != null
+                ? fileMeta.getFileName()
+                : "import-%d.yaml".formatted(jobId);
+        InputStream stream = importStorageService.openStream(
+                fileMeta.getBucket(),
+                fileMeta.getObjectKey());
+        return new ImportFileData(fileName, fileMeta.getContentLength(), fileMeta.getContentType(), stream);
+    }
+
+    private void importItems(List<OrganizationImportItem> items) {
+        Map<CoordinateKey, Long> coordinatesCache = new HashMap<>();
+        Map<AddressKey, Long> addressCache = new HashMap<>();
+        for (OrganizationImportItem item : items) {
+            CoordinatesImport coords = item.getCoordinates();
+            CoordinateKey key = new CoordinateKey(coords.getX(), coords.getY());
+            Long coordinatesId = coordinatesCache.get(key);
+            if (coordinatesId == null) {
+                coordinatesId = lookupExistingCoordinatesId(key);
+                if (coordinatesId != null) {
+                    coordinatesCache.put(key, coordinatesId);
+                }
+            }
+            OrganizationForm form = toForm(item, coordinatesId, addressCache);
+            Organization saved = organizationService.create(form);
+            if (coordinatesId == null && saved.getCoordinates() != null) {
+                coordinatesCache.putIfAbsent(key, saved.getCoordinates().getId());
+            }
+            if (saved.getOfficialAddress() != null) {
+                AddressKey officialKey = buildAddressKey(saved.getOfficialAddress());
+                addressCache.putIfAbsent(officialKey, saved.getOfficialAddress().getId());
+            }
+            if (saved.getPostalAddress() != null) {
+                AddressKey postalKey = buildAddressKey(saved.getPostalAddress());
+                addressCache.putIfAbsent(postalKey, saved.getPostalAddress().getId());
+            }
+        }
+    }
+
+    private OrganizationImportPayload readPayload(byte[] content) {
+        try (InputStream input = new java.io.ByteArrayInputStream(content)) {
             OrganizationImportPayload payload =
                     yamlMapper.readValue(input, OrganizationImportPayload.class);
             if (payload == null) {
                 throw new ValidationException("Файл импорта пуст");
             }
             return payload;
+        } catch (IOException ex) {
+            throw new ValidationException("Не удалось прочитать YAML-файл: " + ex.getMessage());
+        }
+    }
+
+    private byte[] readContent(MultipartFile file) {
+        try {
+            byte[] content = file.getBytes();
+            if (content.length == 0) {
+                throw new ValidationException("Импортируемый файл не может быть пустым");
+            }
+            return content;
         } catch (IOException ex) {
             throw new ValidationException("Не удалось прочитать YAML-файл: " + ex.getMessage());
         }

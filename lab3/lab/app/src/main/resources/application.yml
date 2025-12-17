@@ -8,11 +8,33 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://pg:5432/studs}
     username: ${SPRING_DATASOURCE_USERNAME:student}
     password: ${SPRING_DATASOURCE_PASSWORD:student}
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initial-size: 2
+      min-idle: 2
+      max-active: 16
+      max-wait: 2000
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
+      validation-query: SELECT 1
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+      keep-alive: true
   jpa:
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+          region:
+            factory_class: jcache
+        javax:
+          cache:
+            provider: org.ehcache.jsr107.EhcacheCachingProvider
+        generate_statistics: ${app.jpa.cache-stats-logging-enabled:false}
         format_sql: true
     show-sql: false
 
@@ -23,9 +45,19 @@ springdoc:
 
 app:
   schema-init-enabled: false
+  jpa:
+    cache-stats-logging-enabled: true
   sse:
     heartbeat-enabled: true
     heartbeat-interval-ms: 15000
+  import-storage:
+    bucket: ${IMPORT_BUCKET:org-imports}
+    prefix: ${IMPORT_PREFIX:imports}
+    endpoint: ${IMPORT_S3_ENDPOINT:http://localhost:9000}
+    access-key: ${IMPORT_S3_ACCESS_KEY:minioadmin}
+    secret-key: ${IMPORT_S3_SECRET_KEY:minioadmin}
+    region: ${IMPORT_S3_REGION:us-east-1}
+    path-style-access: true
 
 logging:
   level:
