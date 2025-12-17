@@ -9,7 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +36,13 @@ public class MenuService {
     
     public List<MenuItem> searchMenuItems(String name) {
         return menuItemRepository.findByNameContainingIgnoreCase(name);
+    }
+
+    public Set<Integer> getOutOfStockMenuItemIds(List<Integer> menuItemIds) {
+        if (menuItemIds == null || menuItemIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return new HashSet<>(menuItemRepository.findOutOfStockMenuItemIds(menuItemIds));
     }
     
     @Transactional
@@ -85,4 +95,3 @@ public class MenuService {
         log.info("MenuItem {} deleted", id);
     }
 }
-

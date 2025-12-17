@@ -1,9 +1,15 @@
 package com.krusty.crab.controller;
 
 import com.krusty.crab.api.AnalyticsApi;
+import com.krusty.crab.dto.generated.FinancialSummary;
 import com.krusty.crab.dto.generated.SalesSummary;
+import com.krusty.crab.dto.generated.SalesByEmployeeItem;
+import com.krusty.crab.dto.generated.SalesByTimeOfDayItem;
 import com.krusty.crab.dto.generated.TopMenuItem;
+import com.krusty.crab.mapper.ReportViewMapper;
+import com.krusty.crab.security.UserPrincipal;
 import com.krusty.crab.service.AnalyticsService;
+import com.krusty.crab.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -20,14 +26,18 @@ import java.util.List;
 public class AnalyticsController implements AnalyticsApi {
     
     private final AnalyticsService analyticsService;
+    private final ReportViewMapper reportViewMapper;
     
     @Override
     public ResponseEntity<SalesSummary> getSalesSummary(
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
+        SecurityUtil.requireRole("Manager");
+        UserPrincipal user = SecurityUtil.getCurrentUser();
         log.info("Getting sales summary from {} to {}", from, to);
         LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
         LocalDateTime toLocal = to != null ? to.toLocalDateTime() : null;
+        analyticsService.logReportView(user.getUserId(), "sales_summary", fromLocal, toLocal);
         SalesSummary summary = analyticsService.getSalesSummary(fromLocal, toLocal);
         return ResponseEntity.ok(summary);
     }
@@ -37,14 +47,67 @@ public class AnalyticsController implements AnalyticsApi {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
             Integer limit) {
+        SecurityUtil.requireRole("Manager");
+        UserPrincipal user = SecurityUtil.getCurrentUser();
         log.info("Getting top menu items from {} to {} with limit {}", from, to, limit);
         LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
         LocalDateTime toLocal = to != null ? to.toLocalDateTime() : null;
+        analyticsService.logReportView(user.getUserId(), "top_menu_items", fromLocal, toLocal);
         List<TopMenuItem> items = analyticsService.getTopMenuItems(fromLocal, toLocal, limit);
         return ResponseEntity.ok(items);
     }
+
+    @Override
+    public ResponseEntity<List<SalesByEmployeeItem>> getSalesByEmployee(
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to
+    ) {
+        SecurityUtil.requireRole("Manager");
+        UserPrincipal user = SecurityUtil.getCurrentUser();
+        log.info("Getting sales by employee from {} to {}", from, to);
+        LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
+        LocalDateTime toLocal = to != null ? to.toLocalDateTime() : null;
+        analyticsService.logReportView(user.getUserId(), "sales_by_employee", fromLocal, toLocal);
+        List<SalesByEmployeeItem> items = analyticsService.getSalesByEmployee(fromLocal, toLocal);
+        return ResponseEntity.ok(items);
+    }
+
+    @Override
+    public ResponseEntity<List<SalesByTimeOfDayItem>> getSalesByTimeOfDay(
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to
+    ) {
+        SecurityUtil.requireRole("Manager");
+        UserPrincipal user = SecurityUtil.getCurrentUser();
+        log.info("Getting sales by time of day from {} to {}", from, to);
+        LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
+        LocalDateTime toLocal = to != null ? to.toLocalDateTime() : null;
+        analyticsService.logReportView(user.getUserId(), "sales_by_time_of_day", fromLocal, toLocal);
+        List<SalesByTimeOfDayItem> items = analyticsService.getSalesByTimeOfDay(fromLocal, toLocal);
+        return ResponseEntity.ok(items);
+    }
+
+    @Override
+    public ResponseEntity<List<com.krusty.crab.dto.generated.ReportView>> getReportViews(Integer limit, Integer offset) {
+        SecurityUtil.requireRole("Manager");
+        log.info("Getting report views history, limit: {}, offset: {}", limit, offset);
+        List<com.krusty.crab.entity.ReportView> views = analyticsService.getReportViews(limit, offset);
+        return ResponseEntity.ok(reportViewMapper.toDtoList(views));
+    }
+
+    @Override
+    public ResponseEntity<FinancialSummary> getFinancialSummary(
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to
+    ) {
+        SecurityUtil.requireRole("Manager");
+        UserPrincipal user = SecurityUtil.getCurrentUser();
+        log.info("Getting financial summary from {} to {}", from, to);
+        LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
+        LocalDateTime toLocal = to != null ? to.toLocalDateTime() : null;
+        analyticsService.logReportView(user.getUserId(), "financial_summary", fromLocal, toLocal);
+        FinancialSummary summary = analyticsService.getFinancialSummary(fromLocal, toLocal);
+        return ResponseEntity.ok(summary);
+    }
 }
-
-
-
 

@@ -2,6 +2,7 @@ package com.krusty.crab.entity;
 
 import com.krusty.crab.entity.enums.OrderStatus;
 import com.krusty.crab.entity.enums.OrderType;
+import com.krusty.crab.entity.enums.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,6 +29,16 @@ public class Order {
         foreignKey = @ForeignKey(name = "fk_orders_client"))
     private Client client;
     
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_employee_id",
+        foreignKey = @ForeignKey(name = "fk_orders_created_by_employee"))
+    private Employee createdByEmployee;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "accepted_by_employee_id",
+        foreignKey = @ForeignKey(name = "fk_orders_accepted_by_employee"))
+    private Employee acceptedByEmployee;
+
     @Column(name = "type", nullable = false, length = 32)
     @Convert(converter = OrderType.OrderTypeConverter.class)
     private OrderType type;
@@ -35,6 +46,19 @@ public class Order {
     @Column(name = "status", nullable = false, length = 32)
     @Convert(converter = OrderStatus.OrderStatusConverter.class)
     private OrderStatus status;
+
+    @Column(name = "payment_method", length = 32)
+    @Convert(converter = PaymentMethod.PaymentMethodConverter.class)
+    private PaymentMethod paymentMethod;
+
+    @Column(name = "preparing_at")
+    private LocalDateTime preparingAt;
+
+    @Column(name = "ready_at")
+    private LocalDateTime readyAt;
+
+    @Column(name = "cooking_duration_seconds")
+    private Integer cookingDurationSeconds;
     
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -68,4 +92,3 @@ public class Order {
     @Builder.Default
     private List<Review> reviews = new ArrayList<>();
 }
-

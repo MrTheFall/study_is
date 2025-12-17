@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { inventoryApi } from '@/api/client';
-import { InventoryRecord, LowStockItem } from '@/api/generated/api';
+import { InventoryRecord, InventoryTransaction, LowStockItem } from '@/api/generated/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -11,10 +11,13 @@ export function InventoryPage() {
   const [inventory, setInventory] = useState<InventoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [lowStock, setLowStock] = useState<LowStockItem[]>([]);
+  const [transactions, setTransactions] = useState<InventoryTransaction[]>([]);
+  const [reasonByIngredientId, setReasonByIngredientId] = useState<Record<number, string>>({});
 
   useEffect(() => {
     loadInventory();
     loadLowStock();
+    loadTransactions();
   }, []);
 
   const loadInventory = async () => {
@@ -37,12 +40,21 @@ export function InventoryPage() {
     }
   };
 
-  const updateQuantity = async (ingredientId: number, newQuantity: number, currentQuantity: number) => {
+  const loadTransactions = async () => {
     try {
-      const delta = newQuantity - currentQuantity;
-      await inventoryApi.updateInventory(ingredientId, { delta });
+      const response = await inventoryApi.getInventoryTransactions(undefined, 50, 0);
+      setTransactions(response.data);
+    } catch (error) {
+      console.error('Ошибка загрузки журнала движений:', error);
+    }
+  };
+
+  const adjustInventory = async (ingredientId: number, delta: number, reason?: string) => {
+    try {
+      await inventoryApi.updateInventory(ingredientId, { delta, reason });
       loadInventory();
       loadLowStock();
+      loadTransactions();
     } catch (error) {
       console.error('Ошибка обновления:', error);
       alert('Ошибка обновления количества');
@@ -83,6 +95,54 @@ export function InventoryPage() {
           </Card>
         )}
 
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Журнал движений склада</CardTitle>
+            <CardDescription>Последние 50 операций</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {transactions.length === 0 ? (
+              <div className="text-sm text-gray-600">Нет записей</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 pr-4">Время</th>
+                      <th className="text-left py-2 pr-4">Ингредиент</th>
+                      <th className="text-left py-2 pr-4">Δ</th>
+                      <th className="text-left py-2 pr-4">Сотрудник</th>
+                      <th className="text-left py-2 pr-4">Причина</th>
+                      <th className="text-left py-2 pr-4">Источник</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transactions.map((t) => (
+                      <tr key={t.id} className="border-b last:border-b-0">
+                        <td className="py-2 pr-4 whitespace-nowrap">
+                          {t.createdAt ? new Date(t.createdAt).toLocaleString() : '—'}
+                        </td>
+                        <td className="py-2 pr-4">
+                          {t.ingredientName ? t.ingredientName : `#${t.ingredientId}`}
+                        </td>
+                        <td className={`py-2 pr-4 font-semibold ${t.delta && t.delta > 0 ? 'text-green-700' : 'text-red-700'}`}>
+                          {t.delta}
+                        </td>
+                        <td className="py-2 pr-4">{t.employeeName ? t.employeeName : 'Система'}</td>
+                        <td className="py-2 pr-4">{t.reason ? t.reason : '—'}</td>
+                        <td className="py-2 pr-4">
+                          {t.source ? t.source : '—'}
+                          {t.orderId ? ` (#${t.orderId})` : ''}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {inventory.map((item) => (
             <Card key={item.id}>
@@ -105,17 +165,33 @@ export function InventoryPage() {
                   <div className="flex gap-2">
                     <Input
                       type="number"
-                      step="0.01"
-                      placeholder="Изменение количества"
+                      step="0.001"
+                      placeholder="Δ количества (Enter)"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           const input = e.target as HTMLInputElement;
                           const delta = parseFloat(input.value);
                           if (!isNaN(delta) && item.ingredientId && item.quantity !== undefined) {
-                            updateQuantity(item.ingredientId, item.quantity + delta, item.quantity);
+                            const reason = item.ingredientId ? reasonByIngredientId[item.ingredientId] : undefined;
+                            adjustInventory(item.ingredientId, delta, reason);
                             input.value = '';
+                            if (item.ingredientId) {
+                              setReasonByIngredientId((prev) => ({ ...prev, [item.ingredientId as number]: '' }));
+                            }
                           }
                         }
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Input
+                      type="text"
+                      placeholder="Причина (опционально)"
+                      value={item.ingredientId ? (reasonByIngredientId[item.ingredientId] ?? '') : ''}
+                      onChange={(e) => {
+                        if (!item.ingredientId) return;
+                        const value = e.target.value;
+                        setReasonByIngredientId((prev) => ({ ...prev, [item.ingredientId as number]: value }));
                       }}
                     />
                   </div>
@@ -128,4 +204,3 @@ export function InventoryPage() {
     </div>
   );
 }
-

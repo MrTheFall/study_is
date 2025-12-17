@@ -1,12 +1,20 @@
 package com.krusty.crab.controller;
 
 import com.krusty.crab.api.OrdersApi;
+import com.krusty.crab.dto.generated.AssignCourierRequest;
 import com.krusty.crab.dto.generated.PlaceOrder201Response;
 import com.krusty.crab.dto.generated.PlaceOrderRequest;
 import com.krusty.crab.dto.generated.UpdateOrderStatusRequest;
+import com.krusty.crab.dto.generated.UpdateOrderPaymentMethodRequest;
 import com.krusty.crab.entity.Order;
+import com.krusty.crab.entity.OrderItem;
+import com.krusty.crab.entity.enums.PaymentMethod;
+import com.krusty.crab.exception.ValidationException;
+import com.krusty.crab.mapper.OrderItemMapper;
 import com.krusty.crab.mapper.OrderMapper;
+import com.krusty.crab.security.UserPrincipal;
 import com.krusty.crab.service.OrderService;
+import com.krusty.crab.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -22,11 +30,23 @@ public class OrdersController implements OrdersApi {
     
     private final OrderService orderService;
     private final OrderMapper orderMapper;
+    private final OrderItemMapper orderItemMapper;
     
     @Override
     public ResponseEntity<PlaceOrder201Response> placeOrder(PlaceOrderRequest placeOrderRequest) {
         log.info("Placing order for client: {}", placeOrderRequest.getClientId());
-        Integer orderId = orderService.placeOrder(placeOrderRequest);
+        UserPrincipal user = SecurityUtil.getCurrentUser();
+        if ("CLIENT".equals(user.getUserType()) && placeOrderRequest.getClientId() != null
+            && !placeOrderRequest.getClientId().equals(user.getUserId())) {
+            throw new ValidationException("Access denied");
+        }
+        if (placeOrderRequest.getType() != null
+            && "delivery".equalsIgnoreCase(placeOrderRequest.getType().getValue())
+            && placeOrderRequest.getPaymentMethod() == null) {
+            throw new ValidationException("paymentMethod is required for delivery orders");
+        }
+        Integer createdByEmployeeId = "EMPLOYEE".equals(user.getUserType()) ? user.getUserId() : null;
+        Integer orderId = orderService.placeOrder(placeOrderRequest, createdByEmployeeId);
         PlaceOrder201Response response = orderMapper.toPlaceOrderResponse(orderId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -34,6 +54,10 @@ public class OrdersController implements OrdersApi {
     @Override
     public ResponseEntity<List<com.krusty.crab.dto.generated.Order>> getAllOrders(com.krusty.crab.dto.generated.OrderStatus status, Integer clientId) {
         log.info("Getting all orders, status: {}, clientId: {}", status, clientId);
+        UserPrincipal user = SecurityUtil.getCurrentUser();
+        if ("CLIENT".equals(user.getUserType())) {
+            clientId = user.getUserId();
+        }
         List<Order> orders;
         if (status != null && clientId != null) {
             orders = orderService.getOrdersByStatusAndClient(status.getValue(), clientId);
@@ -51,6 +75,7 @@ public class OrdersController implements OrdersApi {
     public ResponseEntity<com.krusty.crab.dto.generated.Order> getOrderById(Integer orderId) {
         log.info("Getting order by ID: {}", orderId);
         Order order = orderService.getOrderById(orderId);
+        assertOrderAccess(order);
         com.krusty.crab.dto.generated.Order dto = orderMapper.toDto(order);
         return ResponseEntity.ok(dto);
     }
@@ -58,11 +83,161 @@ public class OrdersController implements OrdersApi {
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.Order> updateOrderStatus(Integer orderId, UpdateOrderStatusRequest updateOrderStatusRequest) {
         log.info("Updating order {} status to {}", orderId, updateOrderStatusRequest.getStatus());
-        com.krusty.crab.entity.enums.OrderStatus newStatus = com.krusty.crab.entity.enums.OrderStatus.fromValue(updateOrderStatusRequest.getStatus().getValue());
-        orderService.updateOrderStatus(orderId, newStatus);
         Order order = orderService.getOrderById(orderId);
-        com.krusty.crab.dto.generated.Order dto = orderMapper.toDto(order);
+        assertOrderAccess(order);
+
+        if (updateOrderStatusRequest.getStatus() == null) {
+            throw new ValidationException("status is required");
+        }
+
+        UserPrincipal user = SecurityUtil.getCurrentUser();
+        String currentStatus = order.getStatus() != null ? order.getStatus().getValue() : null;
+        com.krusty.crab.dto.generated.OrderStatus requestedStatus = updateOrderStatusRequest.getStatus();
+
+        if ("CLIENT".equals(user.getUserType())) {
+            if (requestedStatus != com.krusty.crab.dto.generated.OrderStatus.CANCELLED) {
+                throw new ValidationException("Clients can only cancel their orders");
+            }
+            if (currentStatus == null || !"pending".equalsIgnoreCase(currentStatus)) {
+                throw new ValidationException("Client can only cancel pending orders");
+            }
+        } else if ("EMPLOYEE".equals(user.getUserType())) {
+            String role = user.getRole();
+            if (role == null) {
+                throw new ValidationException("Access denied");
+            }
+
+            if ("Cook".equals(role)) {
+                if (requestedStatus != com.krusty.crab.dto.generated.OrderStatus.PREPARING
+                    && requestedStatus != com.krusty.crab.dto.generated.OrderStatus.READY) {
+                    throw new ValidationException("Cook can only set statuses preparing/ready");
+                }
+            } else if ("Cashier".equals(role)) {
+                if (requestedStatus != com.krusty.crab.dto.generated.OrderStatus.CONFIRMED
+                    && requestedStatus != com.krusty.crab.dto.generated.OrderStatus.CANCELLED
+                    && requestedStatus != com.krusty.crab.dto.generated.OrderStatus.DELIVERING
+                    && requestedStatus != com.krusty.crab.dto.generated.OrderStatus.DELIVERED
+                    && requestedStatus != com.krusty.crab.dto.generated.OrderStatus.COMPLETED) {
+                    throw new ValidationException("Cashier cannot set this status");
+                }
+
+                if (requestedStatus == com.krusty.crab.dto.generated.OrderStatus.CANCELLED) {
+                    if (currentStatus == null
+                        || (!"pending".equalsIgnoreCase(currentStatus) && !"confirmed".equalsIgnoreCase(currentStatus))) {
+                        throw new ValidationException("Cashier can only cancel pending/confirmed orders");
+                    }
+                }
+            } else if (!"Manager".equals(role)) {
+                throw new ValidationException("Access denied");
+            }
+
+            if ((("Cashier".equals(role) || "Manager".equals(role))
+                && requestedStatus == com.krusty.crab.dto.generated.OrderStatus.CONFIRMED
+                && (currentStatus != null && "pending".equalsIgnoreCase(currentStatus)))
+                && order.getPaymentMethod() == PaymentMethod.ONLINE
+                && order.getPayment() == null) {
+                throw new ValidationException("Online orders can only be confirmed after successful payment");
+            }
+
+            if ((("Cashier".equals(role) || "Manager".equals(role))
+                && requestedStatus == com.krusty.crab.dto.generated.OrderStatus.CONFIRMED
+                && (currentStatus != null && "pending".equalsIgnoreCase(currentStatus)))
+                && order.getType() != null
+                && !"delivery".equalsIgnoreCase(order.getType().getValue())
+                && (order.getPaymentMethod() == PaymentMethod.CASH || order.getPaymentMethod() == PaymentMethod.CARD)
+                && order.getPayment() == null) {
+                throw new ValidationException("Orders must be paid before confirmation");
+            }
+
+            if ((("Cashier".equals(role) || "Manager".equals(role))
+                && requestedStatus == com.krusty.crab.dto.generated.OrderStatus.COMPLETED)
+                && order.getType() != null
+                && "delivery".equalsIgnoreCase(order.getType().getValue())
+                && (order.getPaymentMethod() == PaymentMethod.CASH || order.getPaymentMethod() == PaymentMethod.CARD)
+                && order.getPayment() == null) {
+                throw new ValidationException("Delivery orders with pay on receipt must be paid before completion");
+            }
+        } else {
+            throw new ValidationException("Access denied");
+        }
+
+        com.krusty.crab.entity.enums.OrderStatus newStatus = com.krusty.crab.entity.enums.OrderStatus.fromValue(requestedStatus.getValue());
+        Integer acceptedByEmployeeId = null;
+        if ("EMPLOYEE".equals(user.getUserType())
+            && requestedStatus == com.krusty.crab.dto.generated.OrderStatus.CONFIRMED
+            && ("Cashier".equals(user.getRole()) || "Manager".equals(user.getRole()))) {
+            acceptedByEmployeeId = user.getUserId();
+        }
+        orderService.updateOrderStatus(orderId, newStatus, acceptedByEmployeeId);
+        Order updatedOrder = orderService.getOrderById(orderId);
+        com.krusty.crab.dto.generated.Order dto = orderMapper.toDto(updatedOrder);
         return ResponseEntity.ok(dto);
     }
-}
 
+    @Override
+    public ResponseEntity<com.krusty.crab.dto.generated.Order> updateOrderPaymentMethod(
+        Integer orderId,
+        UpdateOrderPaymentMethodRequest updateOrderPaymentMethodRequest
+    ) {
+        log.info("Updating order {} payment method to {}", orderId, updateOrderPaymentMethodRequest.getPaymentMethod());
+        Order order = orderService.getOrderById(orderId);
+        assertOrderAccess(order);
+
+        if (updateOrderPaymentMethodRequest.getPaymentMethod() == null) {
+            throw new ValidationException("paymentMethod is required");
+        }
+
+        String currentStatus = order.getStatus() != null ? order.getStatus().getValue() : null;
+        if (currentStatus == null || !"pending".equalsIgnoreCase(currentStatus)) {
+            throw new ValidationException("Payment method can only be changed for pending orders");
+        }
+
+        UserPrincipal user = SecurityUtil.getCurrentUser();
+        if ("CLIENT".equals(user.getUserType())) {
+            // ok (assertOrderAccess already checked ownership)
+        } else if ("EMPLOYEE".equals(user.getUserType())) {
+            String role = user.getRole();
+            if (!"Cashier".equals(role) && !"Manager".equals(role)) {
+                throw new ValidationException("Access denied");
+            }
+            if (updateOrderPaymentMethodRequest.getPaymentMethod() == com.krusty.crab.dto.generated.PaymentMethod.ONLINE) {
+                throw new ValidationException("Employees cannot set payment method to online");
+            }
+        } else {
+            throw new ValidationException("Access denied");
+        }
+
+        PaymentMethod newMethod = PaymentMethod.fromValue(updateOrderPaymentMethodRequest.getPaymentMethod().getValue());
+        Order updated = orderService.updateOrderPaymentMethod(orderId, newMethod);
+        return ResponseEntity.ok(orderMapper.toDto(updated));
+    }
+
+    @Override
+    public ResponseEntity<List<com.krusty.crab.dto.generated.OrderItem>> getOrderItems(Integer orderId) {
+        log.info("Getting order items for order: {}", orderId);
+        Order order = orderService.getOrderById(orderId);
+        assertOrderAccess(order);
+
+        List<OrderItem> items = orderService.getOrderItems(orderId);
+        return ResponseEntity.ok(orderItemMapper.toDtoList(items));
+    }
+
+    @Override
+    public ResponseEntity<com.krusty.crab.dto.generated.Order> assignCourierToOrder(Integer orderId, AssignCourierRequest assignCourierRequest) {
+        SecurityUtil.requireRole("Manager");
+        log.info("Assigning courier {} to order {}", assignCourierRequest.getCourierId(), orderId);
+
+        Order updated = orderService.assignCourierToOrder(orderId, assignCourierRequest.getCourierId());
+        return ResponseEntity.ok(orderMapper.toDto(updated));
+    }
+
+    private void assertOrderAccess(Order order) {
+        UserPrincipal user = SecurityUtil.getCurrentUser();
+        if ("CLIENT".equals(user.getUserType())) {
+            Integer orderClientId = order.getClient() != null ? order.getClient().getId() : null;
+            if (orderClientId == null || !orderClientId.equals(user.getUserId())) {
+                throw new ValidationException("Access denied");
+            }
+        }
+    }
+}

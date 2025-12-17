@@ -62,10 +62,12 @@ export const ordersApi = new api.OrdersApi(configuration, API_BASE_URL, axiosIns
 export const paymentsApi = new api.PaymentsApi(configuration, API_BASE_URL, axiosInstance as any);
 export const reviewsApi = new api.ReviewsApi(configuration, API_BASE_URL, axiosInstance as any);
 export const inventoryApi = new api.InventoryApi(configuration, API_BASE_URL, axiosInstance as any);
+export const couriersApi = new api.CouriersApi(configuration, API_BASE_URL, axiosInstance as any);
 export const employeesApi = new api.EmployeesApi(configuration, API_BASE_URL, axiosInstance as any);
 export const shiftsApi = new api.ShiftsApi(configuration, API_BASE_URL, axiosInstance as any);
 export const kitchenApi = new api.KitchenApi(configuration, API_BASE_URL, axiosInstance as any);
 export const analyticsApi = new api.AnalyticsApi(configuration, API_BASE_URL, axiosInstance as any);
+export const financeApi = new api.FinanceApi(configuration, API_BASE_URL, axiosInstance as any);
 
 export { axiosInstance };
 export type { AxiosRequestConfig };

@@ -7,8 +7,10 @@ import com.krusty.crab.exception.PaymentException;
 import com.krusty.crab.mapper.PaymentMapper;
 import com.krusty.crab.repository.OrderRepository;
 import com.krusty.crab.repository.PaymentRepository;
+import com.krusty.crab.util.DbErrorUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,18 +24,25 @@ public class PaymentService {
     private final PaymentMapper paymentMapper;
     
     @Transactional
-    public Integer processPayment(Integer orderId, PaymentMethod method) {
+    public Integer processPayment(Integer orderId, PaymentMethod method, boolean simulateFailure) {
         orderRepository.findById(orderId)
             .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
         
         if (paymentRepository.existsByOrderId(orderId)) {
             throw new PaymentException("Payment already exists for order " + orderId);
         }
+
+        if (method == PaymentMethod.ONLINE && simulateFailure) {
+            throw new PaymentException("Online payment failed");
+        }
         
         try {
             Integer paymentId = paymentRepository.callProcessPayment(orderId, method.getValue());
             log.info("Payment processed successfully with ID: {} for order: {}", paymentId, orderId);
             return paymentId;
+        } catch (DataAccessException e) {
+            String dbMessage = DbErrorUtil.extractMeaningfulMessage(e);
+            throw new PaymentException(dbMessage != null ? dbMessage : "Failed to process payment: " + e.getMessage(), e);
         } catch (Exception e) {
             throw new PaymentException("Failed to process payment: " + e.getMessage(), e);
         }
@@ -57,9 +66,8 @@ public class PaymentService {
             throw new PaymentException("Amount received is less than order total");
         }
         
-        processPayment(orderId, PaymentMethod.CASH);
+        processPayment(orderId, PaymentMethod.CASH, false);
         
         return paymentMapper.toChangeResponse(order.getTotalAmount(), amountReceived);
     }
 }
-

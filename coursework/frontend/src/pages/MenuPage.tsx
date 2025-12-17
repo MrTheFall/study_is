@@ -21,8 +21,10 @@ export function MenuPage() {
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [showAddressDialog, setShowAddressDialog] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.Online);
   const [cardData, setCardData] = useState({ number: '', expiry: '', cvv: '' });
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
 
   useEffect(() => {
     loadMenu();
@@ -95,8 +97,8 @@ export function MenuPage() {
     setShowPaymentDialog(true);
   };
 
-  const placeOrder = async () => {
-    if (cart.size === 0) return;
+  const submitOrder = async () => {
+    if (cart.size === 0 && !createdOrderId) return;
     if (!isAuthenticated || !isClient()) {
       setShowPaymentDialog(false);
       setShowLoginDialog(true);
@@ -111,21 +113,24 @@ export function MenuPage() {
       return;
     }
 
+    const isOnlinePayment = paymentMethod === PaymentMethod.Online;
     const sanitizedCardNumber = cardData.number.replace(/\s+/g, '');
     const sanitizedExpiry = cardData.expiry.trim();
     const sanitizedCvv = cardData.cvv.trim();
 
-    if (!/^[0-9]{16}$/.test(sanitizedCardNumber)) {
-      setPaymentError('Введите корректный номер карты (16 цифр)');
-      return;
-    }
-    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(sanitizedExpiry)) {
-      setPaymentError('Срок действия в формате ММ/ГГ');
-      return;
-    }
-    if (!/^[0-9]{3,4}$/.test(sanitizedCvv)) {
-      setPaymentError('CVV должен содержать 3-4 цифры');
-      return;
+    if (isOnlinePayment) {
+      if (!/^[0-9]{16}$/.test(sanitizedCardNumber)) {
+        setPaymentError('Введите корректный номер карты (16 цифр)');
+        return;
+      }
+      if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(sanitizedExpiry)) {
+        setPaymentError('Срок действия в формате ММ/ГГ');
+        return;
+      }
+      if (!/^[0-9]{3,4}$/.test(sanitizedCvv)) {
+        setPaymentError('CVV должен содержать 3-4 цифры');
+        return;
+      }
     }
 
     setIsPlacingOrder(true);
@@ -158,34 +163,55 @@ export function MenuPage() {
         throw new Error('Только клиенты могут оформлять заказы. Войдите как клиент.');
       }
 
-      const items = Array.from(cart.entries()).map(([menuItemId, quantity]) => ({
-        menuItemId,
-        quantity,
-      }));
+      let orderId = createdOrderId;
 
-      const requestData: any = {
-        clientId: user.userId,
-        type: OrderType.Delivery,
-        items,
-        deliveryAddress,
-      };
+      if (orderId == null) {
+        const items = Array.from(cart.entries()).map(([menuItemId, quantity]) => ({
+          menuItemId,
+          quantity,
+        }));
 
-      const orderResponse = await ordersApi.placeOrder(requestData);
-      const orderId = orderResponse.data.orderId;
-      if (!orderId) {
-        throw new Error('Заказ создан, но не удалось получить его номер.');
+        const requestData: any = {
+          clientId: user.userId,
+          type: OrderType.Delivery,
+          paymentMethod,
+          items,
+          deliveryAddress,
+        };
+
+        const orderResponse = await ordersApi.placeOrder(requestData);
+        const newOrderId = orderResponse.data.orderId;
+        if (newOrderId == null) {
+          throw new Error('Заказ создан, но не удалось получить его номер.');
+        }
+
+        orderId = newOrderId;
+        setCreatedOrderId(newOrderId);
+        setCart(new Map());
       }
 
-      await paymentsApi.processPayment({
-        orderId,
-        method: PaymentMethod.Card,
-      });
+      if (createdOrderId != null) {
+        await ordersApi.updateOrderPaymentMethod(createdOrderId, { paymentMethod });
+      }
 
-      await ordersApi.updateOrderStatus(orderId, { status: OrderStatus.Confirmed });
+      if (paymentMethod === PaymentMethod.Online) {
+        const simulateFailure = sanitizedCardNumber === '0000000000000000';
+        await paymentsApi.processPayment({
+          orderId,
+          method: PaymentMethod.Online,
+          simulateFailure,
+        });
 
-      setCart(new Map());
+        setCreatedOrderId(null);
+        setShowPaymentDialog(false);
+        alert('Оплата прошла успешно. Заказ отправлен на кухню.');
+        navigate('/orders');
+        return;
+      }
+
+      setCreatedOrderId(null);
       setShowPaymentDialog(false);
-      alert('Оплата прошла успешно. Заказ отправлен на кухню.');
+      alert('Заказ создан. Оплата при получении. Ожидайте подтверждения.');
       navigate('/orders');
     } catch (error: any) {
       console.error('Order placement error:', error);
@@ -194,6 +220,21 @@ export function MenuPage() {
       alert(errorMessage);
     } finally {
       setIsPlacingOrder(false);
+    }
+  };
+
+  const cancelCreatedOrder = async () => {
+    if (!createdOrderId) return;
+    try {
+      await ordersApi.updateOrderStatus(createdOrderId, { status: OrderStatus.Cancelled });
+      setCreatedOrderId(null);
+      setShowPaymentDialog(false);
+      setPaymentError(null);
+      alert('Заказ отменён');
+    } catch (error: any) {
+      console.error('Order cancellation error:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Не удалось отменить заказ';
+      alert(errorMessage);
     }
   };
 
@@ -280,7 +321,7 @@ export function MenuPage() {
                     Товаров в корзине: {Array.from(cart.values()).reduce((a, b) => a + b, 0)}
                   </p>
                   <p className="text-sm text-gray-500">
-                    Заказы с сайта — только доставка и оплата картой онлайн.
+                    Заказы с сайта — доставка. Оплата: онлайн или при получении.
                   </p>
                 </div>
                 <Button onClick={startCheckout} disabled={isPlacingOrder}>
@@ -335,44 +376,71 @@ export function MenuPage() {
             setShowPaymentDialog(open);
             if (!open) {
               setPaymentError(null);
+              setCreatedOrderId(null);
             }
           }}
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Оплата картой</DialogTitle>
+              <DialogTitle>Оформление заказа</DialogTitle>
               <DialogDescription>
-                Оплата проходит в тестовом режиме. После подтверждения заказ сразу уйдет на кухню.
+                Онлайн‑оплата работает в тестовом режиме. Для симуляции отказа введите номер карты 0000 0000 0000 0000.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
-              <Input
-                placeholder="Номер карты"
-                value={cardData.number}
-                onChange={(e) => setCardData({ ...cardData, number: e.target.value })}
-              />
-              <div className="flex gap-2">
-                <Input
-                  placeholder="MM/YY"
-                  value={cardData.expiry}
-                  onChange={(e) => setCardData({ ...cardData, expiry: e.target.value })}
-                />
-                <Input
-                  placeholder="CVV"
-                  value={cardData.cvv}
-                  onChange={(e) => setCardData({ ...cardData, cvv: e.target.value })}
-                />
+              <div>
+                <label className="block text-sm font-medium mb-1">Способ оплаты</label>
+                <select
+                  className="w-full h-10 rounded-md border border-gray-300 px-3"
+                  value={paymentMethod}
+                  onChange={(e) => {
+                    setPaymentMethod(e.target.value as PaymentMethod);
+                    setPaymentError(null);
+                  }}
+                >
+                  <option value={PaymentMethod.Online}>Онлайн</option>
+                  <option value={PaymentMethod.Cash}>При получении (наличные)</option>
+                  <option value={PaymentMethod.Card}>При получении (карта)</option>
+                </select>
               </div>
+              {paymentMethod === PaymentMethod.Online && (
+                <>
+                  <Input
+                    placeholder="Номер карты"
+                    value={cardData.number}
+                    onChange={(e) => setCardData({ ...cardData, number: e.target.value })}
+                  />
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="MM/YY"
+                      value={cardData.expiry}
+                      onChange={(e) => setCardData({ ...cardData, expiry: e.target.value })}
+                    />
+                    <Input
+                      placeholder="CVV"
+                      value={cardData.cvv}
+                      onChange={(e) => setCardData({ ...cardData, cvv: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
               {paymentError && (
                 <p className="text-red-600 text-sm">{paymentError}</p>
               )}
             </div>
             <DialogFooter>
+              {paymentError && createdOrderId && (
+                <Button variant="destructive" onClick={cancelCreatedOrder} disabled={isPlacingOrder}>
+                  Отменить заказ
+                </Button>
+              )}
               <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>
                 Отмена
               </Button>
-              <Button onClick={placeOrder} disabled={isPlacingOrder}>
-                {isPlacingOrder ? 'Оплата...' : 'Оплатить и отправить'}
+              <Button onClick={submitOrder} disabled={isPlacingOrder}>
+                {isPlacingOrder
+                  ? (paymentMethod === PaymentMethod.Online ? 'Оплата...' : 'Оформление...')
+                  : (paymentMethod === PaymentMethod.Online ? 'Оплатить' : 'Создать заказ')}
               </Button>
             </DialogFooter>
           </DialogContent>

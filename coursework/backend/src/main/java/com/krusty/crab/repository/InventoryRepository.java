@@ -17,10 +17,11 @@ public interface InventoryRepository extends JpaRepository<InventoryRecord, Inte
     @Query(value = "SELECT * FROM low_stock(:thresholdFactor)", nativeQuery = true)
     List<Object[]> callLowStock(@Param("thresholdFactor") Double thresholdFactor);
     
-    @Query(value = "SELECT restock_ingredient(:ingredientId, :delta)", nativeQuery = true)
-    void callRestockIngredient(
+    @Query(value = "SELECT adjust_inventory(:ingredientId, :delta, :reason, :employeeId)", nativeQuery = true)
+    void callAdjustInventory(
         @Param("ingredientId") Integer ingredientId,
-        @Param("delta") Double delta
+        @Param("delta") Double delta,
+        @Param("reason") String reason,
+        @Param("employeeId") Integer employeeId
     );
 }
-

@@ -28,6 +28,8 @@ tags:
     description: Управление меню
   - name: orders
     description: Управление заказами
+  - name: couriers
+    description: Управление курьерами
   - name: payments
     description: Обработка платежей
   - name: reviews
@@ -42,6 +44,8 @@ tags:
     description: Очередь заказов для кухни
   - name: analytics
     description: Аналитика и отчеты
+  - name: finance
+    description: Финансы и расходы
 
 paths:
   # ========== AUTH ==========
@@ -298,6 +302,31 @@ paths:
                 items:
                   $ref: '#/components/schemas/Order'
 
+  /clients/{clientId}/password:
+    patch:
+      tags:
+        - clients
+      summary: Сменить пароль клиента
+      description: Смена пароля клиента (UC-8). Требует текущий пароль.
+      operationId: changeClientPassword
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ClientId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '204':
+          description: Пароль изменен
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   # ========== MENU ==========
   /menu:
     get:
@@ -525,6 +554,213 @@ paths:
                 $ref: '#/components/schemas/Order'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /orders/{orderId}/payment-method:
+    patch:
+      tags:
+        - orders
+      summary: Обновить способ оплаты заказа
+      description: Обновление выбранного способа оплаты для заказа (UC-2)
+      operationId: updateOrderPaymentMethod
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - paymentMethod
+              properties:
+                paymentMethod:
+                  $ref: '#/components/schemas/PaymentMethod'
+      responses:
+        '200':
+          description: Заказ обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /orders/{orderId}/items:
+    get:
+      tags:
+        - orders
+      summary: Получить позиции заказа
+      description: Получение списка позиций (строк) заказа.
+      operationId: getOrderItems
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Список позиций заказа
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /orders/{orderId}/courier:
+    patch:
+      tags:
+        - orders
+      summary: Назначить курьера на заказ
+      description: Назначение/снятие курьера для delivery-заказа (UC-2).
+      operationId: assignCourierToOrder
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignCourierRequest'
+      responses:
+        '200':
+          description: Заказ обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ========== COURIERS ==========
+  /couriers:
+    get:
+      tags:
+        - couriers
+      summary: Получить список курьеров
+      description: Получение списка всех курьеров (для управляющего)
+      operationId: getAllCouriers
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список курьеров
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Courier'
+
+    post:
+      tags:
+        - couriers
+      summary: Создать курьера
+      description: Создание нового курьера (для управляющего)
+      operationId: createCourier
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourierCreateRequest'
+      responses:
+        '201':
+          description: Курьер создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Courier'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Курьер с таким телефоном уже существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /couriers/{courierId}:
+    get:
+      tags:
+        - couriers
+      summary: Получить курьера по ID
+      description: Получение информации о курьере (для управляющего)
+      operationId: getCourierById
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CourierId'
+      responses:
+        '200':
+          description: Информация о курьере
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Courier'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - couriers
+      summary: Обновить курьера
+      description: Обновление информации о курьере (для управляющего)
+      operationId: updateCourier
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CourierId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourierCreateRequest'
+      responses:
+        '200':
+          description: Курьер обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Courier'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Курьер с таким телефоном уже существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - couriers
+      summary: Удалить курьера
+      description: Удаление курьера (для управляющего)
+      operationId: deleteCourier
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CourierId'
+      responses:
+        '204':
+          description: Курьер удален
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -773,6 +1009,46 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/LowStockItem'
+
+  /inventory/transactions:
+    get:
+      tags:
+        - inventory
+      summary: Журнал движений склада
+      description: Получение журнала движений склада (приход/расход, причина, сотрудник, время)
+      operationId: getInventoryTransactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ingredientId
+          in: query
+          description: Фильтр по ингредиенту
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          description: Максимум записей
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 500
+        - name: offset
+          in: query
+          description: Смещение (пагинация)
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: Журнал движений склада
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InventoryTransaction'
 
   # ========== EMPLOYEES ==========
   /employees:
@@ -1175,6 +1451,212 @@ paths:
                 items:
                   $ref: '#/components/schemas/TopMenuItem'
 
+  /analytics/sales/by-employee:
+    get:
+      tags:
+        - analytics
+      summary: Продажи по сотрудникам
+      description: Разрез продаж по сотрудникам (кассир/управляющий) за период (UC-4)
+      operationId: getSalesByEmployee
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: from
+          in: query
+          description: Начало периода
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: Конец периода
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Продажи по сотрудникам
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SalesByEmployeeItem'
+
+  /analytics/sales/by-time-of-day:
+    get:
+      tags:
+        - analytics
+      summary: Продажи по времени суток
+      description: Разрез продаж по времени суток (morning/day/evening/night) за период (UC-4)
+      operationId: getSalesByTimeOfDay
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: from
+          in: query
+          description: Начало периода
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: Конец периода
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Продажи по времени суток
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SalesByTimeOfDayItem'
+
+  /analytics/report-views:
+    get:
+      tags:
+        - analytics
+      summary: История просмотров отчётов
+      description: Получение истории просмотров отчётов (UC-4 шаг 4)
+      operationId: getReportViews
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Максимум записей
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 500
+        - name: offset
+          in: query
+          description: Смещение (пагинация)
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: История просмотров отчётов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportView'
+
+  /analytics/financial:
+    get:
+      tags:
+        - analytics
+      summary: Финансовая сводка
+      description: Финансовый отчёт за период (выручка + расходы) (UC-13)
+      operationId: getFinancialSummary
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: from
+          in: query
+          description: Начало периода
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: Конец периода
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Финансовая сводка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinancialSummary'
+
+  # ========== FINANCE ==========
+  /salary-payments:
+    get:
+      tags:
+        - finance
+      summary: История выплат зарплат
+      operationId: getSalaryPayments
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: employeeId
+          in: query
+          description: Фильтр по сотруднику
+          schema:
+            type: integer
+        - name: from
+          in: query
+          description: Начало периода
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: Конец периода
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          description: Максимум записей
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 500
+        - name: offset
+          in: query
+          description: Смещение (пагинация)
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: История выплат зарплат
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SalaryPayment'
+
+    post:
+      tags:
+        - finance
+      summary: Зафиксировать выплату зарплаты
+      operationId: createSalaryPayment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalaryPaymentCreateRequest'
+      responses:
+        '201':
+          description: Выплата создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalaryPayment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1207,6 +1689,14 @@ components:
       schema:
         type: integer
       description: ID блюда
+
+    CourierId:
+      name: courierId
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: ID курьера
 
   responses:
     BadRequest:
@@ -1274,6 +1764,51 @@ components:
         defaultAddress:
           type: string
 
+    ChangePasswordRequest:
+      type: object
+      required:
+        - currentPassword
+        - newPassword
+      properties:
+        currentPassword:
+          type: string
+          format: password
+        newPassword:
+          type: string
+          format: password
+          minLength: 6
+
+    Courier:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        vehicleInfo:
+          type: string
+        available:
+          type: boolean
+        busy:
+          type: boolean
+
+    CourierCreateRequest:
+      type: object
+      required:
+        - name
+        - phone
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        vehicleInfo:
+          type: string
+        available:
+          type: boolean
+
     MenuItem:
       type: object
       properties:
@@ -1319,10 +1854,30 @@ components:
           type: integer
         clientId:
           type: integer
+        createdByEmployeeId:
+          type: integer
+          nullable: true
+        acceptedByEmployeeId:
+          type: integer
+          nullable: true
         type:
           $ref: '#/components/schemas/OrderType'
         status:
           $ref: '#/components/schemas/OrderStatus'
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentMethod'
+        preparingAt:
+          type: string
+          format: date-time
+          nullable: true
+        readyAt:
+          type: string
+          format: date-time
+          nullable: true
+        cookingDurationSeconds:
+          type: integer
+          minimum: 0
+          nullable: true
         createdAt:
           type: string
           format: date-time
@@ -1334,6 +1889,9 @@ components:
           format: decimal
         courierId:
           type: integer
+          nullable: true
+        courier:
+          $ref: '#/components/schemas/Courier'
           nullable: true
         deliveredAt:
           type: string
@@ -1373,6 +1931,8 @@ components:
           type: integer
         type:
           $ref: '#/components/schemas/OrderType'
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentMethod'
         deliveryAddress:
           type: string
         items:
@@ -1394,6 +1954,37 @@ components:
         unitPrice:
           type: number
           format: decimal
+
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        orderId:
+          type: integer
+        menuItemId:
+          type: integer
+        name:
+          type: string
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+          format: decimal
+        totalPrice:
+          type: number
+          format: decimal
+        note:
+          type: string
+
+    AssignCourierRequest:
+      type: object
+      required:
+        - courierId
+      properties:
+        courierId:
+          type: integer
+          nullable: true
 
     Payment:
       type: object
@@ -1431,6 +2022,10 @@ components:
           type: integer
         method:
           $ref: '#/components/schemas/PaymentMethod'
+        simulateFailure:
+          type: boolean
+          description: Только для метода online - принудительно смоделировать ошибку платежа (UC-2 альтернативный поток 6а)
+          default: false
 
     CashPaymentRequest:
       type: object
@@ -1517,6 +2112,8 @@ components:
         delta:
           type: number
           format: double
+        reason:
+          type: string
 
     LowStockItem:
       type: object
@@ -1531,6 +2128,112 @@ components:
         minThreshold:
           type: number
           format: decimal
+
+    InventoryTransaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        ingredientId:
+          type: integer
+        ingredientName:
+          type: string
+        delta:
+          type: number
+          format: decimal
+        reason:
+          type: string
+        source:
+          type: string
+        employeeId:
+          type: integer
+        employeeName:
+          type: string
+        orderId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    ReportView:
+      type: object
+      properties:
+        id:
+          type: integer
+        employeeId:
+          type: integer
+        employeeName:
+          type: string
+        report:
+          type: string
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        viewedAt:
+          type: string
+          format: date-time
+
+    FinancialSummary:
+      type: object
+      properties:
+        hasData:
+          type: boolean
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        revenue:
+          type: number
+          format: decimal
+        ingredientExpenses:
+          type: number
+          format: decimal
+        salaryExpenses:
+          type: number
+          format: decimal
+        profit:
+          type: number
+          format: decimal
+
+    SalaryPaymentCreateRequest:
+      type: object
+      required:
+        - employeeId
+        - amount
+      properties:
+        employeeId:
+          type: integer
+        amount:
+          type: number
+          format: decimal
+        note:
+          type: string
+        paidAt:
+          type: string
+          format: date-time
+
+    SalaryPayment:
+      type: object
+      properties:
+        id:
+          type: integer
+        employeeId:
+          type: integer
+        employeeName:
+          type: string
+        amount:
+          type: number
+          format: decimal
+        note:
+          type: string
+        paidAt:
+          type: string
+          format: date-time
 
     Employee:
       type: object
@@ -1632,6 +2335,18 @@ components:
           format: date-time
         status:
           type: string
+        preparingAt:
+          type: string
+          format: date-time
+          nullable: true
+        readyAt:
+          type: string
+          format: date-time
+          nullable: true
+        cookingDurationSeconds:
+          type: integer
+          minimum: 0
+          nullable: true
         items:
           type: array
           items:
@@ -1652,12 +2367,45 @@ components:
     SalesSummary:
       type: object
       properties:
+        hasData:
+          type: boolean
         fromTs:
           type: string
           format: date-time
         toTs:
           type: string
           format: date-time
+        ordersCnt:
+          type: integer
+        revenue:
+          type: number
+          format: decimal
+        avgTicket:
+          type: number
+          format: decimal
+
+    SalesByEmployeeItem:
+      type: object
+      properties:
+        employeeId:
+          type: integer
+        employeeName:
+          type: string
+        ordersCnt:
+          type: integer
+        revenue:
+          type: number
+          format: decimal
+        avgTicket:
+          type: number
+          format: decimal
+
+    SalesByTimeOfDayItem:
+      type: object
+      properties:
+        bucket:
+          type: string
+          description: Время суток (morning/day/evening/night)
         ordersCnt:
           type: integer
         revenue:
@@ -1687,4 +2435,3 @@ components:
           type: string
         message:
           type: string
-

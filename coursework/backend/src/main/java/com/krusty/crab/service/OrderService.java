@@ -6,12 +6,19 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.krusty.crab.dto.generated.KitchenQueueItem;
 import com.krusty.crab.dto.generated.OrderItemInfo;
 import com.krusty.crab.dto.generated.PlaceOrderRequest;
+import com.krusty.crab.entity.Courier;
+import com.krusty.crab.entity.Employee;
 import com.krusty.crab.entity.Order;
+import com.krusty.crab.entity.OrderItem;
 import com.krusty.crab.entity.enums.OrderStatus;
+import com.krusty.crab.entity.enums.PaymentMethod;
 import com.krusty.crab.exception.EntityNotFoundException;
 import com.krusty.crab.exception.OrderException;
+import com.krusty.crab.repository.CourierRepository;
+import com.krusty.crab.repository.EmployeeRepository;
+import com.krusty.crab.repository.OrderItemRepository;
 import com.krusty.crab.repository.OrderRepository;
-import lombok.RequiredArgsConstructor;
+import com.krusty.crab.util.DbErrorUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
@@ -30,15 +37,35 @@ import java.util.Map;
 public class OrderService {
     
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final CourierRepository courierRepository;
+    private final EmployeeRepository employeeRepository;
     private final ObjectMapper objectMapper;
+
+    private static final List<OrderStatus> COURIER_BUSY_STATUSES = List.of(
+        OrderStatus.PENDING,
+        OrderStatus.CONFIRMED,
+        OrderStatus.PREPARING,
+        OrderStatus.READY,
+        OrderStatus.DELIVERING
+    );
     
-    public OrderService(OrderRepository orderRepository, ObjectMapper objectMapper) {
+    public OrderService(
+        OrderRepository orderRepository,
+        OrderItemRepository orderItemRepository,
+        CourierRepository courierRepository,
+        EmployeeRepository employeeRepository,
+        ObjectMapper objectMapper
+    ) {
         this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
+        this.courierRepository = courierRepository;
+        this.employeeRepository = employeeRepository;
         this.objectMapper = objectMapper;
     }
     
     @Transactional
-    public Integer placeOrder(PlaceOrderRequest request) {
+    public Integer placeOrder(PlaceOrderRequest request, Integer createdByEmployeeId) {
         try {
             List<Map<String, Object>> itemsJson = new ArrayList<>();
             for (com.krusty.crab.dto.generated.OrderItemRequest item : request.getItems()) {
@@ -52,19 +79,36 @@ public class OrderService {
             }
             
             String itemsJsonb = objectMapper.writeValueAsString(itemsJson);
+
+            String paymentMethod = request.getPaymentMethod() != null ? request.getPaymentMethod().getValue() : null;
             
             Integer orderId = orderRepository.callPlaceOrder(
                 request.getClientId(),
                 request.getType() != null ? request.getType().getValue() : null,
                 request.getDeliveryAddress(),
+                paymentMethod,
                 itemsJsonb
             );
+
+            if (createdByEmployeeId != null) {
+                Employee employee = employeeRepository.findById(createdByEmployeeId)
+                    .orElseThrow(() -> new EntityNotFoundException("Employee", createdByEmployeeId));
+                Order order = getOrderById(orderId);
+                if (order.getCreatedByEmployee() == null) {
+                    order.setCreatedByEmployee(employee);
+                    orderRepository.save(order);
+                }
+            }
             
             log.info("Order placed successfully with ID: {}", orderId);
             return orderId;
         } catch (JsonProcessingException e) {
             log.error("Error converting items to JSON", e);
             throw new OrderException("Failed to convert order items to JSON", e);
+        } catch (DataAccessException e) {
+            String dbMessage = DbErrorUtil.extractMeaningfulMessage(e);
+            log.error("Database error placing order", e);
+            throw new OrderException(dbMessage != null ? dbMessage : "Failed to place order: " + e.getMessage(), e);
         } catch (Exception e) {
             log.error("Error placing order", e);
             throw new OrderException("Failed to place order: " + e.getMessage(), e);
@@ -72,13 +116,25 @@ public class OrderService {
     }
     
     @Transactional
-    public void updateOrderStatus(Integer orderId, OrderStatus newStatus) {
+    public void updateOrderStatus(Integer orderId, OrderStatus newStatus, Integer acceptedByEmployeeId) {
         try {
             orderRepository.callUpdateOrderStatus(orderId, newStatus.getValue());
+            if (newStatus == OrderStatus.CONFIRMED && acceptedByEmployeeId != null) {
+                Employee employee = employeeRepository.findById(acceptedByEmployeeId)
+                    .orElseThrow(() -> new EntityNotFoundException("Employee", acceptedByEmployeeId));
+                Order order = getOrderById(orderId);
+                if (order.getAcceptedByEmployee() == null) {
+                    order.setAcceptedByEmployee(employee);
+                    orderRepository.save(order);
+                }
+            }
             log.info("Order {} status updated to {}", orderId, newStatus);
-        } catch (org.springframework.dao.DataAccessException e) {
-            String errorMessage = e.getMessage();
+        } catch (DataAccessException e) {
+            String errorMessage = DbErrorUtil.extractMeaningfulMessage(e);
             if (errorMessage != null) {
+                if (errorMessage.contains("insufficient ingredients")) {
+                    throw new OrderException(errorMessage);
+                }
                 if (errorMessage.contains("transition") && errorMessage.contains("is not allowed")) {
                     String message = "Status transition is not allowed";
                     if (errorMessage.contains("->")) {
@@ -101,6 +157,19 @@ public class OrderService {
             throw new OrderException("Failed to update order status: " + e.getMessage(), e);
         }
     }
+
+    @Transactional
+    public Order updateOrderPaymentMethod(Integer orderId, PaymentMethod paymentMethod) {
+        Order order = getOrderById(orderId);
+        if (order.getPayment() != null) {
+            throw new OrderException("Cannot change payment method after payment is processed");
+        }
+
+        order.setPaymentMethod(paymentMethod);
+        Order saved = orderRepository.save(order);
+        log.info("Order {} payment method updated to {}", orderId, paymentMethod != null ? paymentMethod.getValue() : null);
+        return saved;
+    }
     
     public List<KitchenQueueItem> getKitchenQueue() {
         List<Object[]> results = orderRepository.callGetKitchenQueue();
@@ -111,7 +180,10 @@ public class OrderService {
                 Integer orderId = row[0] != null ? ((Number) row[0]).intValue() : null;
                 OffsetDateTime createdAt = extractCreatedAt(row[1]);
                 String status = row[2] != null ? row[2].toString() : null;
-                String itemsJson = row[3] != null ? row[3].toString() : null;
+                OffsetDateTime preparingAt = extractCreatedAt(row[3]);
+                OffsetDateTime readyAt = extractCreatedAt(row[4]);
+                Integer cookingDurationSeconds = row[5] != null ? ((Number) row[5]).intValue() : null;
+                String itemsJson = row[6] != null ? row[6].toString() : null;
                 
                 List<OrderItemInfo> items = parseItemsJson(itemsJson);
                 
@@ -119,6 +191,9 @@ public class OrderService {
                 item.setOrderId(orderId);
                 item.setCreatedAt(createdAt);
                 item.setStatus(status);
+                item.setPreparingAt(preparingAt);
+                item.setReadyAt(readyAt);
+                item.setCookingDurationSeconds(cookingDurationSeconds);
                 item.setItems(items);
                 
                 queue.add(item);
@@ -192,5 +267,50 @@ public class OrderService {
         return orderRepository.findByClientId(clientId).stream()
             .filter(order -> order.getStatus() != null && order.getStatus().getValue().equals(status))
             .collect(java.util.stream.Collectors.toList());
+    }
+
+    public List<OrderItem> getOrderItems(Integer orderId) {
+        getOrderById(orderId);
+        return orderItemRepository.findDetailedByOrderId(orderId);
+    }
+
+    @Transactional
+    public Order assignCourierToOrder(Integer orderId, Integer courierId) {
+        Order order = getOrderById(orderId);
+        if (order.getType() == null || !"delivery".equalsIgnoreCase(order.getType().getValue())) {
+            throw new OrderException("Courier can only be assigned to delivery orders");
+        }
+        if (order.getStatus() == OrderStatus.DELIVERED
+            || order.getStatus() == OrderStatus.COMPLETED
+            || order.getStatus() == OrderStatus.CANCELLED) {
+            throw new OrderException("Courier cannot be assigned to closed delivery orders");
+        }
+
+        Courier courier = null;
+        if (courierId != null) {
+            courier = courierRepository.findById(courierId)
+                .orElseThrow(() -> new EntityNotFoundException("Courier", courierId));
+
+            if (Boolean.FALSE.equals(courier.getAvailable())) {
+                throw new OrderException("Courier is not available");
+            }
+
+            Integer currentCourierId = order.getCourier() != null ? order.getCourier().getId() : null;
+            if (currentCourierId == null || !currentCourierId.equals(courierId)) {
+                boolean busy = orderRepository.existsByCourier_IdAndStatusInAndIdNot(
+                    courierId,
+                    COURIER_BUSY_STATUSES,
+                    orderId
+                );
+                if (busy) {
+                    throw new OrderException("Courier is busy");
+                }
+            }
+        }
+
+        order.setCourier(courier);
+        Order saved = orderRepository.save(order);
+        log.info("Order {} courier set to {}", orderId, courierId);
+        return saved;
     }
 }

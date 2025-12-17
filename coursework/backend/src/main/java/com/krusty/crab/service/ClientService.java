@@ -4,6 +4,7 @@ import com.krusty.crab.entity.Client;
 import com.krusty.crab.entity.Order;
 import com.krusty.crab.exception.DuplicateEntityException;
 import com.krusty.crab.exception.EntityNotFoundException;
+import com.krusty.crab.exception.ValidationException;
 import com.krusty.crab.repository.ClientRepository;
 import com.krusty.crab.repository.OrderRepository;
 import com.krusty.crab.util.PasswordUtil;
@@ -88,5 +89,15 @@ public class ClientService {
         getClientById(clientId); 
         return orderRepository.findByClientIdOrderByCreatedAtDesc(clientId);
     }
-}
 
+    @Transactional
+    public void changePassword(Integer clientId, String currentPassword, String newPassword) {
+        Client client = getClientById(clientId);
+        if (!PasswordUtil.matches(currentPassword, client.getPasswordHash())) {
+            throw new ValidationException("currentPassword", "is incorrect");
+        }
+        client.setPasswordHash(PasswordUtil.encode(newPassword));
+        clientRepository.save(client);
+        log.info("Client {} password changed", clientId);
+    }
+}

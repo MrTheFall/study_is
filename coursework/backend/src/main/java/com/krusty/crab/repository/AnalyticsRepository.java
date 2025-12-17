@@ -24,5 +24,22 @@ public interface AnalyticsRepository extends JpaRepository<Order, Integer> {
         @Param("toTs") LocalDateTime toTs,
         @Param("limit") Integer limit
     );
-}
 
+    @Query(value = "SELECT * FROM sales_by_employee(:fromTs, :toTs)", nativeQuery = true)
+    List<Object[]> callSalesByEmployee(
+        @Param("fromTs") LocalDateTime fromTs,
+        @Param("toTs") LocalDateTime toTs
+    );
+
+    @Query(value = "SELECT * FROM sales_by_time_of_day(:fromTs, :toTs)", nativeQuery = true)
+    List<Object[]> callSalesByTimeOfDay(
+        @Param("fromTs") LocalDateTime fromTs,
+        @Param("toTs") LocalDateTime toTs
+    );
+
+    @Query(value = "SELECT * FROM financial_summary(:fromTs, :toTs)", nativeQuery = true)
+    List<Object[]> callFinancialSummary(
+        @Param("fromTs") LocalDateTime fromTs,
+        @Param("toTs") LocalDateTime toTs
+    );
+}

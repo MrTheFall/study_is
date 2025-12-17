@@ -13,6 +13,7 @@ import { KitchenPage } from './pages/KitchenPage';
 import { InventoryPage } from './pages/InventoryPage';
 import { EmployeesPage } from './pages/EmployeesPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
+import { CouriersPage } from './pages/CouriersPage';
 import { PaymentsPage } from './pages/PaymentsPage';
 import { ShiftsPage } from './pages/ShiftsPage';
 import { GetCurrentUser200ResponseUserTypeEnum } from './api/generated/api';
@@ -119,6 +120,14 @@ function App() {
           element={
             <ProtectedRoute requireManager>
               <AnalyticsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/couriers"
+          element={
+            <ProtectedRoute requireManager>
+              <CouriersPage />
             </ProtectedRoute>
           }
         />

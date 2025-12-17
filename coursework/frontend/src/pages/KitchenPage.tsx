@@ -38,6 +38,19 @@ export function KitchenPage() {
     }
   };
 
+  const formatDuration = (totalSeconds: number) => {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
+  };
+
+  const secondsSince = (iso: string | null | undefined) => {
+    if (!iso) return null;
+    const from = new Date(iso).getTime();
+    if (Number.isNaN(from)) return null;
+    return Math.max(0, Math.floor((Date.now() - from) / 1000));
+  };
+
   if (loading) {
     return <div className="p-8 text-center">Загрузка очереди...</div>;
   }
@@ -52,42 +65,75 @@ export function KitchenPage() {
           <h1 className="text-3xl font-bold">Очередь кухни</h1>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {queue.map((item) => (
-            <Card key={item.orderId} className={
-              item.status?.toLowerCase() === 'preparing' ? 'border-yellow-500' :
-              item.status?.toLowerCase() === 'ready' ? 'border-green-500' :
-              'border-gray-300'
-            }>
-              <CardHeader>
-                <CardTitle>Заказ #{item.orderId}</CardTitle>
-                <CardDescription>
-                  {formatDate(item.createdAt!)}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 mb-4">
-                  {item.items?.map((orderItem, idx) => (
-                    <div key={idx} className="flex justify-between">
-                      <span>{orderItem.name || `Позиция #${orderItem.menuItemId}`}</span>
-                      <span className="font-semibold">x{orderItem.quantity}</span>
+          {queue.map((item) => {
+            const status = item.status?.toLowerCase();
+            const cookingDurationSeconds =
+              typeof item.cookingDurationSeconds === 'number' ? item.cookingDurationSeconds : null;
+            const cookingSecondsFallback =
+              item.readyAt && item.preparingAt
+                ? Math.max(0, Math.floor((new Date(item.readyAt).getTime() - new Date(item.preparingAt).getTime()) / 1000))
+                : null;
+            const cookingSeconds = cookingDurationSeconds ?? cookingSecondsFallback;
+            const elapsedPreparingSeconds = secondsSince(item.preparingAt);
+
+            return (
+              <Card
+                key={item.orderId}
+                className={
+                  status === 'preparing'
+                    ? 'border-yellow-500'
+                    : status === 'ready'
+                      ? 'border-green-500'
+                      : 'border-gray-300'
+                }
+              >
+                <CardHeader>
+                  <CardTitle>Заказ #{item.orderId}</CardTitle>
+                  <CardDescription>{formatDate(item.createdAt!)}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 mb-4">
+                    {item.items?.map((orderItem, idx) => (
+                      <div key={idx} className="flex justify-between">
+                        <span>{orderItem.name || `Позиция #${orderItem.menuItemId}`}</span>
+                        <span className="font-semibold">x{orderItem.quantity}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {(status === 'preparing' || status === 'ready') && (
+                    <div className="text-sm text-gray-600 mb-4">
+                      {status === 'preparing' && (
+                        <p>
+                          <strong>Готовится:</strong>{' '}
+                          {elapsedPreparingSeconds != null ? formatDuration(elapsedPreparingSeconds) : '—'}
+                        </p>
+                      )}
+                      {status === 'ready' && (
+                        <p>
+                          <strong>Время приготовления:</strong>{' '}
+                          {cookingSeconds != null ? formatDuration(cookingSeconds) : '—'}
+                        </p>
+                      )}
                     </div>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  {item.status?.toLowerCase() === 'confirmed' && (
-                    <Button onClick={() => updateStatus(item.orderId!, OrderStatus.Preparing)}>
-                      Начать готовить
-                    </Button>
                   )}
-                  {item.status?.toLowerCase() === 'preparing' && (
-                    <Button onClick={() => updateStatus(item.orderId!, OrderStatus.Ready)}>
-                      Готово
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+
+                  <div className="flex gap-2">
+                    {status === 'confirmed' && (
+                      <Button onClick={() => updateStatus(item.orderId!, OrderStatus.Preparing)}>
+                        Начать готовить
+                      </Button>
+                    )}
+                    {status === 'preparing' && (
+                      <Button onClick={() => updateStatus(item.orderId!, OrderStatus.Ready)}>
+                        Готово
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
     </div>

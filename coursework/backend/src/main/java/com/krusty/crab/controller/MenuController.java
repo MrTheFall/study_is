@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,15 +26,37 @@ public class MenuController implements MenuApi {
     @Override
     public ResponseEntity<List<com.krusty.crab.dto.generated.MenuItem>> getMenu(Boolean available, String search) {
         log.info("Getting menu, available: {}, search: {}", available, search);
+        boolean requestedAvailableOnly = Boolean.TRUE.equals(available);
         List<MenuItem> items;
-        if (Boolean.TRUE.equals(available)) {
+        if (requestedAvailableOnly) {
             items = menuService.getAvailableMenuItems();
         } else if (search != null && !search.isEmpty()) {
             items = menuService.searchMenuItems(search);
         } else {
             items = menuService.getAllMenuItems();
         }
-        return ResponseEntity.ok(menuMapper.toDtoList(items));
+
+        List<com.krusty.crab.dto.generated.MenuItem> dtoList = menuMapper.toDtoList(items);
+        List<Integer> menuItemIds = dtoList.stream()
+            .map(com.krusty.crab.dto.generated.MenuItem::getId)
+            .filter(java.util.Objects::nonNull)
+            .collect(java.util.stream.Collectors.toList());
+
+        Set<Integer> outOfStockIds = menuService.getOutOfStockMenuItemIds(menuItemIds);
+        for (com.krusty.crab.dto.generated.MenuItem dto : dtoList) {
+            Integer id = dto.getId();
+            if (id != null && outOfStockIds.contains(id) && Boolean.TRUE.equals(dto.getAvailable())) {
+                dto.setAvailable(false);
+            }
+        }
+
+        if (requestedAvailableOnly) {
+            dtoList = dtoList.stream()
+                .filter(dto -> Boolean.TRUE.equals(dto.getAvailable()))
+                .collect(java.util.stream.Collectors.toList());
+        }
+
+        return ResponseEntity.ok(dtoList);
     }
     
     @Override
@@ -41,6 +64,12 @@ public class MenuController implements MenuApi {
         log.info("Getting menu item by ID: {}", menuItemId);
         MenuItem item = menuService.getMenuItemById(menuItemId);
         com.krusty.crab.dto.generated.MenuItem dto = menuMapper.toDto(item);
+        if (menuItemId != null && Boolean.TRUE.equals(dto.getAvailable())) {
+            Set<Integer> outOfStockIds = menuService.getOutOfStockMenuItemIds(java.util.List.of(menuItemId));
+            if (outOfStockIds.contains(menuItemId)) {
+                dto.setAvailable(false);
+            }
+        }
         return ResponseEntity.ok(dto);
     }
     
@@ -73,4 +102,3 @@ public class MenuController implements MenuApi {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }
-

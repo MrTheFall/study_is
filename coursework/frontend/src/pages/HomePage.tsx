@@ -97,6 +97,12 @@ export function HomePage() {
                     <CardDescription>Управление заказами</CardDescription>
                   </CardHeader>
                 </Card>
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/couriers')}>
+                  <CardHeader>
+                    <CardTitle>Курьеры</CardTitle>
+                    <CardDescription>Управление курьерами и доступностью</CardDescription>
+                  </CardHeader>
+                </Card>
                 <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/shifts')}>
                   <CardHeader>
                     <CardTitle>Смены</CardTitle>
@@ -143,4 +149,3 @@ export function HomePage() {
     </div>
   );
 }
-

@@ -27,9 +27,15 @@ public class Courier {
     
     @Column(name = "vehicle_info", length = 255)
     private String vehicleInfo;
+
+    @Column(name = "is_available", nullable = false)
+    @Builder.Default
+    private Boolean available = true;
+
+    @Transient
+    private Boolean busy;
     
-    @OneToMany(mappedBy = "courier", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "courier")
     @Builder.Default
     private List<Order> orders = new ArrayList<>();
 }
-

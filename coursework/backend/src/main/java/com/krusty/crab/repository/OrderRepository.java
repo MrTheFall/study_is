@@ -16,12 +16,21 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     List<Order> findByClientIdOrderByCreatedAtDesc(Integer clientId);
     
     List<Order> findByStatus(String status);
+
+    boolean existsByCourier_IdAndStatusIn(Integer courierId, List<com.krusty.crab.entity.enums.OrderStatus> statuses);
+
+    boolean existsByCourier_IdAndStatusInAndIdNot(
+        Integer courierId,
+        List<com.krusty.crab.entity.enums.OrderStatus> statuses,
+        Integer orderId
+    );
     
-    @Query(value = "SELECT place_order(:clientId, :type, :deliveryAddress, CAST(:items AS jsonb))", nativeQuery = true)
+    @Query(value = "SELECT place_order(:clientId, :type, :deliveryAddress, :paymentMethod, CAST(:items AS jsonb))", nativeQuery = true)
     Integer callPlaceOrder(
         @Param("clientId") Integer clientId,
         @Param("type") String type,
         @Param("deliveryAddress") String deliveryAddress,
+        @Param("paymentMethod") String paymentMethod,
         @Param("items") String items
     );
     
@@ -34,4 +43,3 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     @Query(value = "SELECT * FROM get_kitchen_queue()", nativeQuery = true)
     List<Object[]> callGetKitchenQueue();
 }
-
