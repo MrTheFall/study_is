@@ -26,10 +26,15 @@ const axiosInstance: AxiosInstance = axios.create({
   },
 });
 
+const isAuthLoginRequest = (config?: AxiosRequestConfig) => {
+  const url = config?.url || '';
+  return typeof url === 'string' && url.startsWith('/auth/login/');
+};
+
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    if (token) {
+    if (token && !isAuthLoginRequest(config)) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -42,10 +47,15 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !isAuthLoginRequest(error.config)) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      const current = `${window.location.pathname}${window.location.search}`;
+      const returnTo = current && current.startsWith('/') ? current : '/';
+      const params = new URLSearchParams();
+      params.set('returnTo', returnTo);
+      params.set('reason', 'expired');
+      window.location.href = `/login?${params.toString()}`;
     }
     return Promise.reject(error);
   }

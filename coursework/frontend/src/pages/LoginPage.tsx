@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { authApi } from '@/api/client';
 import { useAuthStore } from '@/store/authStore';
+import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -26,7 +27,18 @@ export function LoginPage() {
   const [isClient, setIsClient] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { setAuth } = useAuthStore();
+
+  const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const returnToParam = search.get('returnTo');
+  const reasonParam = search.get('reason');
+  const returnTo = returnToParam && returnToParam.startsWith('/') ? returnToParam : '/';
+
+  const notice =
+    reasonParam === 'expired'
+      ? 'Сессия истекла. Войдите снова, чтобы продолжить.'
+      : null;
 
   const clientForm = useForm<ClientLoginForm>({
     resolver: zodResolver(clientLoginSchema),
@@ -48,16 +60,10 @@ export function LoginPage() {
       }
       
       localStorage.setItem('token', token);
-      
-      const tempUser = {
-        userId: undefined,
-        username: data.email,
-        userType: 'CLIENT' as any,
-        role: null,
-      };
-      
-      setAuth(token, tempUser);
-      navigate('/', { replace: true });
+
+      const userResponse = await authApi.getCurrentUser();
+      setAuth(token, userResponse.data);
+      navigate(returnTo, { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Ошибка входа');
       localStorage.removeItem('token');
@@ -82,18 +88,12 @@ export function LoginPage() {
         setAuth(token, userResponse.data);
       } catch (err) {
         console.error('Failed to load user info:', err);
-        const tempUser = {
-          userId: undefined,
-          username: data.login,
-          userType: 'EMPLOYEE' as any,
-          role: null,
-        };
-        setAuth(token, tempUser);
+        localStorage.removeItem('token');
+        setError('Не удалось получить данные пользователя. Попробуйте войти ещё раз.');
+        return;
       }
       
-      setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 100);
+      navigate(returnTo, { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Ошибка входа');
       localStorage.removeItem('token');
@@ -128,9 +128,14 @@ export function LoginPage() {
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">
+            <Alert variant="error" title="Ошибка" className="mb-4">
               {error}
-            </div>
+            </Alert>
+          )}
+          {notice && (
+            <Alert variant="warning" title="Требуется вход" className="mb-4">
+              {notice}
+            </Alert>
           )}
 
           {isClient ? (
@@ -200,9 +205,12 @@ export function LoginPage() {
 
           <div className="mt-4 space-y-2">
             <div className="text-center">
-              <a href="/register" className="text-sm text-primary-600 hover:underline">
+              <Link
+                to={returnTo !== '/' ? `/register?returnTo=${encodeURIComponent(returnTo)}` : '/register'}
+                className="text-sm text-primary-600 hover:underline"
+              >
                 Нет аккаунта? Зарегистрироваться
-              </a>
+              </Link>
             </div>
             <div className="text-center">
               <Button
@@ -219,4 +227,3 @@ export function LoginPage() {
     </div>
   );
 }
-

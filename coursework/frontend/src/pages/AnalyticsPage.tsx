@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { analyticsApi } from '@/api/client';
 import { FinancialSummary, ReportView, SalesByEmployeeItem, SalesByTimeOfDayItem, SalesSummary, TopMenuItem } from '@/api/generated/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { LoadingState } from '@/components/ui/LoadingState';
+import { RetryAlert } from '@/components/ui/RetryAlert';
+import { getApiErrorMessage } from '@/lib/apiError';
 import { formatCurrency } from '@/lib/utils';
 
 export function AnalyticsPage() {
-  const navigate = useNavigate();
   const [salesSummary, setSalesSummary] = useState<SalesSummary | null>(null);
   const [topItems, setTopItems] = useState<TopMenuItem[]>([]);
   const [salesByEmployee, setSalesByEmployee] = useState<SalesByEmployeeItem[]>([]);
@@ -15,11 +17,19 @@ export function AnalyticsPage() {
   const [financialSummary, setFinancialSummary] = useState<FinancialSummary | null>(null);
   const [reportViews, setReportViews] = useState<ReportView[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
   useEffect(() => {
-    loadAnalytics();
+    const to = new Date();
+    const from = new Date();
+    from.setDate(from.getDate() - 30);
+    const toStr = to.toISOString().slice(0, 10);
+    const fromStr = from.toISOString().slice(0, 10);
+    setDateFrom(fromStr);
+    setDateTo(toStr);
+    void loadAnalyticsForRange(fromStr, toStr);
   }, []);
 
   const toIsoStartOfDay = (date: string) => new Date(date).toISOString();
@@ -30,12 +40,14 @@ export function AnalyticsPage() {
     return d.toISOString();
   };
 
-  const loadAnalytics = async () => {
+  const loadAnalyticsForRange = async (fromDate: string, toDate: string) => {
+    setLoading(true);
+    setError(null);
     try {
-      const from = dateFrom
-        ? toIsoStartOfDay(dateFrom)
+      const from = fromDate
+        ? toIsoStartOfDay(fromDate)
         : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const to = dateTo ? toIsoEndOfDay(dateTo) : new Date().toISOString();
+      const to = toDate ? toIsoEndOfDay(toDate) : new Date().toISOString();
 
       const [summaryResponse, topItemsResponse, byEmployeeResponse, byTimeOfDayResponse, financialResponse] = await Promise.all([
         analyticsApi.getSalesSummary(from, to),
@@ -55,13 +67,29 @@ export function AnalyticsPage() {
       setReportViews(viewsResponse.data);
     } catch (error) {
       console.error('Ошибка загрузки аналитики:', error);
+      setError(getApiErrorMessage(error, 'Не удалось загрузить аналитику'));
     } finally {
       setLoading(false);
     }
   };
 
+  const loadAnalytics = async () => {
+    await loadAnalyticsForRange(dateFrom, dateTo);
+  };
+
+  const applyPresetDays = (days: number) => {
+    const to = new Date();
+    const from = new Date();
+    from.setDate(from.getDate() - days);
+    const toStr = to.toISOString().slice(0, 10);
+    const fromStr = from.toISOString().slice(0, 10);
+    setDateFrom(fromStr);
+    setDateTo(toStr);
+    void loadAnalyticsForRange(fromStr, toStr);
+  };
+
   if (loading) {
-    return <div className="p-8 text-center">Загрузка аналитики...</div>;
+    return <LoadingState message="Загрузка аналитики..." />;
   }
 
   const formatTimeOfDayBucket = (bucket?: string) => {
@@ -80,35 +108,46 @@ export function AnalyticsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="outline" onClick={() => navigate('/')}>
-            ← На главную
-          </Button>
-          <h1 className="text-3xl font-bold">Аналитика</h1>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Аналитика</h1>
+        <p className="text-gray-600 mt-1">Продажи, финансы и история просмотров отчётов.</p>
+      </div>
 
-        <div className="mb-8 flex gap-4">
-          <input
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+          <Input
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="px-4 py-2 border rounded-md"
+            className="sm:max-w-[180px]"
           />
-          <input
+          <Input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="px-4 py-2 border rounded-md"
+            className="sm:max-w-[180px]"
           />
-          <button
-            onClick={loadAnalytics}
-            className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
-          >
+          <Button onClick={loadAnalytics} disabled={loading || !dateFrom || !dateTo}>
             Обновить
-          </button>
+          </Button>
         </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => applyPresetDays(7)} disabled={loading}>
+            7 дней
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => applyPresetDays(30)} disabled={loading}>
+            30 дней
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => applyPresetDays(90)} disabled={loading}>
+            90 дней
+          </Button>
+        </div>
+      </div>
+
+      {error && (
+        <RetryAlert title="Не удалось загрузить аналитику" message={error} onRetry={loadAnalytics} retryDisabled={loading} />
+      )}
 
         {salesSummary && (
           salesSummary.hasData === false ? (
@@ -344,7 +383,6 @@ export function AnalyticsPage() {
             )}
           </CardContent>
         </Card>
-      </div>
     </div>
   );
 }

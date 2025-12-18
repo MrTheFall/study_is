@@ -16,7 +16,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.OffsetDateTime;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,8 +31,35 @@ public class PaymentsController implements PaymentsApi {
     private final PaymentService paymentService;
     private final PaymentMapper paymentMapper;
     private final OrderRepository orderRepository;
-    
+
     @Override
+    @PreAuthorize("hasRole('CLIENT') or hasRole('Cashier') or hasRole('Manager')")
+    public ResponseEntity<List<com.krusty.crab.dto.generated.Payment>> getPayments(
+        Boolean success,
+        OffsetDateTime from,
+        OffsetDateTime to,
+        Integer limit,
+        Integer offset
+    ) {
+        log.info("Getting payments, success: {}, from: {}, to: {}, limit: {}, offset: {}", success, from, to, limit, offset);
+
+        UserPrincipal user = SecurityUtil.getCurrentUser();
+        Integer clientId = null;
+
+        if ("CLIENT".equals(user.getUserType())) {
+            clientId = user.getUserId();
+        } else if ("EMPLOYEE".equals(user.getUserType())) {
+            requireEmployeeRoleAny("Cashier", "Manager");
+        } else {
+            throw new AccessDeniedException("Access denied");
+        }
+
+        List<com.krusty.crab.entity.Payment> payments = paymentService.listPayments(clientId, success, from, to, limit, offset);
+        return ResponseEntity.ok(paymentMapper.toDtoList(payments));
+    }
+
+    @Override
+    @PreAuthorize("hasRole('CLIENT') or hasRole('Cashier') or hasRole('Manager')")
     public ResponseEntity<com.krusty.crab.dto.generated.Payment> processPayment(PaymentRequest paymentRequest) {
         log.info("Processing payment for order: {} with method: {}", paymentRequest.getOrderId(), paymentRequest.getMethod());
         Order order = orderRepository.findById(paymentRequest.getOrderId())
@@ -43,6 +75,7 @@ public class PaymentsController implements PaymentsApi {
     }
     
     @Override
+    @PreAuthorize("hasRole('Cashier') or hasRole('Manager')")
     public ResponseEntity<com.krusty.crab.dto.generated.ChangeResponse> processCashPayment(CashPaymentRequest cashPaymentRequest) {
         log.info("Processing cash payment for order: {} with amount: {}", 
             cashPaymentRequest.getOrderId(), cashPaymentRequest.getAmountReceived());
@@ -57,6 +90,7 @@ public class PaymentsController implements PaymentsApi {
     }
     
     @Override
+    @PreAuthorize("hasRole('CLIENT') or hasRole('Cashier') or hasRole('Manager')")
     public ResponseEntity<com.krusty.crab.dto.generated.Payment> getPaymentByOrderId(Integer orderId) {
         log.info("Getting payment for order: {}", orderId);
         Order order = orderRepository.findById(orderId)
@@ -96,10 +130,10 @@ public class PaymentsController implements PaymentsApi {
         if ("CLIENT".equals(user.getUserType())) {
             Integer orderClientId = order.getClient() != null ? order.getClient().getId() : null;
             if (orderClientId == null || !orderClientId.equals(user.getUserId())) {
-                throw new ValidationException("Access denied");
+                throw new AccessDeniedException("Access denied");
             }
             if (method != PaymentMethod.ONLINE) {
-                throw new ValidationException("Clients can only pay online");
+                throw new AccessDeniedException("Clients can only pay online");
             }
             return;
         }
@@ -107,12 +141,12 @@ public class PaymentsController implements PaymentsApi {
         if ("EMPLOYEE".equals(user.getUserType())) {
             requireEmployeeRoleAny("Cashier", "Manager");
             if (method == PaymentMethod.ONLINE) {
-                throw new ValidationException("Employees cannot process online payments");
+                throw new AccessDeniedException("Employees cannot process online payments");
             }
             return;
         }
 
-        throw new ValidationException("Access denied");
+        throw new AccessDeniedException("Access denied");
     }
 
     private void validatePaymentViewAccess(Order order) {
@@ -121,7 +155,7 @@ public class PaymentsController implements PaymentsApi {
         if ("CLIENT".equals(user.getUserType())) {
             Integer orderClientId = order.getClient() != null ? order.getClient().getId() : null;
             if (orderClientId == null || !orderClientId.equals(user.getUserId())) {
-                throw new ValidationException("Access denied");
+                throw new AccessDeniedException("Access denied");
             }
             return;
         }
@@ -131,19 +165,19 @@ public class PaymentsController implements PaymentsApi {
             return;
         }
 
-        throw new ValidationException("Access denied");
+        throw new AccessDeniedException("Access denied");
     }
 
     private void requireEmployeeRoleAny(String... allowedRoles) {
         UserPrincipal user = SecurityUtil.getCurrentUser();
 
         if (!"EMPLOYEE".equals(user.getUserType())) {
-            throw new ValidationException("Only employees can perform this action");
+            throw new AccessDeniedException("Only employees can perform this action");
         }
 
         String role = user.getRole();
         if (role == null) {
-            throw new ValidationException("Access denied");
+            throw new AccessDeniedException("Access denied");
         }
 
         for (String allowed : allowedRoles) {
@@ -152,6 +186,6 @@ public class PaymentsController implements PaymentsApi {
             }
         }
 
-        throw new ValidationException("Access denied");
+        throw new AccessDeniedException("Access denied");
     }
 }

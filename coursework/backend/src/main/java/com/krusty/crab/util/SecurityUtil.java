@@ -1,49 +1,42 @@
 package com.krusty.crab.util;
 
-import com.krusty.crab.exception.ValidationException;
 import com.krusty.crab.security.UserPrincipal;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 public class SecurityUtil {
-    
-    private static final String USER_PRINCIPAL_ATTRIBUTE = "userPrincipal";
-    
-    public static HttpServletRequest getCurrentRequest() {
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attributes == null) {
-            throw new ValidationException("No active request found");
-        }
-        return attributes.getRequest();
-    }
-    
+
     public static UserPrincipal getCurrentUser() {
-        HttpServletRequest request = getCurrentRequest();
-        UserPrincipal userPrincipal = (UserPrincipal) request.getAttribute(USER_PRINCIPAL_ATTRIBUTE);
-        if (userPrincipal == null) {
-            throw new ValidationException("User not authenticated");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AuthenticationCredentialsNotFoundException("User not authenticated");
         }
-        return userPrincipal;
+
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserPrincipal userPrincipal) {
+            return userPrincipal;
+        }
+
+        throw new AuthenticationCredentialsNotFoundException("User not authenticated");
     }
     
     public static void requireRole(String requiredRole) {
-        UserPrincipal userPrincipal = getCurrentUser();
-        
-        if (!"EMPLOYEE".equals(userPrincipal.getUserType())) {
-            throw new ValidationException("Only employees can perform this action");
-        }
-        
-        if (!requiredRole.equals(userPrincipal.getRole())) {
-            throw new ValidationException("Access denied. Required role: " + requiredRole);
+        getCurrentUser();
+        if (!hasRole(requiredRole)) {
+            throw new AccessDeniedException("Access denied. Required role: " + requiredRole);
         }
     }
     
     public static boolean hasRole(String role) {
         try {
-            UserPrincipal userPrincipal = getCurrentUser();
-            return "EMPLOYEE".equals(userPrincipal.getUserType()) 
-                && role.equals(userPrincipal.getRole());
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null) {
+                return false;
+            }
+            return authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_" + role));
         } catch (Exception e) {
             return false;
         }
@@ -53,4 +46,3 @@ public class SecurityUtil {
         return hasRole("Manager");
     }
 }
-

@@ -4,11 +4,11 @@ import com.krusty.crab.api.FinanceApi;
 import com.krusty.crab.dto.generated.SalaryPaymentCreateRequest;
 import com.krusty.crab.mapper.SalaryPaymentMapper;
 import com.krusty.crab.service.SalaryPaymentService;
-import com.krusty.crab.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -16,6 +16,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
+@PreAuthorize("hasRole('Manager')")
 public class FinanceController implements FinanceApi {
 
     private final SalaryPaymentService salaryPaymentService;
@@ -29,7 +30,6 @@ public class FinanceController implements FinanceApi {
         Integer limit,
         Integer offset
     ) {
-        SecurityUtil.requireRole("Manager");
         log.info("Getting salary payments, employeeId: {}, from: {}, to: {}, limit: {}, offset: {}", employeeId, from, to, limit, offset);
         List<com.krusty.crab.entity.SalaryPayment> payments = salaryPaymentService.list(employeeId, from, to, limit, offset);
         return ResponseEntity.ok(salaryPaymentMapper.toDtoList(payments));
@@ -37,7 +37,6 @@ public class FinanceController implements FinanceApi {
 
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.SalaryPayment> createSalaryPayment(SalaryPaymentCreateRequest salaryPaymentCreateRequest) {
-        SecurityUtil.requireRole("Manager");
         log.info("Creating salary payment for employee {}", salaryPaymentCreateRequest.getEmployeeId());
         com.krusty.crab.entity.SalaryPayment payment = salaryPaymentService.create(
             salaryPaymentCreateRequest.getEmployeeId(),
@@ -48,4 +47,3 @@ public class FinanceController implements FinanceApi {
         return ResponseEntity.status(HttpStatus.CREATED).body(salaryPaymentMapper.toDto(payment));
     }
 }
-

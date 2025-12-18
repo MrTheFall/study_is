@@ -19,6 +19,7 @@ import com.krusty.crab.repository.EmployeeRepository;
 import com.krusty.crab.repository.OrderItemRepository;
 import com.krusty.crab.repository.OrderRepository;
 import com.krusty.crab.util.DbErrorUtil;
+import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ public class OrderService {
     private final CourierRepository courierRepository;
     private final EmployeeRepository employeeRepository;
     private final ObjectMapper objectMapper;
+    private final EntityManager entityManager;
 
     private static final List<OrderStatus> COURIER_BUSY_STATUSES = List.of(
         OrderStatus.PENDING,
@@ -55,13 +57,15 @@ public class OrderService {
         OrderItemRepository orderItemRepository,
         CourierRepository courierRepository,
         EmployeeRepository employeeRepository,
-        ObjectMapper objectMapper
+        ObjectMapper objectMapper,
+        EntityManager entityManager
     ) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.courierRepository = courierRepository;
         this.employeeRepository = employeeRepository;
         this.objectMapper = objectMapper;
+        this.entityManager = entityManager;
     }
     
     @Transactional
@@ -119,6 +123,7 @@ public class OrderService {
     public void updateOrderStatus(Integer orderId, OrderStatus newStatus, Integer acceptedByEmployeeId) {
         try {
             orderRepository.callUpdateOrderStatus(orderId, newStatus.getValue());
+            entityManager.clear();
             if (newStatus == OrderStatus.CONFIRMED && acceptedByEmployeeId != null) {
                 Employee employee = employeeRepository.findById(acceptedByEmployeeId)
                     .orElseThrow(() -> new EntityNotFoundException("Employee", acceptedByEmployeeId));
@@ -272,6 +277,13 @@ public class OrderService {
     public List<OrderItem> getOrderItems(Integer orderId) {
         getOrderById(orderId);
         return orderItemRepository.findDetailedByOrderId(orderId);
+    }
+
+    public List<OrderItem> getOrderItemsBatch(List<Integer> orderIds) {
+        if (orderIds == null || orderIds.isEmpty()) {
+            return List.of();
+        }
+        return orderItemRepository.findDetailedByOrderIds(orderIds);
     }
 
     @Transactional

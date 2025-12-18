@@ -6,6 +6,7 @@ import com.krusty.crab.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -18,13 +19,13 @@ public class KitchenController implements KitchenApi {
     private final OrderService orderService;
     
     @Override
+    @PreAuthorize("hasRole('Cook') or hasRole('Manager')")
     public ResponseEntity<List<KitchenQueueItem>> getKitchenQueue() {
         log.info("Getting kitchen queue");
         List<KitchenQueueItem> queue = orderService.getKitchenQueue();
         return ResponseEntity.ok(queue);
     }
 }
-
 
 
 

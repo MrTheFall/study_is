@@ -17,6 +17,12 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     
     List<Order> findByStatus(String status);
 
+    @Query("select count(o.id) from Order o where o.client.id = :clientId and o.id in :orderIds")
+    long countOwnedByClient(
+        @Param("clientId") Integer clientId,
+        @Param("orderIds") List<Integer> orderIds
+    );
+
     boolean existsByCourier_IdAndStatusIn(Integer courierId, List<com.krusty.crab.entity.enums.OrderStatus> statuses);
 
     boolean existsByCourier_IdAndStatusInAndIdNot(

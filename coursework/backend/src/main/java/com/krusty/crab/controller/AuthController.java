@@ -10,7 +10,6 @@ import com.krusty.crab.service.AuthService;
 import com.krusty.crab.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -47,19 +46,14 @@ public class AuthController implements AuthApi {
 
     @Override
     public ResponseEntity<GetCurrentUser200Response> getCurrentUser() {
-        try {
-            com.krusty.crab.security.UserPrincipal userPrincipal = SecurityUtil.getCurrentUser();
-            
-            GetCurrentUser200Response response = new GetCurrentUser200Response();
-            response.setUserId(userPrincipal.getUserId());
-            response.setUsername(userPrincipal.getUsername());
-            response.setUserType(GetCurrentUser200Response.UserTypeEnum.fromValue(userPrincipal.getUserType()));
-            response.setRole(userPrincipal.getRole());
+        com.krusty.crab.security.UserPrincipal userPrincipal = SecurityUtil.getCurrentUser();
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.warn("Unauthorized access attempt to /auth/me");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        GetCurrentUser200Response response = new GetCurrentUser200Response();
+        response.setUserId(userPrincipal.getUserId());
+        response.setUsername(userPrincipal.getUsername());
+        response.setUserType(GetCurrentUser200Response.UserTypeEnum.fromValue(userPrincipal.getUserType()));
+        response.setRole(userPrincipal.getRole());
+
+        return ResponseEntity.ok(response);
     }
 }

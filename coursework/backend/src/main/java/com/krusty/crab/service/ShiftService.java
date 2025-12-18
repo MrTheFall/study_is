@@ -101,6 +101,10 @@ public class ShiftService {
             .orElseThrow(() -> new EntityNotFoundException("Employee", employeeId));
         return employeeShiftRepository.findByEmployeeId(employeeId);
     }
+
+    public List<EmployeeShift> getShiftAssignments(LocalDate date) {
+        return employeeShiftRepository.findDetailedByShiftDate(date);
+    }
     
     @Transactional
     public EmployeeShift assignEmployeeToShift(Integer employeeId, Integer shiftId) {
@@ -135,4 +139,3 @@ public class ShiftService {
         log.info("EmployeeShift {} deleted", employeeShiftId);
     }
 }
-

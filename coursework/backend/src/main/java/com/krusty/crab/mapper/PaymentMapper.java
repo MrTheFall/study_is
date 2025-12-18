@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface PaymentMapper {
@@ -17,6 +18,8 @@ public interface PaymentMapper {
     @Mapping(target = "orderId", expression = "java(entity.getOrder() != null ? entity.getOrder().getId() : null)")
     @Mapping(target = "paidAt", expression = "java(mapDateTime(entity.getPaidAt()))")
     com.krusty.crab.dto.generated.Payment toDto(com.krusty.crab.entity.Payment entity);
+
+    List<com.krusty.crab.dto.generated.Payment> toDtoList(List<Payment> entities);
     
     default OffsetDateTime mapDateTime(LocalDateTime value) {
         return value != null ? value.atOffset(ZoneOffset.UTC) : null;
@@ -38,4 +41,3 @@ public interface PaymentMapper {
         return response;
     }
 }
-

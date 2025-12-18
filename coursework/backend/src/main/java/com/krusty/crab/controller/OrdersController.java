@@ -2,6 +2,7 @@ package com.krusty.crab.controller;
 
 import com.krusty.crab.api.OrdersApi;
 import com.krusty.crab.dto.generated.AssignCourierRequest;
+import com.krusty.crab.dto.generated.OrderItemsBatchRequest;
 import com.krusty.crab.dto.generated.PlaceOrder201Response;
 import com.krusty.crab.dto.generated.PlaceOrderRequest;
 import com.krusty.crab.dto.generated.UpdateOrderStatusRequest;
@@ -12,6 +13,7 @@ import com.krusty.crab.entity.enums.PaymentMethod;
 import com.krusty.crab.exception.ValidationException;
 import com.krusty.crab.mapper.OrderItemMapper;
 import com.krusty.crab.mapper.OrderMapper;
+import com.krusty.crab.repository.OrderRepository;
 import com.krusty.crab.security.UserPrincipal;
 import com.krusty.crab.service.OrderService;
 import com.krusty.crab.util.SecurityUtil;
@@ -19,9 +21,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,6 +36,7 @@ public class OrdersController implements OrdersApi {
     private final OrderService orderService;
     private final OrderMapper orderMapper;
     private final OrderItemMapper orderItemMapper;
+    private final OrderRepository orderRepository;
     
     @Override
     public ResponseEntity<PlaceOrder201Response> placeOrder(PlaceOrderRequest placeOrderRequest) {
@@ -38,7 +44,7 @@ public class OrdersController implements OrdersApi {
         UserPrincipal user = SecurityUtil.getCurrentUser();
         if ("CLIENT".equals(user.getUserType()) && placeOrderRequest.getClientId() != null
             && !placeOrderRequest.getClientId().equals(user.getUserId())) {
-            throw new ValidationException("Access denied");
+            throw new AccessDeniedException("Access denied");
         }
         if (placeOrderRequest.getType() != null
             && "delivery".equalsIgnoreCase(placeOrderRequest.getType().getValue())
@@ -96,7 +102,7 @@ public class OrdersController implements OrdersApi {
 
         if ("CLIENT".equals(user.getUserType())) {
             if (requestedStatus != com.krusty.crab.dto.generated.OrderStatus.CANCELLED) {
-                throw new ValidationException("Clients can only cancel their orders");
+                throw new AccessDeniedException("Clients can only cancel their orders");
             }
             if (currentStatus == null || !"pending".equalsIgnoreCase(currentStatus)) {
                 throw new ValidationException("Client can only cancel pending orders");
@@ -104,13 +110,13 @@ public class OrdersController implements OrdersApi {
         } else if ("EMPLOYEE".equals(user.getUserType())) {
             String role = user.getRole();
             if (role == null) {
-                throw new ValidationException("Access denied");
+                throw new AccessDeniedException("Access denied");
             }
 
             if ("Cook".equals(role)) {
                 if (requestedStatus != com.krusty.crab.dto.generated.OrderStatus.PREPARING
                     && requestedStatus != com.krusty.crab.dto.generated.OrderStatus.READY) {
-                    throw new ValidationException("Cook can only set statuses preparing/ready");
+                    throw new AccessDeniedException("Cook can only set statuses preparing/ready");
                 }
             } else if ("Cashier".equals(role)) {
                 if (requestedStatus != com.krusty.crab.dto.generated.OrderStatus.CONFIRMED
@@ -118,7 +124,7 @@ public class OrdersController implements OrdersApi {
                     && requestedStatus != com.krusty.crab.dto.generated.OrderStatus.DELIVERING
                     && requestedStatus != com.krusty.crab.dto.generated.OrderStatus.DELIVERED
                     && requestedStatus != com.krusty.crab.dto.generated.OrderStatus.COMPLETED) {
-                    throw new ValidationException("Cashier cannot set this status");
+                    throw new AccessDeniedException("Cashier cannot set this status");
                 }
 
                 if (requestedStatus == com.krusty.crab.dto.generated.OrderStatus.CANCELLED) {
@@ -128,7 +134,7 @@ public class OrdersController implements OrdersApi {
                     }
                 }
             } else if (!"Manager".equals(role)) {
-                throw new ValidationException("Access denied");
+                throw new AccessDeniedException("Access denied");
             }
 
             if ((("Cashier".equals(role) || "Manager".equals(role))
@@ -158,7 +164,7 @@ public class OrdersController implements OrdersApi {
                 throw new ValidationException("Delivery orders with pay on receipt must be paid before completion");
             }
         } else {
-            throw new ValidationException("Access denied");
+            throw new AccessDeniedException("Access denied");
         }
 
         com.krusty.crab.entity.enums.OrderStatus newStatus = com.krusty.crab.entity.enums.OrderStatus.fromValue(requestedStatus.getValue());
@@ -198,13 +204,13 @@ public class OrdersController implements OrdersApi {
         } else if ("EMPLOYEE".equals(user.getUserType())) {
             String role = user.getRole();
             if (!"Cashier".equals(role) && !"Manager".equals(role)) {
-                throw new ValidationException("Access denied");
+                throw new AccessDeniedException("Access denied");
             }
             if (updateOrderPaymentMethodRequest.getPaymentMethod() == com.krusty.crab.dto.generated.PaymentMethod.ONLINE) {
-                throw new ValidationException("Employees cannot set payment method to online");
+                throw new AccessDeniedException("Employees cannot set payment method to online");
             }
         } else {
-            throw new ValidationException("Access denied");
+            throw new AccessDeniedException("Access denied");
         }
 
         PaymentMethod newMethod = PaymentMethod.fromValue(updateOrderPaymentMethodRequest.getPaymentMethod().getValue());
@@ -223,8 +229,40 @@ public class OrdersController implements OrdersApi {
     }
 
     @Override
+    public ResponseEntity<List<com.krusty.crab.dto.generated.OrderItem>> getOrderItemsBatch(OrderItemsBatchRequest orderItemsBatchRequest) {
+        List<Integer> orderIds = orderItemsBatchRequest != null ? orderItemsBatchRequest.getOrderIds() : null;
+        if (orderIds == null || orderIds.isEmpty()) {
+            throw new ValidationException("orderIds is required");
+        }
+
+        List<Integer> normalized = orderIds.stream()
+            .filter(Objects::nonNull)
+            .distinct()
+            .limit(201)
+            .toList();
+
+        if (normalized.isEmpty()) {
+            throw new ValidationException("orderIds is required");
+        }
+        if (normalized.size() > 200) {
+            throw new ValidationException("Too many orderIds (max 200)");
+        }
+
+        UserPrincipal user = SecurityUtil.getCurrentUser();
+        if ("CLIENT".equals(user.getUserType())) {
+            long ownedCount = orderRepository.countOwnedByClient(user.getUserId(), normalized);
+            if (ownedCount != normalized.size()) {
+                throw new AccessDeniedException("Access denied");
+            }
+        }
+
+        List<OrderItem> items = orderService.getOrderItemsBatch(normalized);
+        return ResponseEntity.ok(orderItemMapper.toDtoList(items));
+    }
+
+    @Override
+    @PreAuthorize("hasRole('Manager') or hasRole('Cashier')")
     public ResponseEntity<com.krusty.crab.dto.generated.Order> assignCourierToOrder(Integer orderId, AssignCourierRequest assignCourierRequest) {
-        SecurityUtil.requireRole("Manager");
         log.info("Assigning courier {} to order {}", assignCourierRequest.getCourierId(), orderId);
 
         Order updated = orderService.assignCourierToOrder(orderId, assignCourierRequest.getCourierId());
@@ -236,7 +274,7 @@ public class OrdersController implements OrdersApi {
         if ("CLIENT".equals(user.getUserType())) {
             Integer orderClientId = order.getClient() != null ? order.getClient().getId() : null;
             if (orderClientId == null || !orderClientId.equals(user.getUserId())) {
-                throw new ValidationException("Access denied");
+                throw new AccessDeniedException("Access denied");
             }
         }
     }

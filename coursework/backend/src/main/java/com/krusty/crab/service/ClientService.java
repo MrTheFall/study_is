@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +33,30 @@ public class ClientService {
     public Client getClientByEmail(String email) {
         return clientRepository.findByEmail(email)
             .orElseThrow(() -> new EntityNotFoundException("Client", "email", email));
+    }
+
+    public Client lookupClient(String email, String phone) {
+        String normalizedEmail = email != null ? email.trim() : null;
+        String normalizedPhone = phone != null ? phone.trim() : null;
+
+        if ((normalizedEmail == null || normalizedEmail.isBlank()) && (normalizedPhone == null || normalizedPhone.isBlank())) {
+            throw new ValidationException("email or phone is required");
+        }
+
+        Optional<Client> client = Optional.empty();
+        if (normalizedEmail != null && !normalizedEmail.isBlank()) {
+            client = clientRepository.findByEmail(normalizedEmail);
+            if (client.isPresent()) return client.get();
+        }
+        if (normalizedPhone != null && !normalizedPhone.isBlank()) {
+            client = clientRepository.findByPhone(normalizedPhone);
+            if (client.isPresent()) return client.get();
+        }
+
+        if (normalizedEmail != null && !normalizedEmail.isBlank()) {
+            throw new EntityNotFoundException("Client", "email", normalizedEmail);
+        }
+        throw new EntityNotFoundException("Client", "phone", normalizedPhone);
     }
     
     public List<Client> getAllClients() {

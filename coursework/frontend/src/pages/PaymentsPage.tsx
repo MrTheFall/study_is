@@ -1,186 +1,181 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { paymentsApi, ordersApi } from '@/api/client';
-import { Payment, PaymentMethod } from '@/api/generated/api';
+import { paymentsApi } from '@/api/client';
+import { Payment } from '@/api/generated/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { LoadingState } from '@/components/ui/LoadingState';
+import { RetryAlert } from '@/components/ui/RetryAlert';
+import { Select } from '@/components/ui/Select';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { getApiErrorMessage } from '@/lib/apiError';
 
 export function PaymentsPage() {
   const navigate = useNavigate();
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [failedPayments, setFailedPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    orderId: '',
-    method: 'card' as PaymentMethod,
-    amountReceived: '',
-  });
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [pageSize, setPageSize] = useState(30);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    loadPayments();
-  }, []);
+    void loadPayments();
+  }, [page, pageSize]);
 
   const loadPayments = async () => {
     try {
-      const response = await ordersApi.getAllOrders();
-      const orders = response.data;
-      const paymentPromises = orders
-        .filter(order => order.id)
-        .map(order => 
-          paymentsApi.getPaymentByOrderId(order.id!)
-            .then(res => res.data)
-            .catch(() => null)
-        );
-      const paymentResults = await Promise.all(paymentPromises);
-      setPayments(paymentResults.filter((p): p is Payment => p !== null));
+      setLoadError(null);
+      setLoading(true);
+      const offset = Math.max(0, (page - 1) * pageSize);
+      const [listResp, failedResp] = await Promise.all([
+        paymentsApi.getPayments(undefined, undefined, undefined, pageSize, offset),
+        paymentsApi.getPayments(false, undefined, undefined, 10, 0),
+      ]);
+
+      const paymentsList = (listResp.data || []).slice().sort((a, b) => {
+        const aTs = a.paidAt ? Date.parse(a.paidAt) : 0;
+        const bTs = b.paidAt ? Date.parse(b.paidAt) : 0;
+        if (aTs !== bTs) return bTs - aTs;
+        return (b.id || 0) - (a.id || 0);
+      });
+      setPayments(paymentsList);
+
+      const failedList = (failedResp.data || []).slice().sort((a, b) => {
+        const aTs = a.paidAt ? Date.parse(a.paidAt) : 0;
+        const bTs = b.paidAt ? Date.parse(b.paidAt) : 0;
+        if (aTs !== bTs) return bTs - aTs;
+        return (b.id || 0) - (a.id || 0);
+      });
+      setFailedPayments(failedList);
     } catch (error) {
       console.error('Ошибка загрузки платежей:', error);
+      setLoadError(getApiErrorMessage(error, 'Не удалось загрузить платежи'));
     } finally {
       setLoading(false);
     }
   };
 
-  const processPayment = async () => {
-    try {
-      if (!formData.orderId) {
-        alert('Введите ID заказа');
-        return;
-      }
-      await paymentsApi.processPayment({
-        orderId: parseInt(formData.orderId),
-        method: formData.method,
-      });
-      setShowForm(false);
-      setFormData({
-        orderId: '',
-        method: 'card',
-        amountReceived: '',
-      });
-      loadPayments();
-    } catch (error: any) {
-      console.error('Ошибка обработки платежа:', error);
-      alert(error.response?.data?.message || 'Ошибка обработки платежа');
-    }
-  };
-
-  const processCashPayment = async () => {
-    try {
-      if (!formData.orderId || !formData.amountReceived) {
-        alert('Введите ID заказа и полученную сумму');
-        return;
-      }
-      const response = await paymentsApi.processCashPayment({
-        orderId: parseInt(formData.orderId),
-        amountReceived: parseFloat(formData.amountReceived),
-      });
-      alert(`Сдача: ${formatCurrency(response.data.change!)}`);
-      setShowForm(false);
-      setFormData({
-        orderId: '',
-        method: 'cash',
-        amountReceived: '',
-      });
-      loadPayments();
-    } catch (error: any) {
-      console.error('Ошибка обработки наличного платежа:', error);
-      alert(error.response?.data?.message || 'Ошибка обработки платежа');
-    }
-  };
+  const hasNextPage = useMemo(() => payments.length === pageSize, [payments.length, pageSize]);
+  const canPrevPage = page > 1;
 
   if (loading) {
-    return <div className="p-8 text-center">Загрузка платежей...</div>;
+    return <LoadingState message="Загрузка платежей..." />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => navigate('/')}>
-              ← На главную
-            </Button>
-            <h1 className="text-3xl font-bold">Платежи</h1>
-          </div>
-          <Button onClick={() => setShowForm(!showForm)}>
-            {showForm ? 'Отмена' : 'Обработать платеж'}
-          </Button>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold">История оплат</h1>
+          <p className="text-gray-600 mt-1">
+            Здесь — история и ошибки. Обработка оплаты выполняется в карточке заказа.
+          </p>
         </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={loadPayments}>
+            Обновить
+          </Button>
+          <Button onClick={() => navigate('/orders')}>Открыть заказы</Button>
+        </div>
+      </div>
 
-        {showForm && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Обработка платежа</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Input
-                type="number"
-                placeholder="ID заказа"
-                value={formData.orderId}
-                onChange={(e) => setFormData({ ...formData, orderId: e.target.value })}
-              />
-              <select
-                className="w-full h-10 rounded-md border border-gray-300 px-3"
-                value={formData.method}
-                onChange={(e) => setFormData({ ...formData, method: e.target.value as PaymentMethod })}
-              >
-                <option value="card">Карта</option>
-                <option value="cash">Наличные</option>
-                <option value="online">Онлайн</option>
-              </select>
-              {formData.method === 'cash' && (
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="Полученная сумма"
-                  value={formData.amountReceived}
-                  onChange={(e) => setFormData({ ...formData, amountReceived: e.target.value })}
-                />
-              )}
-              {formData.method === 'cash' ? (
-                <Button onClick={processCashPayment}>Обработать наличный платеж</Button>
-              ) : (
-                <Button onClick={processPayment}>Обработать платеж</Button>
-              )}
-            </CardContent>
-          </Card>
-        )}
+      {loadError && (
+        <RetryAlert message={loadError} onRetry={loadPayments} />
+      )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {payments.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-gray-500">Платежей пока нет</p>
+      {failedPayments.length > 0 && (
+        <Card className="border-red-300">
+          <CardHeader>
+            <CardTitle className="text-xl text-red-700">Проблемные платежи</CardTitle>
+            <CardDescription>Платежи со статусом “Ошибка”</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {failedPayments.slice(0, 10).map((p) => (
+                <div
+                  key={p.id}
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-md border border-red-200 bg-red-50 p-3"
+                >
+                  <div className="text-sm">
+                    <div className="font-medium">Платеж #{p.id} • Заказ #{p.orderId}</div>
+                    <div className="text-gray-700">Сумма: {formatCurrency(p.amount || 0)}</div>
+                  </div>
+                  {p.orderId ? (
+                    <Button variant="outline" onClick={() => navigate(`/orders?orderId=${p.orderId}`)}>
+                      Открыть заказ
+                    </Button>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-semibold">Платежи</h2>
+          <p className="text-sm text-gray-500">Успешные и неуспешные операции оплаты</p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+          <div className="w-full sm:w-40">
+            <label className="block text-sm font-medium mb-1">На странице</label>
+            <Select
+              value={String(pageSize)}
+              onChange={(e) => {
+                setPageSize(parseInt(e.target.value, 10));
+                setPage(1);
+              }}
+            >
+              <option value="10">10</option>
+              <option value="30">30</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </Select>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={!canPrevPage}>
+              Назад
+            </Button>
+            <Button variant="outline" onClick={() => setPage((p) => p + 1)} disabled={!hasNextPage}>
+              Вперёд
+            </Button>
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {payments.length === 0 ? (
+          <EmptyState
+            title={page === 1 ? 'Платежей пока нет' : 'На этой странице платежей нет'}
+            description={page === 1 ? 'Оплаты появятся здесь после обработки заказов.' : 'Перейдите на предыдущую страницу.'}
+          />
+        ) : (
+          payments.map((payment) => (
+            <Card key={payment.id} className={payment.success ? 'border-green-500' : 'border-red-500'}>
+              <CardHeader>
+                <CardTitle>Платеж #{payment.id}</CardTitle>
+                <CardDescription>Заказ #{payment.orderId}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600">
+                  Метод: {payment.method === 'card' ? 'Карта' : payment.method === 'cash' ? 'Наличные' : 'Онлайн'}
+                </p>
+                <p className="text-sm text-gray-600">Сумма: {formatCurrency(payment.amount!)}</p>
+                <p className="text-sm text-gray-600">
+                  Статус: {payment.success ? 'Успешно' : 'Ошибка'}
+                </p>
+                {payment.paidAt && (
+                  <p className="text-sm text-gray-600">
+                    Оплачен: {formatDate(payment.paidAt)}
+                  </p>
+                )}
               </CardContent>
             </Card>
-          ) : (
-            payments.map((payment) => (
-              <Card key={payment.id} className={payment.success ? 'border-green-500' : 'border-red-500'}>
-                <CardHeader>
-                  <CardTitle>Платеж #{payment.id}</CardTitle>
-                  <CardDescription>Заказ #{payment.orderId}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600">
-                    Метод: {payment.method === 'card' ? 'Карта' : payment.method === 'cash' ? 'Наличные' : 'Онлайн'}
-                  </p>
-                  <p className="text-sm text-gray-600">Сумма: {formatCurrency(payment.amount!)}</p>
-                  <p className="text-sm text-gray-600">
-                    Статус: {payment.success ? 'Успешно' : 'Ошибка'}
-                  </p>
-                  {payment.paidAt && (
-                    <p className="text-sm text-gray-600">
-                      Оплачен: {formatDate(payment.paidAt)}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+          ))
+        )}
       </div>
     </div>
   );
 }
-

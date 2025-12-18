@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -23,6 +24,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
+@PreAuthorize("hasRole('Manager')")
 public class AnalyticsController implements AnalyticsApi {
     
     private final AnalyticsService analyticsService;
@@ -32,7 +34,6 @@ public class AnalyticsController implements AnalyticsApi {
     public ResponseEntity<SalesSummary> getSalesSummary(
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
-        SecurityUtil.requireRole("Manager");
         UserPrincipal user = SecurityUtil.getCurrentUser();
         log.info("Getting sales summary from {} to {}", from, to);
         LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
@@ -47,7 +48,6 @@ public class AnalyticsController implements AnalyticsApi {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
             Integer limit) {
-        SecurityUtil.requireRole("Manager");
         UserPrincipal user = SecurityUtil.getCurrentUser();
         log.info("Getting top menu items from {} to {} with limit {}", from, to, limit);
         LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
@@ -62,7 +62,6 @@ public class AnalyticsController implements AnalyticsApi {
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to
     ) {
-        SecurityUtil.requireRole("Manager");
         UserPrincipal user = SecurityUtil.getCurrentUser();
         log.info("Getting sales by employee from {} to {}", from, to);
         LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
@@ -77,7 +76,6 @@ public class AnalyticsController implements AnalyticsApi {
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to
     ) {
-        SecurityUtil.requireRole("Manager");
         UserPrincipal user = SecurityUtil.getCurrentUser();
         log.info("Getting sales by time of day from {} to {}", from, to);
         LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
@@ -89,7 +87,6 @@ public class AnalyticsController implements AnalyticsApi {
 
     @Override
     public ResponseEntity<List<com.krusty.crab.dto.generated.ReportView>> getReportViews(Integer limit, Integer offset) {
-        SecurityUtil.requireRole("Manager");
         log.info("Getting report views history, limit: {}, offset: {}", limit, offset);
         List<com.krusty.crab.entity.ReportView> views = analyticsService.getReportViews(limit, offset);
         return ResponseEntity.ok(reportViewMapper.toDtoList(views));
@@ -100,7 +97,6 @@ public class AnalyticsController implements AnalyticsApi {
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to
     ) {
-        SecurityUtil.requireRole("Manager");
         UserPrincipal user = SecurityUtil.getCurrentUser();
         log.info("Getting financial summary from {} to {}", from, to);
         LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
@@ -110,4 +106,3 @@ public class AnalyticsController implements AnalyticsApi {
         return ResponseEntity.ok(summary);
     }
 }
-

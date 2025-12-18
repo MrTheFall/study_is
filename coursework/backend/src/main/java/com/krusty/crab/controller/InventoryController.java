@@ -11,6 +11,7 @@ import com.krusty.crab.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
+@PreAuthorize("hasRole('Manager')")
 public class InventoryController implements InventoryApi {
     
     private final InventoryService inventoryService;
@@ -26,7 +28,6 @@ public class InventoryController implements InventoryApi {
     
     @Override
     public ResponseEntity<List<com.krusty.crab.dto.generated.InventoryRecord>> getInventory(Boolean lowStock, Double thresholdFactor) {
-        SecurityUtil.requireRole("Manager");
         log.info("Getting inventory, lowStock: {}, thresholdFactor: {}", lowStock, thresholdFactor);
         if (Boolean.TRUE.equals(lowStock)) {
             List<LowStockItem> lowStockItems = inventoryService.getLowStock(thresholdFactor);
@@ -42,7 +43,6 @@ public class InventoryController implements InventoryApi {
     
     @Override
     public ResponseEntity<List<com.krusty.crab.dto.generated.LowStockItem>> getLowStock(Double thresholdFactor) {
-        SecurityUtil.requireRole("Manager");
         log.info("Getting low stock items with thresholdFactor: {}", thresholdFactor);
         List<com.krusty.crab.dto.generated.LowStockItem> items = inventoryService.getLowStock(thresholdFactor);
         return ResponseEntity.ok(items);
@@ -50,7 +50,6 @@ public class InventoryController implements InventoryApi {
     
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.InventoryRecord> updateInventory(Integer ingredientId, InventoryUpdateRequest inventoryUpdateRequest) {
-        SecurityUtil.requireRole("Manager");
         UserPrincipal user = SecurityUtil.getCurrentUser();
         log.info("Updating inventory for ingredient: {} with delta: {}", ingredientId, inventoryUpdateRequest.getDelta());
         com.krusty.crab.entity.InventoryRecord record = inventoryService.updateInventory(
@@ -65,7 +64,6 @@ public class InventoryController implements InventoryApi {
 
     @Override
     public ResponseEntity<List<com.krusty.crab.dto.generated.InventoryTransaction>> getInventoryTransactions(Integer ingredientId, Integer limit, Integer offset) {
-        SecurityUtil.requireRole("Manager");
         log.info("Getting inventory transactions, ingredientId: {}, limit: {}, offset: {}", ingredientId, limit, offset);
         List<com.krusty.crab.entity.InventoryTransaction> transactions = inventoryService.getInventoryTransactions(ingredientId, limit, offset);
         return ResponseEntity.ok(inventoryTransactionMapper.toDtoList(transactions));

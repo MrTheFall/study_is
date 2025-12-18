@@ -11,6 +11,7 @@ import com.krusty.crab.util.JwtUtil;
 import com.krusty.crab.util.PasswordUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +30,7 @@ public class AuthService {
                 .orElseThrow(() -> new EntityNotFoundException("Client with email '" + email + "' not found"));
 
         if (!PasswordUtil.matches(password, client.getPasswordHash())) {
-            throw new ValidationException("Invalid email or password");
+            throw new BadCredentialsException("Invalid email or password");
         }
 
         String token = jwtUtil.generateToken(
@@ -49,7 +50,7 @@ public class AuthService {
                 .orElseThrow(() -> new EntityNotFoundException("Employee with login '" + login + "' not found"));
 
         if (!PasswordUtil.matches(password, employee.getPasswordHash())) {
-            throw new ValidationException("Invalid login or password");
+            throw new BadCredentialsException("Invalid login or password");
         }
 
         String roleName = employee.getRole() != null ? employee.getRole().getName() : null;
@@ -80,4 +81,3 @@ public class AuthService {
         }
     }
 }
-

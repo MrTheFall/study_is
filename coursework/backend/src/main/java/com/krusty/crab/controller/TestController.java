@@ -10,6 +10,7 @@ import com.krusty.crab.service.InventoryService;
 import com.krusty.crab.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/test")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('Manager')")
 public class TestController {
     
     private final OrderService orderService;
@@ -86,4 +88,3 @@ public class TestController {
         return ResponseEntity.ok("OK - All services are available");
     }
 }
-

@@ -14,6 +14,10 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -51,6 +55,26 @@ public class PaymentService {
     public Payment getPaymentByOrderId(Integer orderId) {
         return paymentRepository.findByOrderId(orderId)
             .orElseThrow(() -> new EntityNotFoundException("Payment", orderId));
+    }
+
+    public List<Payment> listPayments(
+        Integer clientId,
+        Boolean success,
+        OffsetDateTime from,
+        OffsetDateTime to,
+        Integer limit,
+        Integer offset
+    ) {
+        int resolvedLimit = limit != null ? limit : 50;
+        int resolvedOffset = offset != null ? offset : 0;
+        if (resolvedLimit < 1) resolvedLimit = 1;
+        if (resolvedLimit > 500) resolvedLimit = 500;
+        if (resolvedOffset < 0) resolvedOffset = 0;
+
+        LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
+        LocalDateTime toLocal = to != null ? to.toLocalDateTime() : null;
+
+        return paymentRepository.findRecent(clientId, success, fromLocal, toLocal, resolvedLimit, resolvedOffset);
     }
     
     public boolean paymentExists(Integer orderId) {

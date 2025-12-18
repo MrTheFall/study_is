@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { clientsApi } from '@/api/client';
+import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -22,6 +23,10 @@ export function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const returnToParam = new URLSearchParams(location.search).get('returnTo');
+  const returnTo = returnToParam && returnToParam.startsWith('/') ? returnToParam : '/';
 
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
@@ -39,7 +44,7 @@ export function RegisterPage() {
       });
       setSuccess(true);
       setTimeout(() => {
-        navigate('/login');
+        navigate(returnTo !== '/' ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login');
       }, 2000);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Ошибка регистрации');
@@ -71,9 +76,9 @@ export function RegisterPage() {
         </CardHeader>
         <CardContent>
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">
+            <Alert variant="error" title="Ошибка" className="mb-4">
               {error}
-            </div>
+            </Alert>
           )}
 
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -133,14 +138,15 @@ export function RegisterPage() {
           </form>
 
           <div className="mt-4 text-center">
-            <a href="/login" className="text-sm text-primary-600 hover:underline">
+            <Link
+              to={returnTo !== '/' ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login'}
+              className="text-sm text-primary-600 hover:underline"
+            >
               Уже есть аккаунт? Войти
-            </a>
+            </Link>
           </div>
         </CardContent>
       </Card>
     </div>
   );
 }
-
-
