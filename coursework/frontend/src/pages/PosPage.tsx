@@ -839,7 +839,6 @@ export function PosPage() {
                   {amountReceived && amountReceivedValue === null ? (
                     <span className="text-red-600">Введите сумму числом.</span>
                   ) : cashChangeValue === null ? (
-                    <span className="text-gray-500">К оплате: {formatCurrency(total)}</span>
                   ) : cashChangeValue < 0 ? (
                     <span className="text-red-600">Не хватает: {formatCurrency(cashShortageValue || 0)}</span>
                   ) : (

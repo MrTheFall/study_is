@@ -1164,10 +1164,6 @@ export function OrdersPage() {
                             <strong>Создатель:</strong>{' '}
                             {order.createdByEmployeeId ? `сотрудник #${order.createdByEmployeeId}` : 'клиент'}
                           </p>
-                          <p>
-                            <strong>Принял:</strong>{' '}
-                            {order.acceptedByEmployeeId ? `сотрудник #${order.acceptedByEmployeeId}` : '—'}
-                          </p>
                         </>
                       )}
                     </div>
