@@ -7,16 +7,13 @@ import com.krusty.crab.service.OnlinePaymentService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -25,9 +22,6 @@ import java.util.UUID;
 public class OnlinePaymentCallbackController {
 
     private final OnlinePaymentService onlinePaymentService;
-
-    @Value("${frontend.url:http://localhost:5173}")
-    private String frontendUrl;
 
     @PostMapping(
         value = "/payments/online/return",
@@ -101,39 +95,14 @@ public class OnlinePaymentCallbackController {
     }
 
     private String resolveFrontendBaseUrl(HttpServletRequest request) {
-        String host = request != null ? request.getServerName() : null;
-        String[] urls = frontendUrl.split(",");
-        Optional<String> first = Optional.empty();
-
-        for (String url : urls) {
-            String trimmed = url.trim();
-            if (trimmed.isEmpty()) {
-                continue;
-            }
-            if (first.isEmpty()) {
-                first = Optional.of(trimmed);
-            }
-            if (host == null) {
-                continue;
-            }
-            try {
-                URI uri = URI.create(trimmed);
-                if (uri.getHost() != null && uri.getHost().equalsIgnoreCase(host)) {
-                    return trimmed;
-                }
-            } catch (IllegalArgumentException e) {
-                log.warn("Invalid frontend url: {}", trimmed);
-            }
-        }
-
-        if (first.isPresent()) {
-            return first.get();
-        }
-
         String scheme = request != null ? request.getScheme() : "http";
-        String resolvedHost = host != null ? host : "localhost";
-        int port = request != null ? request.getServerPort() : 5173;
-        return scheme + "://" + resolvedHost + ":" + port;
+        String host = request != null ? request.getServerName() : "localhost";
+        int port = request != null ? request.getServerPort() : 80;
+
+        boolean defaultPort = ("http".equalsIgnoreCase(scheme) && port == 80)
+            || ("https".equalsIgnoreCase(scheme) && port == 443);
+        String portSegment = defaultPort ? "" : ":" + port;
+        return scheme + "://" + host + portSegment;
     }
 
     private String mapStatus(OnlinePaymentStatus status) {

@@ -3,15 +3,15 @@ import { Configuration } from './generated/configuration';
 import * as api from './generated';
 
 const resolveApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+
   if (typeof window !== 'undefined') {
     const { protocol, hostname } = window.location;
     const port = import.meta.env.VITE_API_PORT || '13228';
     const portSegment = port ? `:${port}` : '';
     return `${protocol}//${hostname}${portSegment}`;
-  }
-
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
   }
 
   return 'http://localhost:13228';
