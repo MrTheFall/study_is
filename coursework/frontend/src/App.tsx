@@ -4,6 +4,7 @@ import { useAuthStore } from './store/authStore';
 import { authApi } from './api/client';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppShell } from './components/AppShell';
+import { LoadingState } from './components/ui/LoadingState';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { HomePage } from './pages/HomePage';
@@ -24,6 +25,20 @@ import { ShiftsPage } from './pages/ShiftsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { ForbiddenPage } from './pages/ForbiddenPage';
 import { GetCurrentUser200ResponseUserTypeEnum } from './api/generated/api';
+
+function MenuRoute() {
+  const { isAuthenticated, user, isEmployee } = useAuthStore();
+
+  if (isAuthenticated && !user) {
+    return <LoadingState message="Загрузка профиля..." />;
+  }
+
+  if (user && isEmployee()) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <MenuPage />;
+}
 
 function App() {
   const { setAuth } = useAuthStore();
@@ -66,7 +81,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/menu" element={<MenuPage />} />
+          <Route path="/menu" element={<MenuRoute />} />
           <Route
             path="/menu/manage"
             element={

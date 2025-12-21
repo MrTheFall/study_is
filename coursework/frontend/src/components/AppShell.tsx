@@ -41,7 +41,7 @@ export function AppShell() {
     const cook = authed && isCook();
 
     return [
-      { to: '/menu', label: 'Меню', visible: true },
+      { to: '/menu', label: 'Меню', visible: !employee },
       { to: '/', label: 'Главная', visible: authed },
 
       // Client

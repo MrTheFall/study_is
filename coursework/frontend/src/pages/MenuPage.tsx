@@ -508,7 +508,8 @@ export function MenuPage() {
                 {profileDefaultAddress.trim() && (
                   <Button
                     variant="outline"
-                    size="sm"
+                    size="md"
+                    className="px-6 min-w-[140px] whitespace-nowrap"
                     onClick={() => {
                       setDeliveryAddress(profileDefaultAddress);
                       setAddressError(null);
@@ -528,7 +529,6 @@ export function MenuPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <p className="font-semibold">Итого: {formatCurrency(totalPrice)}</p>
-                <p className="text-sm text-gray-500">Заказы с сайта — доставка. Оплата: онлайн или при получении.</p>
               </div>
               <Button onClick={startCheckout} disabled={isPlacingOrder}>
                 {isPlacingOrder ? 'Оформление...' : 'Перейти к оплате'}
