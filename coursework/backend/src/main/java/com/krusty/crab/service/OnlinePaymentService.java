@@ -79,7 +79,7 @@ public class OnlinePaymentService {
             merchantId,
             order.getId(),
             order.getTotalAmount(),
-            "RUB",
+            "USD",
             sanitizedNumber,
             cardData.expiry(),
             cardData.cvv(),

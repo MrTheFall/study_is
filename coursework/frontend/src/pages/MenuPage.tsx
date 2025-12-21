@@ -591,10 +591,6 @@ export function MenuPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Оформление заказа</DialogTitle>
-            <DialogDescription>
-              Онлайн‑оплата проходит через 3-D Secure и перенаправит на страницу банка. Для симуляции отказа введите
-              номер карты 0000 0000 0000 0000 или неверный код подтверждения.
-            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
@@ -639,9 +635,6 @@ export function MenuPage() {
                     maxLength={4}
                   />
                 </div>
-                <p className="text-xs text-gray-500">
-                  После подтверждения появится страница банка. Тестовый код 3-D Secure: 123456.
-                </p>
               </>
             )}
             {paymentError && <p className="text-red-600 text-sm">{paymentError}</p>}

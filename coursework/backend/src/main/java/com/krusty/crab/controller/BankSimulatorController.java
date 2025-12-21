@@ -167,7 +167,7 @@ public class BankSimulatorController {
 
         sb.append("<div class=\"row\"><span class=\"label\">Мерчант</span><span>Krusty Krab</span></div>")
             .append("<div class=\"row\"><span class=\"label\">Заказ</span><span>#").append(session.getOrderId()).append("</span></div>")
-            .append("<div class=\"row\"><span class=\"label\">Сумма</span><span>").append(amount).append(" RUB</span></div>")
+            .append("<div class=\"row\"><span class=\"label\">Сумма</span><span>").append(amount).append(" USD</span></div>")
             .append("<div class=\"row\"><span class=\"label\">Карта</span><span>**** **** **** ").append(last4).append("</span></div>")
             .append("<div class=\"row\"><span class=\"label\">Создан</span><span>").append(createdAt).append("</span></div>")
             .append("<div class=\"row\"><span class=\"label\">Действует до</span><span>").append(expiresAt).append("</span></div>")
