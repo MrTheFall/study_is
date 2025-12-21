@@ -838,8 +838,7 @@ export function PosPage() {
                 <div className="mt-1 text-xs">
                   {amountReceived && amountReceivedValue === null ? (
                     <span className="text-red-600">Введите сумму числом.</span>
-                  ) : cashChangeValue === null ? (
-                  ) : cashChangeValue < 0 ? (
+                  ) : cashChangeValue === null ? null : cashChangeValue < 0 ? (
                     <span className="text-red-600">Не хватает: {formatCurrency(cashShortageValue || 0)}</span>
                   ) : (
                     <span className="text-gray-600">
