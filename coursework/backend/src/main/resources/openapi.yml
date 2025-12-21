@@ -900,6 +900,31 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
+  /payments/online/start:
+    post:
+      tags:
+        - payments
+      summary: Инициировать онлайн-оплату (3-D Secure)
+      description: Создает сессию онлайн-оплаты и возвращает ссылку на страницу банка (ACS)
+      operationId: startOnlinePayment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnlinePaymentStartRequest'
+      responses:
+        '200':
+          description: Сессия онлайн-оплаты создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnlinePaymentStartResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
   /payments/cash:
     post:
       tags:
@@ -2197,6 +2222,62 @@ components:
           type: boolean
           description: Только для метода online - принудительно смоделировать ошибку платежа (UC-2 альтернативный поток 6а)
           default: false
+
+    OnlinePaymentStartRequest:
+      type: object
+      required:
+        - orderId
+        - cardNumber
+        - cardExpiry
+        - cardCvv
+      properties:
+        orderId:
+          type: integer
+        cardNumber:
+          type: string
+          description: Номер карты (16 цифр, допускаются пробелы)
+        cardExpiry:
+          type: string
+          description: Срок действия карты в формате ММ/ГГ
+        cardCvv:
+          type: string
+          description: CVV/CVC (3-4 цифры)
+        cardHolder:
+          type: string
+          description: Имя держателя карты
+        simulateFailure:
+          type: boolean
+          description: Принудительно смоделировать отказ банка
+          default: false
+
+    OnlinePaymentStartResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        orderId:
+          type: integer
+        amount:
+          type: number
+          format: decimal
+        status:
+          $ref: '#/components/schemas/OnlinePaymentStatus'
+        redirectUrl:
+          type: string
+          description: Ссылка на ACS/3-D Secure страницу банка
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    OnlinePaymentStatus:
+      type: string
+      enum:
+        - created
+        - challenge_required
+        - succeeded
+        - failed
+        - cancelled
 
     CashPaymentRequest:
       type: object

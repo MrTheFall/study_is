@@ -50,6 +50,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/error", "/error/**").permitAll()
+                        .requestMatchers("/bank/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/payments/online/return", "/payments/online/notify").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/login/client", "/auth/login/employee").permitAll()
                         .requestMatchers(HttpMethod.POST, "/clients").permitAll()
                         .requestMatchers(HttpMethod.GET, "/menu", "/menu/**").permitAll()

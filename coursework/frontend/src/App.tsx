@@ -19,6 +19,7 @@ import { AnalyticsPage } from './pages/AnalyticsPage';
 import { CouriersPage } from './pages/CouriersPage';
 import { PaymentsPage } from './pages/PaymentsPage';
 import { PosPage } from './pages/PosPage';
+import { PaymentResultPage } from './pages/PaymentResultPage';
 import { ShiftsPage } from './pages/ShiftsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { ForbiddenPage } from './pages/ForbiddenPage';
@@ -164,6 +165,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/payment/result" element={<PaymentResultPage />} />
           <Route
             path="/pos"
             element={

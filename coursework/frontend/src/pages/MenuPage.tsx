@@ -12,6 +12,7 @@ import { LoadingState } from '@/components/ui/LoadingState';
 import { RetryAlert } from '@/components/ui/RetryAlert';
 import { formatCurrency } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/apiError';
+import { formatCardNumberInput, formatExpiryInput, isValidLuhn, sanitizeCardNumber, validateExpiry } from '@/lib/cardUtils';
 import { useToast } from '@/components/ui/toast';
 
 type LoginDialogMode = 'loginRequired' | 'clientOnly';
@@ -243,17 +244,18 @@ export function MenuPage() {
     }
 
     const isOnlinePayment = paymentMethod === PaymentMethod.Online;
-    const sanitizedCardNumber = cardData.number.replace(/\s+/g, '');
+    const sanitizedCardNumber = sanitizeCardNumber(cardData.number);
     const sanitizedExpiry = cardData.expiry.trim();
     const sanitizedCvv = cardData.cvv.trim();
 
     if (isOnlinePayment) {
-      if (!/^[0-9]{16}$/.test(sanitizedCardNumber)) {
-        setPaymentError('Введите корректный номер карты (16 цифр)');
+      if (!/^[0-9]{16}$/.test(sanitizedCardNumber) || !isValidLuhn(sanitizedCardNumber)) {
+        setPaymentError('Введите корректный номер карты');
         return;
       }
-      if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(sanitizedExpiry)) {
-        setPaymentError('Срок действия в формате ММ/ГГ');
+      const expiryCheck = validateExpiry(sanitizedExpiry);
+      if (!expiryCheck.valid) {
+        setPaymentError(expiryCheck.reason === 'expired' ? 'Срок действия карты истек' : 'Срок действия в формате ММ/ГГ');
         return;
       }
       if (!/^[0-9]{3,4}$/.test(sanitizedCvv)) {
@@ -324,16 +326,22 @@ export function MenuPage() {
 
       if (paymentMethod === PaymentMethod.Online) {
         const simulateFailure = sanitizedCardNumber === '0000000000000000';
-        await paymentsApi.processPayment({
+        const response = await paymentsApi.startOnlinePayment({
           orderId,
-          method: PaymentMethod.Online,
+          cardNumber: sanitizedCardNumber,
+          cardExpiry: sanitizedExpiry,
+          cardCvv: sanitizedCvv,
           simulateFailure,
         });
 
+        const redirectUrl = response.data.redirectUrl;
+        if (!redirectUrl) {
+          throw new Error('Не удалось получить ссылку для оплаты в банке.');
+        }
+
         setCreatedOrderId(null);
         setShowPaymentDialog(false);
-        toast.success('Оплата прошла успешно. Заказ отправлен на кухню.');
-        navigate('/orders');
+        window.location.href = redirectUrl;
         return;
       }
 
@@ -584,7 +592,8 @@ export function MenuPage() {
           <DialogHeader>
             <DialogTitle>Оформление заказа</DialogTitle>
             <DialogDescription>
-              Онлайн‑оплата работает в тестовом режиме. Для симуляции отказа введите номер карты 0000 0000 0000 0000.
+              Онлайн‑оплата проходит через 3-D Secure и перенаправит на страницу банка. Для симуляции отказа введите
+              номер карты 0000 0000 0000 0000 или неверный код подтверждения.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -607,20 +616,32 @@ export function MenuPage() {
                 <Input
                   placeholder="Номер карты"
                   value={cardData.number}
-                  onChange={(e) => setCardData({ ...cardData, number: e.target.value })}
+                  onChange={(e) => setCardData({ ...cardData, number: formatCardNumberInput(e.target.value) })}
+                  inputMode="numeric"
+                  autoComplete="cc-number"
+                  maxLength={19}
                 />
                 <div className="flex gap-2">
                   <Input
                     placeholder="MM/YY"
                     value={cardData.expiry}
-                    onChange={(e) => setCardData({ ...cardData, expiry: e.target.value })}
+                    onChange={(e) => setCardData({ ...cardData, expiry: formatExpiryInput(e.target.value) })}
+                    inputMode="numeric"
+                    autoComplete="cc-exp"
+                    maxLength={5}
                   />
                   <Input
                     placeholder="CVV"
                     value={cardData.cvv}
-                    onChange={(e) => setCardData({ ...cardData, cvv: e.target.value })}
+                    onChange={(e) => setCardData({ ...cardData, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) })}
+                    inputMode="numeric"
+                    autoComplete="cc-csc"
+                    maxLength={4}
                   />
                 </div>
+                <p className="text-xs text-gray-500">
+                  После подтверждения появится страница банка. Тестовый код 3-D Secure: 123456.
+                </p>
               </>
             )}
             {paymentError && <p className="text-red-600 text-sm">{paymentError}</p>}

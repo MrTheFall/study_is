@@ -4,12 +4,14 @@ import com.krusty.crab.api.PaymentsApi;
 import com.krusty.crab.dto.generated.CashPaymentRequest;
 import com.krusty.crab.dto.generated.PaymentRequest;
 import com.krusty.crab.entity.Order;
+import com.krusty.crab.entity.OnlinePaymentSession;
 import com.krusty.crab.entity.enums.PaymentMethod;
 import com.krusty.crab.exception.EntityNotFoundException;
 import com.krusty.crab.exception.ValidationException;
 import com.krusty.crab.mapper.PaymentMapper;
 import com.krusty.crab.repository.OrderRepository;
 import com.krusty.crab.security.UserPrincipal;
+import com.krusty.crab.service.OnlinePaymentService;
 import com.krusty.crab.service.PaymentService;
 import com.krusty.crab.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ public class PaymentsController implements PaymentsApi {
     private final PaymentService paymentService;
     private final PaymentMapper paymentMapper;
     private final OrderRepository orderRepository;
+    private final OnlinePaymentService onlinePaymentService;
 
     @Override
     @PreAuthorize("hasRole('CLIENT') or hasRole('Cashier') or hasRole('Manager')")
@@ -66,12 +69,65 @@ public class PaymentsController implements PaymentsApi {
             .orElseThrow(() -> new EntityNotFoundException("Order", paymentRequest.getOrderId()));
 
         PaymentMethod method = PaymentMethod.fromValue(paymentRequest.getMethod().getValue());
+        if (method == PaymentMethod.ONLINE) {
+            throw new ValidationException("Online payment must be initiated via /payments/online/start");
+        }
         validatePaymentAccess(order, method);
         boolean simulateFailure = Boolean.TRUE.equals(paymentRequest.getSimulateFailure());
         Integer paymentId = paymentService.processPayment(paymentRequest.getOrderId(), method, simulateFailure);
         com.krusty.crab.entity.Payment payment = paymentService.getPaymentByOrderId(paymentRequest.getOrderId());
         com.krusty.crab.dto.generated.Payment dto = paymentMapper.toDto(payment);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+    }
+
+    @Override
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<com.krusty.crab.dto.generated.OnlinePaymentStartResponse> startOnlinePayment(
+        com.krusty.crab.dto.generated.OnlinePaymentStartRequest onlinePaymentStartRequest
+    ) {
+        Integer orderId = onlinePaymentStartRequest.getOrderId();
+        log.info("Starting online payment for order: {}", orderId);
+
+        Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
+        validatePaymentAccess(order, PaymentMethod.ONLINE);
+
+        String baseUrl = org.springframework.web.servlet.support.ServletUriComponentsBuilder
+            .fromCurrentContextPath()
+            .build()
+            .toUriString();
+
+        OnlinePaymentService.CardData cardData = new OnlinePaymentService.CardData(
+            onlinePaymentStartRequest.getCardNumber(),
+            onlinePaymentStartRequest.getCardExpiry(),
+            onlinePaymentStartRequest.getCardCvv(),
+            onlinePaymentStartRequest.getCardHolder()
+        );
+
+        boolean simulateFailure = Boolean.TRUE.equals(onlinePaymentStartRequest.getSimulateFailure());
+        OnlinePaymentSession session = onlinePaymentService.startPayment(
+            order,
+            cardData,
+            simulateFailure,
+            baseUrl + "/payments/online/return",
+            baseUrl + "/payments/online/notify",
+            baseUrl
+        );
+
+        com.krusty.crab.dto.generated.OnlinePaymentStartResponse response =
+            new com.krusty.crab.dto.generated.OnlinePaymentStartResponse();
+        response.setSessionId(session.getId().toString());
+        response.setOrderId(orderId);
+        response.setAmount(session.getAmount());
+        response.setStatus(
+            com.krusty.crab.dto.generated.OnlinePaymentStatus.fromValue(session.getStatus().getValue())
+        );
+        response.setRedirectUrl(session.getRedirectUrl());
+        if (session.getExpiresAt() != null) {
+            response.setExpiresAt(session.getExpiresAt().atOffset(java.time.ZoneOffset.UTC));
+        }
+
+        return ResponseEntity.ok(response);
     }
     
     @Override

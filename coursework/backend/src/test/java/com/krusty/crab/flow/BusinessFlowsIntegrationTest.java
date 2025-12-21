@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.krusty.crab.entity.Order;
 import com.krusty.crab.entity.enums.OrderStatus;
+import com.krusty.crab.service.BankSignatureService;
+import com.krusty.crab.util.BankPayloadUtil;
 import com.krusty.crab.security.UserPrincipal;
 import com.krusty.crab.repository.OrderRepository;
 import org.junit.jupiter.api.AfterAll;
@@ -28,11 +30,13 @@ import org.springframework.web.context.WebApplicationContext;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
@@ -78,6 +82,9 @@ class BusinessFlowsIntegrationTest {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired
+    private BankSignatureService bankSignatureService;
+
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context)
@@ -121,17 +128,56 @@ class BusinessFlowsIntegrationTest {
             .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
             .andExpect(jsonPath("$.message").value("Online orders can only be confirmed after successful payment"));
 
-        mockMvc.perform(post("/payments")
+        String startResponse = mockMvc.perform(post("/payments/online/start")
                 .with(authentication(clientAuth(100)))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                    { "orderId": %d, "method": "online" }
+                    {
+                      "orderId": %d,
+                      "cardNumber": "4111111111111111",
+                      "cardExpiry": "12/25",
+                      "cardCvv": "123"
+                    }
                     """.formatted(orderId))
                 .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isCreated())
+            .andExpect(status().isOk())
             .andExpect(jsonPath("$.orderId").value(orderId))
-            .andExpect(jsonPath("$.method").value("online"))
-            .andExpect(jsonPath("$.success").value(true));
+            .andExpect(jsonPath("$.redirectUrl").isNotEmpty())
+            .andReturn()
+            .getResponse()
+            .getContentAsString(StandardCharsets.UTF_8);
+
+        JsonNode startJson = objectMapper.readTree(startResponse);
+        String redirectUrl = startJson.get("redirectUrl").asText();
+        String transactionId = redirectUrl.substring(redirectUrl.lastIndexOf('/') + 1);
+        BigDecimal amount = new BigDecimal(startJson.get("amount").asText());
+        String amountStr = amount.stripTrailingZeros().toPlainString();
+
+        long timestamp = Instant.now().getEpochSecond();
+        String nonce = UUID.randomUUID().toString().replace("-", "");
+        String statusValue = "approved";
+
+        String signature = bankSignatureService.sign(
+            BankPayloadUtil.buildSignaturePayload(
+                transactionId,
+                String.valueOf(orderId),
+                amountStr,
+                statusValue,
+                String.valueOf(timestamp),
+                nonce
+            )
+        );
+
+        mockMvc.perform(post("/payments/online/return")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("transactionId", transactionId)
+                .param("orderId", String.valueOf(orderId))
+                .param("amount", amountStr)
+                .param("status", statusValue)
+                .param("timestamp", String.valueOf(timestamp))
+                .param("nonce", nonce)
+                .param("signature", signature))
+            .andExpect(status().isOk());
 
         Order confirmed = orderRepository.findById(orderId).orElseThrow();
         assertThat(confirmed.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
