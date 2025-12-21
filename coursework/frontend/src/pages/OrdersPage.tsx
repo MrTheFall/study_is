@@ -289,6 +289,14 @@ export function OrdersPage() {
   }, []);
 
   useEffect(() => {
+    if (!isClientUser) return;
+    const intervalId = window.setInterval(() => {
+      void loadOrders();
+    }, 5000);
+    return () => window.clearInterval(intervalId);
+  }, [isClientUser]);
+
+  useEffect(() => {
     if (isClientUser) return;
     void preloadOrderPayments(visibleOrders);
   }, [isClientUser, visibleOrders]);
