@@ -163,11 +163,17 @@ export function PosPage() {
     return parsed;
   };
 
+  const toCents = (value: number): number => Math.round(value * 100);
+  const normalizeMoney = (value: number): number => toCents(value) / 100;
+
+  const normalizedTotal = useMemo(() => normalizeMoney(total), [total]);
+
   const amountReceivedValue = useMemo(() => parseMoneyInput(amountReceived), [amountReceived]);
   const cashChangeValue = useMemo(() => {
     if (paymentMethod !== PaymentMethod.Cash) return null;
     if (amountReceivedValue === null) return null;
-    return amountReceivedValue - total;
+    const diffCents = toCents(amountReceivedValue) - toCents(total);
+    return diffCents / 100;
   }, [amountReceivedValue, paymentMethod, total]);
   const cashShortageValue = useMemo(() => {
     if (cashChangeValue === null) return null;
@@ -314,13 +320,14 @@ export function PosPage() {
       if (cashReceived === null || !Number.isFinite(cashReceived)) {
         throw new Error('Введите корректную сумму наличными');
       }
+      const normalizedCashReceived = normalizeMoney(cashReceived);
       try {
         const resp = await paymentsApi.processCashPayment({
           orderId,
-          amountReceived: cashReceived,
+          amountReceived: normalizedCashReceived,
         });
         return {
-          amountReceived: resp.data.amountReceived ?? cashReceived,
+          amountReceived: resp.data.amountReceived ?? normalizedCashReceived,
           change: resp.data.change ?? undefined,
         };
       } catch (e: any) {
@@ -380,7 +387,7 @@ export function PosPage() {
           orderId: current.orderId,
           orderType: current.orderType,
           paymentMethod: current.paymentMethod,
-          total,
+          total: normalizedTotal,
           amountReceived: paymentResult.amountReceived,
           change: paymentResult.change,
         };
@@ -401,7 +408,7 @@ export function PosPage() {
           orderId: current.orderId,
           orderType: current.orderType,
           paymentMethod: current.paymentMethod,
-          total,
+          total: normalizedTotal,
         };
         setSuccessInfo(info);
         setSuccessDialogOpen(true);
@@ -508,7 +515,7 @@ export function PosPage() {
         orderId,
         orderType,
         paymentMethod,
-        total,
+        total: normalizedTotal,
         amountReceived: paymentResult.amountReceived,
         change: paymentResult.change,
       };
@@ -838,13 +845,9 @@ export function PosPage() {
                 <div className="mt-1 text-xs">
                   {amountReceived && amountReceivedValue === null ? (
                     <span className="text-red-600">Введите сумму числом.</span>
-                  ) : cashChangeValue === null ? null : cashChangeValue < 0 ? (
+                  ) : cashChangeValue !== null && cashChangeValue < 0 ? (
                     <span className="text-red-600">Не хватает: {formatCurrency(cashShortageValue || 0)}</span>
-                  ) : (
-                    <span className="text-gray-600">
-                      Сдача: <span className="font-semibold">{formatCurrency(cashChangeValue)}</span>
-                    </span>
-                  )}
+                  ) : null}
                 </div>
               </div>
             ) : (

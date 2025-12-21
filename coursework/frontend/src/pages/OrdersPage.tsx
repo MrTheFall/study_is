@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ordersApi, authApi, paymentsApi, couriersApi, reviewsApi } from '@/api/client';
 import { Courier, Order, OrderItem, OrderStatus, OrderType, Payment, PaymentMethod, Review } from '@/api/generated/api';
@@ -121,6 +121,7 @@ export function OrdersPage() {
   const [clientCardData, setClientCardData] = useState({ number: '', expiry: '', cvv: '' });
   const [clientPayError, setClientPayError] = useState<string | null>(null);
   const [clientPaySubmitting, setClientPaySubmitting] = useState(false);
+  const loadOrdersRef = useRef<() => Promise<void>>(() => Promise.resolve());
 
   const focusedOrderId = useMemo(() => {
     const raw = searchParams.get('orderId');
@@ -291,7 +292,7 @@ export function OrdersPage() {
   useEffect(() => {
     if (!isClientUser) return;
     const intervalId = window.setInterval(() => {
-      void loadOrders();
+      void loadOrdersRef.current();
     }, 5000);
     return () => window.clearInterval(intervalId);
   }, [isClientUser]);
@@ -356,6 +357,7 @@ export function OrdersPage() {
       setLoading(false);
     }
   };
+  loadOrdersRef.current = loadOrders;
 
   const loadClientReviews = async (clientId: number) => {
     try {
