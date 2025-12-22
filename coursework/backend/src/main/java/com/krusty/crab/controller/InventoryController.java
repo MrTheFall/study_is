@@ -64,8 +64,14 @@ public class InventoryController implements InventoryApi {
 
     @Override
     public ResponseEntity<List<com.krusty.crab.dto.generated.InventoryTransaction>> getInventoryTransactions(Integer ingredientId, Integer limit, Integer offset) {
-        log.info("Getting inventory transactions, ingredientId: {}, limit: {}, offset: {}", ingredientId, limit, offset);
-        List<com.krusty.crab.entity.InventoryTransaction> transactions = inventoryService.getInventoryTransactions(ingredientId, limit, offset);
+        log.info(
+            "Getting inventory transactions, ingredientId: {}, limit: {}, offset: {}",
+            ingredientId,
+            limit,
+            offset
+        );
+        List<com.krusty.crab.entity.InventoryTransaction> transactions =
+            inventoryService.getInventoryTransactions(ingredientId, limit, offset);
         return ResponseEntity.ok(inventoryTransactionMapper.toDtoList(transactions));
     }
 }

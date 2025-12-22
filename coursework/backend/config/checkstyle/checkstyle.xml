@@ -8,8 +8,10 @@
         <property name="max" value="160"/>
         <property name="ignorePattern" value="^package|^import"/>
     </module>
+    <module name="SuppressionFilter">
+        <property name="file" value="${config_loc}/checkstyle/suppressions.xml"/>
+    </module>
     <module name="TreeWalker">
         <module name="UnusedImports"/>
-        <module name="AvoidStarImport"/>
     </module>
 </module>

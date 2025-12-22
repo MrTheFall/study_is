@@ -1,10 +1,8 @@
 package com.krusty.crab.mapper;
 
 import com.krusty.crab.dto.generated.ReviewCreateRequest;
-import com.krusty.crab.entity.Review;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import java.time.LocalDateTime;
@@ -43,4 +41,3 @@ public interface ReviewMapper {
     
     java.util.List<com.krusty.crab.dto.generated.Review> toDtoList(java.util.List<com.krusty.crab.entity.Review> entities);
 }
-

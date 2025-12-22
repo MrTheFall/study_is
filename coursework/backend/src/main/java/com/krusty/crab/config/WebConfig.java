@@ -25,15 +25,23 @@ public class WebConfig implements WebMvcConfigurer {
             // Проверяем, что значение не содержит знак равенства (это может быть ошибка в URL)
             if (source.contains("=")) {
                 throw new IllegalArgumentException(
-                    String.format("Invalid OrderStatus value: '%s'. Did you mean to use query parameter 'clientId' instead of 'status'? Valid status values: pending, confirmed, preparing, ready, delivering, delivered, completed, cancelled", 
-                    source));
+                    String.format(
+                        "Invalid OrderStatus value: '%s'. Did you mean to use query parameter 'clientId' instead of 'status'? "
+                            + "Valid status values: pending, confirmed, preparing, ready, delivering, delivered, completed, cancelled",
+                        source
+                    )
+                );
             }
             try {
                 return com.krusty.crab.dto.generated.OrderStatus.fromValue(source);
             } catch (Exception e) {
                 throw new IllegalArgumentException(
-                    String.format("Invalid OrderStatus value: '%s'. Valid values: pending, confirmed, preparing, ready, delivering, delivered, completed, cancelled", 
-                    source), e);
+                    String.format(
+                        "Invalid OrderStatus value: '%s'. Valid values: pending, confirmed, preparing, ready, delivering, delivered, completed, cancelled",
+                        source
+                    ),
+                    e
+                );
             }
         }
     }
@@ -78,4 +86,3 @@ public class WebConfig implements WebMvcConfigurer {
         }
     }
 }
-

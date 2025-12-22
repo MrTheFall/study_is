@@ -81,8 +81,15 @@ public class ShiftsController implements ShiftsApi {
     }
     
     @Override
-    public ResponseEntity<com.krusty.crab.dto.generated.EmployeeShift> assignEmployeeToShift(Integer shiftId, AssignEmployeeToShiftRequest assignEmployeeToShiftRequest) {
-        log.info("Assigning employee {} to shift {}", assignEmployeeToShiftRequest.getEmployeeId(), shiftId);
+    public ResponseEntity<com.krusty.crab.dto.generated.EmployeeShift> assignEmployeeToShift(
+        Integer shiftId,
+        AssignEmployeeToShiftRequest assignEmployeeToShiftRequest
+    ) {
+        log.info(
+            "Assigning employee {} to shift {}",
+            assignEmployeeToShiftRequest.getEmployeeId(),
+            shiftId
+        );
         com.krusty.crab.entity.EmployeeShift employeeShift = shiftService.assignEmployeeToShift(
             assignEmployeeToShiftRequest.getEmployeeId(), 
             shiftId
