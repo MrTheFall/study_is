@@ -9,10 +9,25 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 
+const phonePattern = /^[+\d\s()-]+$/;
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const countPhoneDigits = (value: string) => value.replace(/\D/g, '').length;
+const sanitizePhoneInput = (value: string) => value.replace(/[^\d+()\s-]/g, '');
+const sanitizeEmailInput = (value: string) => value.replace(/\s+/g, '');
+
 const registerSchema = z.object({
   name: z.string().min(1, 'Имя обязательно'),
-  phone: z.string().min(1, 'Телефон обязателен'),
-  email: z.string().email('Неверный формат email'),
+  phone: z
+    .string()
+    .min(1, 'Телефон обязателен')
+    .refine((value) => phonePattern.test(value), 'Телефон должен содержать только цифры и символы +()-')
+    .refine((value) => countPhoneDigits(value) >= 6, 'Телефон должен содержать минимум 6 цифр'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email обязателен')
+    .email('Неверный формат email')
+    .refine((value) => emailPattern.test(value), 'Email должен быть вида name@example.com'),
   password: z.string().min(6, 'Пароль должен быть не менее 6 символов'),
   defaultAddress: z.string().min(1, 'Адрес обязателен'),
 });
@@ -30,6 +45,22 @@ export function RegisterPage() {
 
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
+  });
+  const phoneRegister = form.register('phone', {
+    onChange: (event) => {
+      const sanitized = sanitizePhoneInput(event.target.value);
+      if (sanitized !== event.target.value) {
+        event.target.value = sanitized;
+      }
+    },
+  });
+  const emailRegister = form.register('email', {
+    onChange: (event) => {
+      const sanitized = sanitizeEmailInput(event.target.value);
+      if (sanitized !== event.target.value) {
+        event.target.value = sanitized;
+      }
+    },
   });
 
   const onSubmit = async (data: RegisterForm) => {
@@ -94,7 +125,12 @@ export function RegisterPage() {
 
             <div>
               <label className="block text-sm font-medium mb-1">Телефон</label>
-              <Input {...form.register('phone')} placeholder="+7 (999) 123-45-67" />
+              <Input
+                {...phoneRegister}
+                placeholder="+7 (999) 123-45-67"
+                inputMode="tel"
+                autoComplete="tel"
+              />
               {form.formState.errors.phone && (
                 <p className="text-red-500 text-sm mt-1">
                   {form.formState.errors.phone.message}
@@ -104,7 +140,13 @@ export function RegisterPage() {
 
             <div>
               <label className="block text-sm font-medium mb-1">Email</label>
-              <Input type="email" {...form.register('email')} placeholder="email@example.com" />
+              <Input
+                type="email"
+                {...emailRegister}
+                placeholder="email@example.com"
+                inputMode="email"
+                autoComplete="email"
+              />
               {form.formState.errors.email && (
                 <p className="text-red-500 text-sm mt-1">
                   {form.formState.errors.email.message}

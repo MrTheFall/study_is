@@ -10,8 +10,16 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const sanitizeEmailInput = (value: string) => value.replace(/\s+/g, '');
+
 const clientLoginSchema = z.object({
-  email: z.string().email('Неверный формат email'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email обязателен')
+    .email('Неверный формат email')
+    .refine((value) => emailPattern.test(value), 'Email должен быть вида name@example.com'),
   password: z.string().min(1, 'Пароль обязателен'),
 });
 
@@ -42,6 +50,14 @@ export function LoginPage() {
 
   const clientForm = useForm<ClientLoginForm>({
     resolver: zodResolver(clientLoginSchema),
+  });
+  const clientEmailRegister = clientForm.register('email', {
+    onChange: (event) => {
+      const sanitized = sanitizeEmailInput(event.target.value);
+      if (sanitized !== event.target.value) {
+        event.target.value = sanitized;
+      }
+    },
   });
 
   const employeeForm = useForm<EmployeeLoginForm>({
@@ -144,8 +160,10 @@ export function LoginPage() {
                 <label className="block text-sm font-medium mb-1">Email</label>
                 <Input
                   type="email"
-                  {...clientForm.register('email')}
+                  {...clientEmailRegister}
                   placeholder="email@example.com"
+                  inputMode="email"
+                  autoComplete="email"
                 />
                 {clientForm.formState.errors.email && (
                   <p className="text-red-500 text-sm mt-1">
