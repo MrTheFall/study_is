@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { auditApi } from '@/api/client';
-import { AuditLogEntry } from '@/api/generated/api';
+import { auditApi, type AuditLogEntry } from '@/api/client';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';

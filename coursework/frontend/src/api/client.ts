@@ -78,7 +78,35 @@ export const shiftsApi = new api.ShiftsApi(configuration, API_BASE_URL, axiosIns
 export const kitchenApi = new api.KitchenApi(configuration, API_BASE_URL, axiosInstance as any);
 export const analyticsApi = new api.AnalyticsApi(configuration, API_BASE_URL, axiosInstance as any);
 export const financeApi = new api.FinanceApi(configuration, API_BASE_URL, axiosInstance as any);
-export const auditApi = new api.AuditApi(configuration, API_BASE_URL, axiosInstance as any);
+
+export type AuditLogEntry = {
+  id?: number;
+  employeeId?: number;
+  employeeName?: string;
+  action?: string;
+  entityType?: string;
+  entityId?: number;
+  orderId?: number;
+  fromValue?: string;
+  toValue?: string;
+  details?: string;
+  createdAt?: string;
+};
+
+export const auditApi = {
+  getAuditLogs: (
+    employeeId?: number,
+    orderId?: number,
+    action?: string,
+    from?: string,
+    to?: string,
+    limit?: number,
+    offset?: number
+  ) =>
+    axiosInstance.get<AuditLogEntry[]>('/audit/logs', {
+      params: { employeeId, orderId, action, from, to, limit, offset },
+    }),
+};
 
 export { axiosInstance };
 export type { AxiosRequestConfig };
