@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: coursework/frontend/package-lock.json
       - name: Validate Deploy Secrets
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -34,10 +34,10 @@ jobs:
             exit 1
           fi
       - name: Build Backend
-        working-directory: backend
+        working-directory: coursework/backend
         run: ./gradlew --no-daemon assemble
       - name: Build Frontend
-        working-directory: frontend
+        working-directory: coursework/frontend
         run: |
           npm ci
           npm run build
@@ -57,5 +57,5 @@ jobs:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
           ssh "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_PATH/backend' '$DEPLOY_PATH/frontend'"
-          scp backend/build/libs/*.jar "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/backend/"
-          rsync -az --delete frontend/dist/ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/frontend/"
+          scp coursework/backend/build/libs/*.jar "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/backend/"
+          rsync -az --delete coursework/frontend/dist/ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/frontend/"

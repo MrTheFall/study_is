@@ -3,7 +3,13 @@ name: CI
 on:
   push:
     branches: ["**"]
+    paths:
+      - "coursework/**"
+      - ".github/workflows/**"
   pull_request:
+    paths:
+      - "coursework/**"
+      - ".github/workflows/**"
 
 jobs:
   backend:
@@ -11,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend
+        working-directory: coursework/backend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,16 +40,16 @@ jobs:
         with:
           name: backend-artifacts
           path: |
-            backend/build/libs/*.jar
-            backend/build/reports/jacoco/test
-            backend/build/test-results/test
+            coursework/backend/build/libs/*.jar
+            coursework/backend/build/reports/jacoco/test
+            coursework/backend/build/test-results/test
 
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: frontend
+        working-directory: coursework/frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,7 +58,7 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: coursework/frontend/package-lock.json
       - name: Install
         run: npm ci
       - name: Build
@@ -65,4 +71,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
-          path: frontend/dist
+          path: coursework/frontend/dist
