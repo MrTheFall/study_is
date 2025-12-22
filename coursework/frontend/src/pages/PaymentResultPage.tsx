@@ -43,18 +43,28 @@ export function PaymentResultPage() {
 
   useEffect(() => {
     if (!isAuthenticated || !orderId || statusParam !== 'success') return;
-    setLoading(true);
+    let isActive = true;
+    Promise.resolve().then(() => {
+      if (isActive) setLoading(true);
+    });
     paymentsApi
       .getPaymentByOrderId(orderId)
       .then((response) => {
+        if (!isActive) return;
         setPayment(response.data);
         setError(null);
       })
       .catch((err) => {
+        if (!isActive) return;
         setError(getApiErrorMessage(err, 'Не удалось получить данные платежа'));
         setPayment(null);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (isActive) setLoading(false);
+      });
+    return () => {
+      isActive = false;
+    };
   }, [isAuthenticated, orderId, statusParam]);
 
   const label = mapStatusLabel(statusParam);
