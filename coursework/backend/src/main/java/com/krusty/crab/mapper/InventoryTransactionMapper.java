@@ -26,4 +26,3 @@ public interface InventoryTransactionMapper {
 
     java.util.List<com.krusty.crab.dto.generated.InventoryTransaction> toDtoList(java.util.List<InventoryTransaction> entities);
 }
-

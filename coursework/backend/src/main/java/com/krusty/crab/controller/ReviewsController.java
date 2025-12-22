@@ -27,12 +27,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class ReviewsController implements ReviewsApi {
-    
+
     private final ReviewService reviewService;
     private final ReviewMapper reviewMapper;
     private final ClientService clientService;
     private final OrderService orderService;
-    
+
     @Override
     @PreAuthorize("hasRole('CLIENT') and authentication.principal.userId == #p0.clientId")
     public ResponseEntity<com.krusty.crab.dto.generated.Review> createReview(ReviewCreateRequest reviewCreateRequest) {
@@ -58,7 +58,7 @@ public class ReviewsController implements ReviewsApi {
         com.krusty.crab.dto.generated.Review dto = reviewMapper.toDto(saved);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
-    
+
     @Override
     @PreAuthorize("hasRole('Manager') or (hasRole('CLIENT') and (#p0 == null or authentication.principal.userId == #p0))")
     public ResponseEntity<List<com.krusty.crab.dto.generated.Review>> getAllReviews(Integer clientId, Integer orderId) {
@@ -88,7 +88,7 @@ public class ReviewsController implements ReviewsApi {
         }
         return ResponseEntity.ok(reviewMapper.toDtoList(reviews));
     }
-    
+
     @Override
     @PreAuthorize("hasRole('Manager') or hasRole('CLIENT')")
     public ResponseEntity<com.krusty.crab.dto.generated.Review> getReviewById(Integer reviewId) {

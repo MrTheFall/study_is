@@ -11,5 +11,3 @@ public class UserPrincipal {
     private String userType; // "CLIENT" or "EMPLOYEE"
     private String role; // Role name for employees, null for clients
 }
-
-

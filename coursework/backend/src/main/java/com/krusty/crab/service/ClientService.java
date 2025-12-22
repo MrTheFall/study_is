@@ -21,15 +21,15 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j
 public class ClientService {
-    
+
     private final ClientRepository clientRepository;
     private final OrderRepository orderRepository;
-    
+
     public Client getClientById(Integer id) {
         return clientRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Client", id));
     }
-    
+
     public Client getClientByEmail(String email) {
         return clientRepository.findByEmail(email)
             .orElseThrow(() -> new EntityNotFoundException("Client", "email", email));
@@ -58,11 +58,11 @@ public class ClientService {
         }
         throw new EntityNotFoundException("Client", "phone", normalizedPhone);
     }
-    
+
     public List<Client> getAllClients() {
         return clientRepository.findAll();
     }
-    
+
     @Transactional
     public Client createClient(Client client) {
         if (clientRepository.existsByEmail(client.getEmail())) {
@@ -83,13 +83,13 @@ public class ClientService {
         log.info("Client created with ID: {}", saved.getId());
         return saved;
     }
-    
+
     @Transactional
     public Client createClient(Client client, String password) {
         client.setPasswordHash(PasswordUtil.encode(password));
         return createClient(client);
     }
-    
+
     @Transactional
     public Client updateClient(Integer id, Client clientData) {
         Client client = getClientById(id);
@@ -109,9 +109,9 @@ public class ClientService {
         log.info("Client {} updated", id);
         return updated;
     }
-    
+
     public List<Order> getClientOrders(Integer clientId) {
-        getClientById(clientId); 
+        getClientById(clientId);
         return orderRepository.findByClientIdOrderByCreatedAtDesc(clientId);
     }
 

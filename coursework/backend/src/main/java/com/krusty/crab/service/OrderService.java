@@ -36,7 +36,7 @@ import java.util.Map;
 @Service
 @Slf4j
 public class OrderService {
-    
+
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final CourierRepository courierRepository;
@@ -51,7 +51,7 @@ public class OrderService {
         OrderStatus.READY,
         OrderStatus.DELIVERING
     );
-    
+
     public OrderService(
         OrderRepository orderRepository,
         OrderItemRepository orderItemRepository,
@@ -67,7 +67,7 @@ public class OrderService {
         this.objectMapper = objectMapper;
         this.entityManager = entityManager;
     }
-    
+
     @Transactional
     public Integer placeOrder(PlaceOrderRequest request, Integer createdByEmployeeId) {
         try {
@@ -81,11 +81,11 @@ public class OrderService {
                 }
                 itemsJson.add(itemMap);
             }
-            
+
             String itemsJsonb = objectMapper.writeValueAsString(itemsJson);
 
             String paymentMethod = request.getPaymentMethod() != null ? request.getPaymentMethod().getValue() : null;
-            
+
             Integer orderId = orderRepository.callPlaceOrder(
                 request.getClientId(),
                 request.getType() != null ? request.getType().getValue() : null,
@@ -103,7 +103,7 @@ public class OrderService {
                     orderRepository.save(order);
                 }
             }
-            
+
             log.info("Order placed successfully with ID: {}", orderId);
             return orderId;
         } catch (JsonProcessingException e) {
@@ -118,7 +118,7 @@ public class OrderService {
             throw new OrderException("Failed to place order: " + e.getMessage(), e);
         }
     }
-    
+
     @Transactional
     public void updateOrderStatus(Integer orderId, OrderStatus newStatus, Integer acceptedByEmployeeId) {
         try {
@@ -175,11 +175,11 @@ public class OrderService {
         log.info("Order {} payment method updated to {}", orderId, paymentMethod != null ? paymentMethod.getValue() : null);
         return saved;
     }
-    
+
     public List<KitchenQueueItem> getKitchenQueue() {
         List<Object[]> results = orderRepository.callGetKitchenQueue();
         List<KitchenQueueItem> queue = new ArrayList<>();
-        
+
         for (Object[] row : results) {
             try {
                 Integer orderId = row[0] != null ? ((Number) row[0]).intValue() : null;
@@ -189,9 +189,9 @@ public class OrderService {
                 OffsetDateTime readyAt = extractCreatedAt(row[4]);
                 Integer cookingDurationSeconds = row[5] != null ? ((Number) row[5]).intValue() : null;
                 String itemsJson = row[6] != null ? row[6].toString() : null;
-                
+
                 List<OrderItemInfo> items = parseItemsJson(itemsJson);
-                
+
                 KitchenQueueItem item = new KitchenQueueItem();
                 item.setOrderId(orderId);
                 item.setCreatedAt(createdAt);
@@ -200,13 +200,13 @@ public class OrderService {
                 item.setReadyAt(readyAt);
                 item.setCookingDurationSeconds(cookingDurationSeconds);
                 item.setItems(items);
-                
+
                 queue.add(item);
             } catch (Exception e) {
                 log.error("Error parsing kitchen queue item: {}", Arrays.toString(row), e);
             }
         }
-        
+
         return queue;
     }
 
@@ -222,18 +222,18 @@ public class OrderService {
         }
         return null;
     }
-    
+
     private List<OrderItemInfo> parseItemsJson(String itemsJson) {
         try {
             if (itemsJson == null || itemsJson.trim().isEmpty() || itemsJson.equals("null")) {
                 return new ArrayList<>();
             }
-            
+
             List<Map<String, Object>> itemsList = objectMapper.readValue(
                 itemsJson,
                 new TypeReference<List<Map<String, Object>>>() {}
             );
-            
+
             List<OrderItemInfo> items = new ArrayList<>();
             for (Map<String, Object> itemMap : itemsList) {
                 OrderItemInfo itemInfo = new OrderItemInfo();
@@ -243,31 +243,31 @@ public class OrderService {
                 itemInfo.setNote((String) itemMap.get("note"));
                 items.add(itemInfo);
             }
-            
+
             return items;
         } catch (JsonProcessingException e) {
             log.error("Error parsing items JSON: {}", itemsJson, e);
             return new ArrayList<>();
         }
     }
-    
+
     public Order getOrderById(Integer orderId) {
         return orderRepository.findById(orderId)
             .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
     }
-    
+
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
     }
-    
+
     public List<Order> getOrdersByStatus(String status) {
         return orderRepository.findByStatus(status);
     }
-    
+
     public List<Order> getOrdersByClient(Integer clientId) {
         return orderRepository.findByClientId(clientId);
     }
-    
+
     public List<Order> getOrdersByStatusAndClient(String status, Integer clientId) {
         return orderRepository.findByClientId(clientId).stream()
             .filter(order -> order.getStatus() != null && order.getStatus().getValue().equals(status))

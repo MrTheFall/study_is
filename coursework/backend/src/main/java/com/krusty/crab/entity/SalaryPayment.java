@@ -33,4 +33,3 @@ public class SalaryPayment {
     @Column(name = "note")
     private String note;
 }
-

@@ -11,4 +11,3 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
     Optional<Employee> findByLogin(String login);
     boolean existsByLogin(String login);
 }
-

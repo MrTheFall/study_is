@@ -14,7 +14,7 @@ import java.time.ZoneOffset;
     uses = {CourierMapper.class}
 )
 public interface OrderMapper {
-    
+
     @Mapping(target = "type", expression = "java(mapOrderType(entity.getType()))")
     @Mapping(target = "status", expression = "java(mapOrderStatus(entity.getStatus()))")
     @Mapping(target = "paymentMethod", expression = "java(mapPaymentMethod(entity.getPaymentMethod()))")
@@ -29,18 +29,18 @@ public interface OrderMapper {
     @Mapping(target = "readyAt", expression = "java(mapDateTime(entity.getReadyAt()))")
     @Mapping(target = "deliveredAt", expression = "java(mapDateTime(entity.getDeliveredAt()))")
     com.krusty.crab.dto.generated.Order toDto(com.krusty.crab.entity.Order entity);
-    
+
     default OffsetDateTime mapDateTime(LocalDateTime value) {
         return value != null ? value.atOffset(ZoneOffset.UTC) : null;
     }
-    
+
     default com.krusty.crab.dto.generated.OrderType mapOrderType(com.krusty.crab.entity.enums.OrderType value) {
         if (value == null) {
             return null;
         }
         return com.krusty.crab.dto.generated.OrderType.fromValue(value.getValue());
     }
-    
+
     default com.krusty.crab.dto.generated.OrderStatus mapOrderStatus(com.krusty.crab.entity.enums.OrderStatus value) {
         if (value == null) {
             return null;
@@ -54,12 +54,12 @@ public interface OrderMapper {
         }
         return com.krusty.crab.dto.generated.PaymentMethod.fromValue(value.getValue());
     }
-    
+
     default com.krusty.crab.dto.generated.PlaceOrder201Response toPlaceOrderResponse(Integer orderId) {
         com.krusty.crab.dto.generated.PlaceOrder201Response response = new com.krusty.crab.dto.generated.PlaceOrder201Response();
         response.setOrderId(orderId);
         return response;
     }
-    
+
     java.util.List<com.krusty.crab.dto.generated.Order> toDtoList(java.util.List<com.krusty.crab.entity.Order> entities);
 }

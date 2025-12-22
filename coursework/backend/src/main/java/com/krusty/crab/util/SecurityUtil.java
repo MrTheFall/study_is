@@ -22,14 +22,14 @@ public class SecurityUtil {
 
         throw new AuthenticationCredentialsNotFoundException("User not authenticated");
     }
-    
+
     public static void requireRole(String requiredRole) {
         getCurrentUser();
         if (!hasRole(requiredRole)) {
             throw new AccessDeniedException("Access denied. Required role: " + requiredRole);
         }
     }
-    
+
     public static boolean hasRole(String role) {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -41,7 +41,7 @@ public class SecurityUtil {
             return false;
         }
     }
-    
+
     public static boolean isManager() {
         return hasRole("Manager");
     }

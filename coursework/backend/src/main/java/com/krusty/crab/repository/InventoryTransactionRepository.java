@@ -25,4 +25,3 @@ public interface InventoryTransactionRepository extends JpaRepository<InventoryT
         @Param("offset") int offset
     );
 }
-

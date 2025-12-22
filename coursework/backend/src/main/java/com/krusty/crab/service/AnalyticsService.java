@@ -25,14 +25,14 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class AnalyticsService {
-    
+
     private final AnalyticsRepository analyticsRepository;
     private final ReportViewRepository reportViewRepository;
     private final EmployeeRepository employeeRepository;
-    
+
     public SalesSummary getSalesSummary(LocalDateTime from, LocalDateTime to) {
         List<Object[]> results = analyticsRepository.callSalesSummary(from, to);
-        
+
         if (results.isEmpty()) {
             SalesSummary summary = new SalesSummary();
             summary.setFromTs(from != null ? from.atOffset(ZoneOffset.UTC) : null);
@@ -43,7 +43,7 @@ public class AnalyticsService {
             summary.setHasData(false);
             return summary;
         }
-        
+
         Object[] row = results.get(0);
         SalesSummary summary = new SalesSummary();
         summary.setFromTs(row[0] != null ? ((LocalDateTime) row[0]).atOffset(ZoneOffset.UTC) : null);
@@ -54,11 +54,11 @@ public class AnalyticsService {
         summary.setHasData(summary.getOrdersCnt() != null && summary.getOrdersCnt() > 0);
         return summary;
     }
-    
+
     public List<TopMenuItem> getTopMenuItems(LocalDateTime from, LocalDateTime to, Integer limit) {
         List<Object[]> results = analyticsRepository.callTopMenuItems(from, to, limit);
         List<TopMenuItem> items = new ArrayList<>();
-        
+
         for (Object[] row : results) {
             TopMenuItem item = new TopMenuItem();
             item.setMenuItemId(((Number) row[0]).intValue());
@@ -67,7 +67,7 @@ public class AnalyticsService {
             item.setRevenue((BigDecimal) row[3]);
             items.add(item);
         }
-        
+
         return items;
     }
 

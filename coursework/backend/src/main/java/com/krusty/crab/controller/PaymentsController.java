@@ -29,7 +29,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentsController implements PaymentsApi {
-    
+
     private final PaymentService paymentService;
     private final PaymentMapper paymentMapper;
     private final OrderRepository orderRepository;
@@ -129,22 +129,22 @@ public class PaymentsController implements PaymentsApi {
 
         return ResponseEntity.ok(response);
     }
-    
+
     @Override
     @PreAuthorize("hasRole('Cashier') or hasRole('Manager')")
     public ResponseEntity<com.krusty.crab.dto.generated.ChangeResponse> processCashPayment(CashPaymentRequest cashPaymentRequest) {
-        log.info("Processing cash payment for order: {} with amount: {}", 
+        log.info("Processing cash payment for order: {} with amount: {}",
             cashPaymentRequest.getOrderId(), cashPaymentRequest.getAmountReceived());
         Order order = orderRepository.findById(cashPaymentRequest.getOrderId())
             .orElseThrow(() -> new EntityNotFoundException("Order", cashPaymentRequest.getOrderId()));
         validatePaymentAccess(order, PaymentMethod.CASH);
         com.krusty.crab.dto.generated.ChangeResponse response = paymentService.processCashPayment(
-            cashPaymentRequest.getOrderId(), 
+            cashPaymentRequest.getOrderId(),
             cashPaymentRequest.getAmountReceived()
         );
         return ResponseEntity.ok(response);
     }
-    
+
     @Override
     @PreAuthorize("hasRole('CLIENT') or hasRole('Cashier') or hasRole('Manager')")
     public ResponseEntity<com.krusty.crab.dto.generated.Payment> getPaymentByOrderId(Integer orderId) {

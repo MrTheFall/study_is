@@ -24,11 +24,11 @@ public class AuthController implements AuthApi {
     public ResponseEntity<LoginClient200Response> loginClient(LoginClientRequest loginClientRequest) {
         log.info("Client login attempt for email: {}", loginClientRequest.getEmail());
         String token = authService.loginClient(loginClientRequest.getEmail(), loginClientRequest.getPassword());
-        
+
         LoginClient200Response response = new LoginClient200Response();
         response.setToken(token);
         response.setUserType(LoginClient200Response.UserTypeEnum.CLIENT);
-        
+
         return ResponseEntity.ok(response);
     }
 
@@ -36,11 +36,11 @@ public class AuthController implements AuthApi {
     public ResponseEntity<LoginEmployee200Response> loginEmployee(LoginEmployeeRequest loginEmployeeRequest) {
         log.info("Employee login attempt for login: {}", loginEmployeeRequest.getLogin());
         String token = authService.loginEmployee(loginEmployeeRequest.getLogin(), loginEmployeeRequest.getPassword());
-        
+
         LoginEmployee200Response response = new LoginEmployee200Response();
         response.setToken(token);
         response.setUserType(LoginEmployee200Response.UserTypeEnum.EMPLOYEE);
-        
+
         return ResponseEntity.ok(response);
     }
 

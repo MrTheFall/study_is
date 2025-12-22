@@ -8,10 +8,9 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 class KrustyCrabApplicationTests {
 
-	@Test
-	void contextLoads() {
-		// Тест проверяет, что Spring контекст загружается без ошибок
-	}
+    @Test
+    void contextLoads() {
+        // Тест проверяет, что Spring контекст загружается без ошибок
+    }
 
 }
-

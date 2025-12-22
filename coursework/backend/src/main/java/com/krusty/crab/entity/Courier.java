@@ -14,17 +14,17 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class Courier {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    
+
     @Column(name = "name", nullable = false, length = 255)
     private String name;
-    
+
     @Column(name = "phone", nullable = false, length = 64)
     private String phone;
-    
+
     @Column(name = "vehicle_info", length = 255)
     private String vehicleInfo;
 
@@ -34,7 +34,7 @@ public class Courier {
 
     @Transient
     private Boolean busy;
-    
+
     @OneToMany(mappedBy = "courier")
     @Builder.Default
     private List<Order> orders = new ArrayList<>();

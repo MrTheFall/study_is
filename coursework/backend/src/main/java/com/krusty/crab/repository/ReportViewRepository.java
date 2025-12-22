@@ -20,4 +20,3 @@ public interface ReportViewRepository extends JpaRepository<ReportView, Integer>
         """, nativeQuery = true)
     List<ReportView> findRecent(@Param("limit") int limit, @Param("offset") int offset);
 }
-

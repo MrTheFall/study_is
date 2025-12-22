@@ -7,14 +7,14 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-    
+
     @Override
     public void addFormatters(FormatterRegistry registry) {
         registry.addConverter(new StringToOrderStatusConverter());
         registry.addConverter(new StringToOrderTypeConverter());
         registry.addConverter(new StringToPaymentMethodConverter());
     }
-    
+
     // Конвертер для OrderStatus
     public static class StringToOrderStatusConverter implements Converter<String, com.krusty.crab.dto.generated.OrderStatus> {
         @Override
@@ -45,7 +45,7 @@ public class WebConfig implements WebMvcConfigurer {
             }
         }
     }
-    
+
     // Конвертер для OrderType
     public static class StringToOrderTypeConverter implements Converter<String, com.krusty.crab.dto.generated.OrderType> {
         @Override
@@ -65,7 +65,7 @@ public class WebConfig implements WebMvcConfigurer {
             }
         }
     }
-    
+
     // Конвертер для PaymentMethod
     public static class StringToPaymentMethodConverter implements Converter<String, com.krusty.crab.dto.generated.PaymentMethod> {
         @Override

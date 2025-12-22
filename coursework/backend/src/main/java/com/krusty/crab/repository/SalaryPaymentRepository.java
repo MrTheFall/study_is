@@ -30,4 +30,3 @@ public interface SalaryPaymentRepository extends JpaRepository<SalaryPayment, In
         @Param("offset") int offset
     );
 }
-

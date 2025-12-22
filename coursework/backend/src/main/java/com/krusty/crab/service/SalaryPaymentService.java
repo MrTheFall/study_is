@@ -63,4 +63,3 @@ public class SalaryPaymentService {
         return salaryPaymentRepository.findRecent(employeeId, fromLocal, toLocal, resolvedLimit, resolvedOffset);
     }
 }
-

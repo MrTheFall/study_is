@@ -20,12 +20,12 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class EmployeesController implements EmployeesApi {
-    
+
     private final EmployeeService employeeService;
     private final ShiftService shiftService;
     private final EmployeeMapper employeeMapper;
     private final ShiftMapper shiftMapper;
-    
+
     @Override
     @PreAuthorize("hasRole('Manager')")
     public ResponseEntity<com.krusty.crab.dto.generated.Employee> createEmployee(EmployeeCreateRequest employeeCreateRequest) {
@@ -35,7 +35,7 @@ public class EmployeesController implements EmployeesApi {
         com.krusty.crab.dto.generated.Employee dto = employeeMapper.toDto(saved);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
-    
+
     @Override
     @PreAuthorize("hasRole('Manager')")
     public ResponseEntity<List<com.krusty.crab.dto.generated.Employee>> getAllEmployees() {
@@ -43,7 +43,7 @@ public class EmployeesController implements EmployeesApi {
         List<Employee> employees = employeeService.getAllEmployees();
         return ResponseEntity.ok(employeeMapper.toDtoList(employees));
     }
-    
+
     @Override
     @PreAuthorize("hasRole('Manager') or (hasRole('EMPLOYEE') and authentication.principal.userId == #p0)")
     public ResponseEntity<com.krusty.crab.dto.generated.Employee> getEmployeeById(Integer employeeId) {
@@ -52,7 +52,7 @@ public class EmployeesController implements EmployeesApi {
         com.krusty.crab.dto.generated.Employee dto = employeeMapper.toDto(employee);
         return ResponseEntity.ok(dto);
     }
-    
+
     @Override
     @PreAuthorize("hasRole('Manager')")
     public ResponseEntity<com.krusty.crab.dto.generated.Employee> updateEmployee(Integer employeeId, EmployeeCreateRequest employeeCreateRequest) {
@@ -63,7 +63,7 @@ public class EmployeesController implements EmployeesApi {
         com.krusty.crab.dto.generated.Employee dto = employeeMapper.toDto(updated);
         return ResponseEntity.ok(dto);
     }
-    
+
     @Override
     @PreAuthorize("hasRole('Manager')")
     public ResponseEntity<Void> deleteEmployee(Integer employeeId) {
@@ -71,7 +71,7 @@ public class EmployeesController implements EmployeesApi {
         employeeService.deleteEmployee(employeeId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
-    
+
     @Override
     @PreAuthorize("hasRole('Manager') or (hasRole('EMPLOYEE') and authentication.principal.userId == #p0)")
     public ResponseEntity<List<com.krusty.crab.dto.generated.EmployeeShift>> getEmployeeShifts(Integer employeeId) {

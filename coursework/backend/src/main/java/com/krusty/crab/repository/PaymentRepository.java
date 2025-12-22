@@ -12,9 +12,9 @@ import java.util.Optional;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Integer> {
-    
+
     Optional<Payment> findByOrderId(Integer orderId);
-    
+
     boolean existsByOrderId(Integer orderId);
 
     @Query(value = """
@@ -37,7 +37,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
         @Param("limit") int limit,
         @Param("offset") int offset
     );
-    
+
     @Query(value = "SELECT process_payment(:orderId, :method)", nativeQuery = true)
     Integer callProcessPayment(
         @Param("orderId") Integer orderId,

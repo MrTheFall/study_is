@@ -21,10 +21,10 @@ import java.util.List;
 @Slf4j
 @PreAuthorize("hasRole('Manager')")
 public class ShiftsController implements ShiftsApi {
-    
+
     private final ShiftService shiftService;
     private final ShiftMapper shiftMapper;
-    
+
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.Shift> createShift(ShiftCreateRequest shiftCreateRequest) {
         log.info("Creating shift");
@@ -33,7 +33,7 @@ public class ShiftsController implements ShiftsApi {
         com.krusty.crab.dto.generated.Shift dto = shiftMapper.toDto(saved);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
-    
+
     @Override
     public ResponseEntity<List<com.krusty.crab.dto.generated.Shift>> getAllShifts(@DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         log.info("Getting all shifts, date: {}", date);
@@ -54,7 +54,7 @@ public class ShiftsController implements ShiftsApi {
         List<com.krusty.crab.entity.EmployeeShift> assignments = shiftService.getShiftAssignments(date);
         return ResponseEntity.ok(shiftMapper.toEmployeeShiftDtoList(assignments));
     }
-    
+
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.Shift> getShiftById(Integer shiftId) {
         log.info("Getting shift by ID: {}", shiftId);
@@ -62,7 +62,7 @@ public class ShiftsController implements ShiftsApi {
         com.krusty.crab.dto.generated.Shift dto = shiftMapper.toDto(shift);
         return ResponseEntity.ok(dto);
     }
-    
+
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.Shift> updateShift(Integer shiftId, ShiftCreateRequest shiftCreateRequest) {
         log.info("Updating shift with ID: {}", shiftId);
@@ -72,14 +72,14 @@ public class ShiftsController implements ShiftsApi {
         com.krusty.crab.dto.generated.Shift dto = shiftMapper.toDto(updated);
         return ResponseEntity.ok(dto);
     }
-    
+
     @Override
     public ResponseEntity<Void> deleteShift(Integer shiftId) {
         log.info("Deleting shift with ID: {}", shiftId);
         shiftService.deleteShift(shiftId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
-    
+
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.EmployeeShift> assignEmployeeToShift(
         Integer shiftId,
@@ -91,7 +91,7 @@ public class ShiftsController implements ShiftsApi {
             shiftId
         );
         com.krusty.crab.entity.EmployeeShift employeeShift = shiftService.assignEmployeeToShift(
-            assignEmployeeToShiftRequest.getEmployeeId(), 
+            assignEmployeeToShiftRequest.getEmployeeId(),
             shiftId
         );
         com.krusty.crab.dto.generated.EmployeeShift dto = shiftMapper.toDto(employeeShift);

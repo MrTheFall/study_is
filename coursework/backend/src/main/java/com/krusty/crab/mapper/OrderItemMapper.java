@@ -14,4 +14,3 @@ public interface OrderItemMapper {
 
     java.util.List<com.krusty.crab.dto.generated.OrderItem> toDtoList(java.util.List<com.krusty.crab.entity.OrderItem> entities);
 }
-

@@ -34,4 +34,3 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
         objectMapper.writeValue(response.getOutputStream(), error);
     }
 }
-

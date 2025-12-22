@@ -15,9 +15,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class KitchenController implements KitchenApi {
-    
+
     private final OrderService orderService;
-    
+
     @Override
     @PreAuthorize("hasRole('Cook') or hasRole('Manager')")
     public ResponseEntity<List<KitchenQueueItem>> getKitchenQueue() {
@@ -26,6 +26,3 @@ public class KitchenController implements KitchenApi {
         return ResponseEntity.ok(queue);
     }
 }
-
-
-

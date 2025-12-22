@@ -18,22 +18,22 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Slf4j
 public class MenuService {
-    
+
     private final MenuItemRepository menuItemRepository;
-    
+
     public List<MenuItem> getAllMenuItems() {
         return menuItemRepository.findAll();
     }
-    
+
     public List<MenuItem> getAvailableMenuItems() {
         return menuItemRepository.findByAvailableTrue();
     }
-    
+
     public MenuItem getMenuItemById(Integer id) {
         return menuItemRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("MenuItem", id));
     }
-    
+
     public List<MenuItem> searchMenuItems(String name) {
         return menuItemRepository.findByNameContainingIgnoreCase(name);
     }
@@ -44,7 +44,7 @@ public class MenuService {
         }
         return new HashSet<>(menuItemRepository.findOutOfStockMenuItemIds(menuItemIds));
     }
-    
+
     @Transactional
     public MenuItem createMenuItem(MenuItem menuItem) {
         if (menuItem.getPrice() == null || menuItem.getPrice().signum() < 0) {
@@ -64,7 +64,7 @@ public class MenuService {
             throw new MenuException("Failed to create menu item: " + e.getMessage(), e);
         }
     }
-    
+
     @Transactional
     public MenuItem updateMenuItem(Integer id, MenuItem menuItemData) {
         MenuItem menuItem = getMenuItemById(id);
@@ -87,7 +87,7 @@ public class MenuService {
         log.info("MenuItem {} updated", id);
         return updated;
     }
-    
+
     @Transactional
     public void deleteMenuItem(Integer id) {
         MenuItem menuItem = getMenuItemById(id);

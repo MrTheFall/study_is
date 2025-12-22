@@ -23,15 +23,15 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class InventoryService {
-    
+
     private final InventoryRepository inventoryRepository;
     private final IngredientRepository ingredientRepository;
     private final InventoryTransactionRepository inventoryTransactionRepository;
-    
+
     public List<LowStockItem> getLowStock(Double thresholdFactor) {
         List<Object[]> results = inventoryRepository.callLowStock(thresholdFactor);
         List<LowStockItem> items = new ArrayList<>();
-        
+
         for (Object[] row : results) {
             LowStockItem item = new LowStockItem();
             item.setIngredientId(((Number) row[0]).intValue());
@@ -40,10 +40,10 @@ public class InventoryService {
             item.setMinThreshold((BigDecimal) row[3]);
             items.add(item);
         }
-        
+
         return items;
     }
-    
+
     @Transactional
     public void adjustInventory(Integer ingredientId, Double delta, Integer employeeId, String reason) {
         ingredientRepository.findById(ingredientId)
@@ -63,16 +63,16 @@ public class InventoryService {
             throw new InventoryException("Failed to adjust inventory: " + e.getMessage(), e);
         }
     }
-    
+
     public List<InventoryRecord> getAllInventoryRecords() {
         return inventoryRepository.findAll();
     }
-    
+
     public InventoryRecord getInventoryRecordByIngredientId(Integer ingredientId) {
         return inventoryRepository.findByIngredientId(ingredientId)
             .orElseThrow(() -> new EntityNotFoundException("InventoryRecord", "ingredientId", ingredientId));
     }
-    
+
     @Transactional
     public InventoryRecord updateInventory(Integer ingredientId, Double delta, Integer employeeId, String reason) {
         adjustInventory(ingredientId, delta, employeeId, reason);

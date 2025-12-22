@@ -29,4 +29,3 @@ public final class DbErrorUtil {
         return message;
     }
 }
-

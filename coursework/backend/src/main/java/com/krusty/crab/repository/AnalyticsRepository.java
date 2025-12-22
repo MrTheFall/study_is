@@ -11,13 +11,13 @@ import java.util.List;
 
 @Repository
 public interface AnalyticsRepository extends JpaRepository<Order, Integer> {
-    
+
     @Query(value = "SELECT * FROM sales_summary(:fromTs, :toTs)", nativeQuery = true)
     List<Object[]> callSalesSummary(
         @Param("fromTs") LocalDateTime fromTs,
         @Param("toTs") LocalDateTime toTs
     );
-    
+
     @Query(value = "SELECT * FROM top_menu_items(:fromTs, :toTs, :limit)", nativeQuery = true)
     List<Object[]> callTopMenuItems(
         @Param("fromTs") LocalDateTime fromTs,

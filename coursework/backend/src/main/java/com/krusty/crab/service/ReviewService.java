@@ -17,49 +17,49 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class ReviewService {
-    
+
     private final ReviewRepository reviewRepository;
     private final OrderRepository orderRepository;
-    
+
     public Review getReviewById(Integer id) {
         return reviewRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Review", id));
     }
-    
+
     public List<Review> getReviewsByClientId(Integer clientId) {
         return reviewRepository.findByClientId(clientId);
     }
-    
+
     public List<Review> getReviewsByOrderId(Integer orderId) {
         return reviewRepository.findByOrderId(orderId);
     }
-    
+
     public List<Review> getAllReviews() {
         return reviewRepository.findAll();
     }
-    
+
     @Transactional
     public Review createReview(Review review) {
         orderRepository.findById(review.getOrder().getId())
             .orElseThrow(() -> new EntityNotFoundException("Order", review.getOrder().getId()));
-        
+
         List<Review> existing = reviewRepository.findByOrderId(review.getOrder().getId());
         if (existing.stream().anyMatch(r -> r.getClient().getId().equals(review.getClient().getId()))) {
             throw new ReviewException("Review already exists for this order and client");
         }
-        
+
         Review newReview = new Review();
         newReview.setOrder(review.getOrder());
         newReview.setClient(review.getClient());
         newReview.setRating(review.getRating());
         newReview.setComment(review.getComment());
         newReview.setCreatedAt(LocalDateTime.now());
-        
+
         Review saved = reviewRepository.save(newReview);
         log.info("Review created with ID: {} for order: {}", saved.getId(), review.getOrder().getId());
         return saved;
     }
-    
+
     @Transactional
     public Review updateReview(Integer id, Review reviewData) {
         Review review = getReviewById(id);
@@ -73,7 +73,7 @@ public class ReviewService {
         log.info("Review {} updated", id);
         return updated;
     }
-    
+
     @Transactional
     public void deleteReview(Integer id) {
         Review review = getReviewById(id);
@@ -81,4 +81,3 @@ public class ReviewService {
         log.info("Review {} deleted", id);
     }
 }
-

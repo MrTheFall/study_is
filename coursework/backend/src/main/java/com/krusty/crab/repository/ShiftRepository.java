@@ -11,4 +11,3 @@ import java.util.List;
 public interface ShiftRepository extends JpaRepository<Shift, Integer> {
     List<Shift> findByShiftDate(LocalDate shiftDate);
 }
-

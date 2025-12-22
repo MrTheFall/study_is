@@ -35,4 +35,3 @@ public class ReportView {
     @Column(name = "viewed_at", nullable = false)
     private LocalDateTime viewedAt;
 }
-

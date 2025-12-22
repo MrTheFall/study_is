@@ -23,4 +23,3 @@ public interface SalaryPaymentMapper {
 
     java.util.List<com.krusty.crab.dto.generated.SalaryPayment> toDtoList(java.util.List<SalaryPayment> entities);
 }
-

@@ -11,12 +11,12 @@ import java.util.Optional;
 
 @Repository
 public interface InventoryRepository extends JpaRepository<InventoryRecord, Integer> {
-    
+
     Optional<InventoryRecord> findByIngredientId(Integer ingredientId);
-    
+
     @Query(value = "SELECT * FROM low_stock(:thresholdFactor)", nativeQuery = true)
     List<Object[]> callLowStock(@Param("thresholdFactor") Double thresholdFactor);
-    
+
     @Query(value = "SELECT adjust_inventory(:ingredientId, CAST(:delta AS numeric), :reason, :employeeId)", nativeQuery = true)
     void callAdjustInventory(
         @Param("ingredientId") Integer ingredientId,

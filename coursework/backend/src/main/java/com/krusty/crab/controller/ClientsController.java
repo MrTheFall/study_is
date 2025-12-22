@@ -21,11 +21,11 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class ClientsController implements ClientsApi {
-    
+
     private final ClientService clientService;
     private final ClientMapper clientMapper;
     private final OrderMapper orderMapper;
-    
+
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.Client> registerClient(ClientRegistrationRequest clientRegistrationRequest) {
         log.info("Registering new client with email: {}", clientRegistrationRequest.getEmail());
@@ -34,7 +34,7 @@ public class ClientsController implements ClientsApi {
         com.krusty.crab.dto.generated.Client dto = clientMapper.toDto(saved);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
-    
+
     @Override
     @PreAuthorize("hasRole('Manager')")
     public ResponseEntity<List<com.krusty.crab.dto.generated.Client>> getAllClients() {
@@ -50,7 +50,7 @@ public class ClientsController implements ClientsApi {
         Client client = clientService.lookupClient(email, phone);
         return ResponseEntity.ok(clientMapper.toDto(client));
     }
-    
+
     @Override
     @PreAuthorize("hasRole('Manager') or (hasRole('CLIENT') and authentication.principal.userId == #p0)")
     public ResponseEntity<com.krusty.crab.dto.generated.Client> getClientById(Integer clientId) {
@@ -59,7 +59,7 @@ public class ClientsController implements ClientsApi {
         com.krusty.crab.dto.generated.Client dto = clientMapper.toDto(client);
         return ResponseEntity.ok(dto);
     }
-    
+
     @Override
     @PreAuthorize("hasRole('Manager') or (hasRole('CLIENT') and authentication.principal.userId == #p0)")
     public ResponseEntity<com.krusty.crab.dto.generated.Client> updateClient(Integer clientId, ClientUpdateRequest clientUpdateRequest) {
@@ -70,7 +70,7 @@ public class ClientsController implements ClientsApi {
         com.krusty.crab.dto.generated.Client dto = clientMapper.toDto(updated);
         return ResponseEntity.ok(dto);
     }
-    
+
     @Override
     @PreAuthorize("hasRole('Manager') or (hasRole('CLIENT') and authentication.principal.userId == #p0)")
     public ResponseEntity<List<com.krusty.crab.dto.generated.Order>> getClientOrders(Integer clientId) {

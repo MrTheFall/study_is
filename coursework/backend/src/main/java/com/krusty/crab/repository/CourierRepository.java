@@ -10,4 +10,3 @@ import java.util.Optional;
 public interface CourierRepository extends JpaRepository<Courier, Integer> {
     Optional<Courier> findByPhone(String phone);
 }
-

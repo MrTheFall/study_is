@@ -8,22 +8,21 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface ShiftMapper {
-    
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "employeeShifts", ignore = true)
     com.krusty.crab.entity.Shift toEntity(ShiftCreateRequest request);
-    
+
     com.krusty.crab.dto.generated.Shift toDto(com.krusty.crab.entity.Shift entity);
-    
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "employeeShifts", ignore = true)
     void updateEntityFromRequest(ShiftCreateRequest request, @MappingTarget com.krusty.crab.entity.Shift entity);
-    
+
     @Mapping(target = "employeeId", expression = "java(entity.getEmployee() != null ? entity.getEmployee().getId() : null)")
     @Mapping(target = "shiftId", expression = "java(entity.getShift() != null ? entity.getShift().getId() : null)")
     com.krusty.crab.dto.generated.EmployeeShift toDto(com.krusty.crab.entity.EmployeeShift entity);
-    
+
     java.util.List<com.krusty.crab.dto.generated.Shift> toDtoList(java.util.List<com.krusty.crab.entity.Shift> entities);
     java.util.List<com.krusty.crab.dto.generated.EmployeeShift> toEmployeeShiftDtoList(java.util.List<com.krusty.crab.entity.EmployeeShift> entities);
 }
-

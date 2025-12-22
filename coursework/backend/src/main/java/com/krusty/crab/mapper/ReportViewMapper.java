@@ -25,4 +25,3 @@ public interface ReportViewMapper {
 
     java.util.List<com.krusty.crab.dto.generated.ReportView> toDtoList(java.util.List<ReportView> entities);
 }
-

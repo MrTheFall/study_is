@@ -32,12 +32,12 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Slf4j
 public class OrdersController implements OrdersApi {
-    
+
     private final OrderService orderService;
     private final OrderMapper orderMapper;
     private final OrderItemMapper orderItemMapper;
     private final OrderRepository orderRepository;
-    
+
     @Override
     public ResponseEntity<PlaceOrder201Response> placeOrder(PlaceOrderRequest placeOrderRequest) {
         log.info("Placing order for client: {}", placeOrderRequest.getClientId());
@@ -56,7 +56,7 @@ public class OrdersController implements OrdersApi {
         PlaceOrder201Response response = orderMapper.toPlaceOrderResponse(orderId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-    
+
     @Override
     public ResponseEntity<List<com.krusty.crab.dto.generated.Order>> getAllOrders(com.krusty.crab.dto.generated.OrderStatus status, Integer clientId) {
         log.info("Getting all orders, status: {}, clientId: {}", status, clientId);
@@ -76,7 +76,7 @@ public class OrdersController implements OrdersApi {
         }
         return ResponseEntity.ok(orderMapper.toDtoList(orders));
     }
-    
+
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.Order> getOrderById(Integer orderId) {
         log.info("Getting order by ID: {}", orderId);
@@ -85,7 +85,7 @@ public class OrdersController implements OrdersApi {
         com.krusty.crab.dto.generated.Order dto = orderMapper.toDto(order);
         return ResponseEntity.ok(dto);
     }
-    
+
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.Order> updateOrderStatus(Integer orderId, UpdateOrderStatusRequest updateOrderStatusRequest) {
         log.info("Updating order {} status to {}", orderId, updateOrderStatusRequest.getStatus());

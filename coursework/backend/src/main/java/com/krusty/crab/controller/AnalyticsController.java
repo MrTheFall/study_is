@@ -26,10 +26,10 @@ import java.util.List;
 @Slf4j
 @PreAuthorize("hasRole('Manager')")
 public class AnalyticsController implements AnalyticsApi {
-    
+
     private final AnalyticsService analyticsService;
     private final ReportViewMapper reportViewMapper;
-    
+
     @Override
     public ResponseEntity<SalesSummary> getSalesSummary(
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
@@ -42,7 +42,7 @@ public class AnalyticsController implements AnalyticsApi {
         SalesSummary summary = analyticsService.getSalesSummary(fromLocal, toLocal);
         return ResponseEntity.ok(summary);
     }
-    
+
     @Override
     public ResponseEntity<List<TopMenuItem>> getTopMenuItems(
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,

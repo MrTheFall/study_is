@@ -19,10 +19,10 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Slf4j
 public class MenuController implements MenuApi {
-    
+
     private final MenuService menuService;
     private final MenuMapper menuMapper;
-    
+
     @Override
     public ResponseEntity<List<com.krusty.crab.dto.generated.MenuItem>> getMenu(Boolean available, String search) {
         log.info("Getting menu, available: {}, search: {}", available, search);
@@ -58,7 +58,7 @@ public class MenuController implements MenuApi {
 
         return ResponseEntity.ok(dtoList);
     }
-    
+
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.MenuItem> getMenuItemById(Integer menuItemId) {
         log.info("Getting menu item by ID: {}", menuItemId);
@@ -72,7 +72,7 @@ public class MenuController implements MenuApi {
         }
         return ResponseEntity.ok(dto);
     }
-    
+
     @Override
     @PreAuthorize("hasRole('Manager')")
     public ResponseEntity<com.krusty.crab.dto.generated.MenuItem> createMenuItem(MenuItemCreateRequest menuItemCreateRequest) {
@@ -82,7 +82,7 @@ public class MenuController implements MenuApi {
         com.krusty.crab.dto.generated.MenuItem dto = menuMapper.toDto(saved);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
-    
+
     @Override
     @PreAuthorize("hasRole('Manager')")
     public ResponseEntity<com.krusty.crab.dto.generated.MenuItem> updateMenuItem(Integer menuItemId, MenuItemCreateRequest menuItemCreateRequest) {
@@ -93,7 +93,7 @@ public class MenuController implements MenuApi {
         com.krusty.crab.dto.generated.MenuItem dto = menuMapper.toDto(updated);
         return ResponseEntity.ok(dto);
     }
-    
+
     @Override
     @PreAuthorize("hasRole('Manager')")
     public ResponseEntity<Void> deleteMenuItem(Integer menuItemId) {

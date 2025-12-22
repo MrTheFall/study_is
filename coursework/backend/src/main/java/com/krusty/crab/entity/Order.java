@@ -19,16 +19,16 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class Order {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id", nullable = false,
         foreignKey = @ForeignKey(name = "fk_orders_client"))
     private Client client;
-    
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_employee_id",
         foreignKey = @ForeignKey(name = "fk_orders_created_by_employee"))
@@ -42,7 +42,7 @@ public class Order {
     @Column(name = "type", nullable = false, length = 32)
     @Convert(converter = OrderType.OrderTypeConverter.class)
     private OrderType type;
-    
+
     @Column(name = "status", nullable = false, length = 32)
     @Convert(converter = OrderStatus.OrderStatusConverter.class)
     private OrderStatus status;
@@ -59,35 +59,35 @@ public class Order {
 
     @Column(name = "cooking_duration_seconds")
     private Integer cookingDurationSeconds;
-    
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
-    
+
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-    
+
     @Column(name = "total_amount", nullable = false, precision = 14, scale = 2)
     @Builder.Default
     private BigDecimal totalAmount = BigDecimal.ZERO;
-    
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "courier_id",
         foreignKey = @ForeignKey(name = "fk_orders_courier"))
     private Courier courier;
-    
+
     @Column(name = "delivered_at")
     private LocalDateTime deliveredAt;
-    
+
     @Column(name = "delivery_address", columnDefinition = "text")
     private String deliveryAddress;
-    
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<OrderItem> orderItems = new ArrayList<>();
-    
+
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private Payment payment;
-    
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Review> reviews = new ArrayList<>();

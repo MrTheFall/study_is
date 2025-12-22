@@ -21,11 +21,11 @@ import java.util.List;
 @Slf4j
 @PreAuthorize("hasRole('Manager')")
 public class InventoryController implements InventoryApi {
-    
+
     private final InventoryService inventoryService;
     private final InventoryMapper inventoryMapper;
     private final InventoryTransactionMapper inventoryTransactionMapper;
-    
+
     @Override
     public ResponseEntity<List<com.krusty.crab.dto.generated.InventoryRecord>> getInventory(Boolean lowStock, Double thresholdFactor) {
         log.info("Getting inventory, lowStock: {}, thresholdFactor: {}", lowStock, thresholdFactor);
@@ -40,14 +40,14 @@ public class InventoryController implements InventoryApi {
             return ResponseEntity.ok(inventoryMapper.toDtoList(records));
         }
     }
-    
+
     @Override
     public ResponseEntity<List<com.krusty.crab.dto.generated.LowStockItem>> getLowStock(Double thresholdFactor) {
         log.info("Getting low stock items with thresholdFactor: {}", thresholdFactor);
         List<com.krusty.crab.dto.generated.LowStockItem> items = inventoryService.getLowStock(thresholdFactor);
         return ResponseEntity.ok(items);
     }
-    
+
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.InventoryRecord> updateInventory(Integer ingredientId, InventoryUpdateRequest inventoryUpdateRequest) {
         UserPrincipal user = SecurityUtil.getCurrentUser();
@@ -63,7 +63,11 @@ public class InventoryController implements InventoryApi {
     }
 
     @Override
-    public ResponseEntity<List<com.krusty.crab.dto.generated.InventoryTransaction>> getInventoryTransactions(Integer ingredientId, Integer limit, Integer offset) {
+    public ResponseEntity<List<com.krusty.crab.dto.generated.InventoryTransaction>> getInventoryTransactions(
+        Integer ingredientId,
+        Integer limit,
+        Integer offset
+    ) {
         log.info(
             "Getting inventory transactions, ingredientId: {}, limit: {}, offset: {}",
             ingredientId,
