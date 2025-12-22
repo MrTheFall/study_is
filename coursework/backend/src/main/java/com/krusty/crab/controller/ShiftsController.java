@@ -4,7 +4,9 @@ import com.krusty.crab.api.ShiftsApi;
 import com.krusty.crab.dto.generated.AssignEmployeeToShiftRequest;
 import com.krusty.crab.dto.generated.ShiftCreateRequest;
 import com.krusty.crab.mapper.ShiftMapper;
+import com.krusty.crab.service.EmployeeActionLogService;
 import com.krusty.crab.service.ShiftService;
+import com.krusty.crab.util.AuditActions;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -24,12 +26,20 @@ public class ShiftsController implements ShiftsApi {
 
     private final ShiftService shiftService;
     private final ShiftMapper shiftMapper;
+    private final EmployeeActionLogService actionLogService;
 
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.Shift> createShift(ShiftCreateRequest shiftCreateRequest) {
         log.info("Creating shift");
         com.krusty.crab.entity.Shift shift = shiftMapper.toEntity(shiftCreateRequest);
         com.krusty.crab.entity.Shift saved = shiftService.createShift(shift);
+        String details = String.format(
+            "date=%s, start=%s, end=%s",
+            saved.getShiftDate(),
+            saved.getStartTime(),
+            saved.getEndTime()
+        );
+        actionLogService.logCurrentEmployeeAction(AuditActions.SHIFT_CREATE, "shift", saved.getId(), null, null, null, details);
         com.krusty.crab.dto.generated.Shift dto = shiftMapper.toDto(saved);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
@@ -69,6 +79,13 @@ public class ShiftsController implements ShiftsApi {
         com.krusty.crab.entity.Shift shift = shiftService.getShiftById(shiftId);
         shiftMapper.updateEntityFromRequest(shiftCreateRequest, shift);
         com.krusty.crab.entity.Shift updated = shiftService.updateShift(shiftId, shift);
+        String details = String.format(
+            "date=%s, start=%s, end=%s",
+            updated.getShiftDate(),
+            updated.getStartTime(),
+            updated.getEndTime()
+        );
+        actionLogService.logCurrentEmployeeAction(AuditActions.SHIFT_UPDATE, "shift", shiftId, null, null, null, details);
         com.krusty.crab.dto.generated.Shift dto = shiftMapper.toDto(updated);
         return ResponseEntity.ok(dto);
     }
@@ -77,6 +94,7 @@ public class ShiftsController implements ShiftsApi {
     public ResponseEntity<Void> deleteShift(Integer shiftId) {
         log.info("Deleting shift with ID: {}", shiftId);
         shiftService.deleteShift(shiftId);
+        actionLogService.logCurrentEmployeeAction(AuditActions.SHIFT_DELETE, "shift", shiftId, null, null, null, null);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
@@ -94,6 +112,8 @@ public class ShiftsController implements ShiftsApi {
             assignEmployeeToShiftRequest.getEmployeeId(),
             shiftId
         );
+        String details = "employeeId=" + assignEmployeeToShiftRequest.getEmployeeId();
+        actionLogService.logCurrentEmployeeAction(AuditActions.SHIFT_ASSIGN, "shift", shiftId, null, null, null, details);
         com.krusty.crab.dto.generated.EmployeeShift dto = shiftMapper.toDto(employeeShift);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
@@ -102,6 +122,7 @@ public class ShiftsController implements ShiftsApi {
     public ResponseEntity<Void> removeEmployeeFromShift(Integer employeeShiftId) {
         log.info("Removing employeeShift assignment {}", employeeShiftId);
         shiftService.removeEmployeeFromShift(employeeShiftId);
+        actionLogService.logCurrentEmployeeAction(AuditActions.SHIFT_UNASSIGN, "employee_shift", employeeShiftId, null, null, null, null);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

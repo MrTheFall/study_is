@@ -11,8 +11,10 @@ import com.krusty.crab.exception.ValidationException;
 import com.krusty.crab.mapper.PaymentMapper;
 import com.krusty.crab.repository.OrderRepository;
 import com.krusty.crab.security.UserPrincipal;
+import com.krusty.crab.service.EmployeeActionLogService;
 import com.krusty.crab.service.OnlinePaymentService;
 import com.krusty.crab.service.PaymentService;
+import com.krusty.crab.util.AuditActions;
 import com.krusty.crab.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,7 @@ public class PaymentsController implements PaymentsApi {
     private final PaymentMapper paymentMapper;
     private final OrderRepository orderRepository;
     private final OnlinePaymentService onlinePaymentService;
+    private final EmployeeActionLogService actionLogService;
 
     @Override
     @PreAuthorize("hasRole('CLIENT') or hasRole('Cashier') or hasRole('Manager')")
@@ -76,6 +79,20 @@ public class PaymentsController implements PaymentsApi {
         boolean simulateFailure = Boolean.TRUE.equals(paymentRequest.getSimulateFailure());
         Integer paymentId = paymentService.processPayment(paymentRequest.getOrderId(), method, simulateFailure);
         com.krusty.crab.entity.Payment payment = paymentService.getPaymentByOrderId(paymentRequest.getOrderId());
+        UserPrincipal user = SecurityUtil.getCurrentUser();
+        if ("EMPLOYEE".equals(user.getUserType())) {
+            String details = String.format("method=%s, amount=%s", method.getValue(), order.getTotalAmount());
+            actionLogService.logAction(
+                user.getUserId(),
+                AuditActions.PAYMENT_PROCESS,
+                "order",
+                order.getId(),
+                order.getId(),
+                null,
+                null,
+                details
+            );
+        }
         com.krusty.crab.dto.generated.Payment dto = paymentMapper.toDto(payment);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
@@ -142,6 +159,20 @@ public class PaymentsController implements PaymentsApi {
             cashPaymentRequest.getOrderId(),
             cashPaymentRequest.getAmountReceived()
         );
+        UserPrincipal user = SecurityUtil.getCurrentUser();
+        if ("EMPLOYEE".equals(user.getUserType())) {
+            String details = String.format("method=%s, amountReceived=%s", PaymentMethod.CASH.getValue(), cashPaymentRequest.getAmountReceived());
+            actionLogService.logAction(
+                user.getUserId(),
+                AuditActions.PAYMENT_PROCESS,
+                "order",
+                order.getId(),
+                order.getId(),
+                null,
+                null,
+                details
+            );
+        }
         return ResponseEntity.ok(response);
     }
 

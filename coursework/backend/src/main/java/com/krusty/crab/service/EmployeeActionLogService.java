@@ -1,0 +1,98 @@
+package com.krusty.crab.service;
+
+import com.krusty.crab.entity.EmployeeActionLog;
+import com.krusty.crab.repository.EmployeeActionLogRepository;
+import com.krusty.crab.repository.EmployeeRepository;
+import com.krusty.crab.security.UserPrincipal;
+import com.krusty.crab.util.SecurityUtil;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class EmployeeActionLogService {
+
+    private final EmployeeActionLogRepository actionLogRepository;
+    private final EmployeeRepository employeeRepository;
+
+    @Transactional
+    public void logAction(
+        Integer employeeId,
+        String action,
+        String entityType,
+        Integer entityId,
+        Integer orderId,
+        String fromValue,
+        String toValue,
+        String details
+    ) {
+        if (employeeId == null || action == null || action.isBlank()) {
+            return;
+        }
+
+        EmployeeActionLog entry = EmployeeActionLog.builder()
+            .employee(employeeRepository.getReferenceById(employeeId))
+            .action(action)
+            .entityType(entityType)
+            .entityId(entityId)
+            .orderId(orderId)
+            .fromValue(fromValue)
+            .toValue(toValue)
+            .details(details)
+            .createdAt(LocalDateTime.now(ZoneOffset.UTC))
+            .build();
+
+        actionLogRepository.save(entry);
+    }
+
+    @Transactional
+    public void logCurrentEmployeeAction(
+        String action,
+        String entityType,
+        Integer entityId,
+        Integer orderId,
+        String fromValue,
+        String toValue,
+        String details
+    ) {
+        UserPrincipal user;
+        try {
+            user = SecurityUtil.getCurrentUser();
+        } catch (Exception e) {
+            return;
+        }
+
+        if (user == null || !"EMPLOYEE".equals(user.getUserType())) {
+            return;
+        }
+
+        logAction(user.getUserId(), action, entityType, entityId, orderId, fromValue, toValue, details);
+    }
+
+    public List<EmployeeActionLog> getLogs(
+        Integer employeeId,
+        Integer orderId,
+        String action,
+        OffsetDateTime from,
+        OffsetDateTime to,
+        Integer limit,
+        Integer offset
+    ) {
+        int resolvedLimit = limit != null ? limit : 50;
+        int resolvedOffset = offset != null ? offset : 0;
+        if (resolvedLimit < 1) resolvedLimit = 1;
+        if (resolvedLimit > 500) resolvedLimit = 500;
+        if (resolvedOffset < 0) resolvedOffset = 0;
+
+        LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
+        LocalDateTime toLocal = to != null ? to.toLocalDateTime() : null;
+
+        return actionLogRepository.findRecent(employeeId, orderId, action, fromLocal, toLocal, resolvedLimit, resolvedOffset);
+    }
+}

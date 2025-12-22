@@ -16,7 +16,9 @@ import com.krusty.crab.mapper.OrderMapper;
 import com.krusty.crab.repository.OrderRepository;
 import com.krusty.crab.security.UserPrincipal;
 import com.krusty.crab.service.OrderService;
+import com.krusty.crab.service.EmployeeActionLogService;
 import com.krusty.crab.util.SecurityUtil;
+import com.krusty.crab.util.AuditActions;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -37,6 +39,7 @@ public class OrdersController implements OrdersApi {
     private final OrderMapper orderMapper;
     private final OrderItemMapper orderItemMapper;
     private final OrderRepository orderRepository;
+    private final EmployeeActionLogService actionLogService;
 
     @Override
     public ResponseEntity<PlaceOrder201Response> placeOrder(PlaceOrderRequest placeOrderRequest) {
@@ -53,6 +56,15 @@ public class OrdersController implements OrdersApi {
         }
         Integer createdByEmployeeId = "EMPLOYEE".equals(user.getUserType()) ? user.getUserId() : null;
         Integer orderId = orderService.placeOrder(placeOrderRequest, createdByEmployeeId);
+        if ("EMPLOYEE".equals(user.getUserType())) {
+            String details = String.format(
+                "clientId=%s, type=%s, paymentMethod=%s",
+                placeOrderRequest.getClientId(),
+                placeOrderRequest.getType() != null ? placeOrderRequest.getType().getValue() : null,
+                placeOrderRequest.getPaymentMethod() != null ? placeOrderRequest.getPaymentMethod().getValue() : null
+            );
+            actionLogService.logAction(user.getUserId(), AuditActions.ORDER_CREATE, "order", orderId, orderId, null, null, details);
+        }
         PlaceOrder201Response response = orderMapper.toPlaceOrderResponse(orderId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -175,6 +187,19 @@ public class OrdersController implements OrdersApi {
             acceptedByEmployeeId = user.getUserId();
         }
         orderService.updateOrderStatus(orderId, newStatus, acceptedByEmployeeId);
+        if ("EMPLOYEE".equals(user.getUserType())
+            && (currentStatus == null || !currentStatus.equalsIgnoreCase(newStatus.getValue()))) {
+            actionLogService.logAction(
+                user.getUserId(),
+                AuditActions.ORDER_STATUS_CHANGE,
+                "order",
+                orderId,
+                orderId,
+                currentStatus,
+                newStatus.getValue(),
+                null
+            );
+        }
         Order updatedOrder = orderService.getOrderById(orderId);
         com.krusty.crab.dto.generated.Order dto = orderMapper.toDto(updatedOrder);
         return ResponseEntity.ok(dto);
@@ -215,6 +240,21 @@ public class OrdersController implements OrdersApi {
 
         PaymentMethod newMethod = PaymentMethod.fromValue(updateOrderPaymentMethodRequest.getPaymentMethod().getValue());
         Order updated = orderService.updateOrderPaymentMethod(orderId, newMethod);
+        if ("EMPLOYEE".equals(user.getUserType())) {
+            String prevMethod = order.getPaymentMethod() != null ? order.getPaymentMethod().getValue() : null;
+            if (prevMethod == null || !prevMethod.equalsIgnoreCase(newMethod.getValue())) {
+                actionLogService.logAction(
+                    user.getUserId(),
+                    AuditActions.ORDER_PAYMENT_METHOD_CHANGE,
+                    "order",
+                    orderId,
+                    orderId,
+                    prevMethod,
+                    newMethod.getValue(),
+                    null
+                );
+            }
+        }
         return ResponseEntity.ok(orderMapper.toDto(updated));
     }
 
@@ -264,8 +304,24 @@ public class OrdersController implements OrdersApi {
     @PreAuthorize("hasRole('Manager') or hasRole('Cashier')")
     public ResponseEntity<com.krusty.crab.dto.generated.Order> assignCourierToOrder(Integer orderId, AssignCourierRequest assignCourierRequest) {
         log.info("Assigning courier {} to order {}", assignCourierRequest.getCourierId(), orderId);
-
+        Order before = orderService.getOrderById(orderId);
+        Integer previousCourierId = before.getCourier() != null ? before.getCourier().getId() : null;
         Order updated = orderService.assignCourierToOrder(orderId, assignCourierRequest.getCourierId());
+        UserPrincipal user = SecurityUtil.getCurrentUser();
+        if ("EMPLOYEE".equals(user.getUserType())) {
+            String fromValue = previousCourierId != null ? previousCourierId.toString() : null;
+            String toValue = assignCourierRequest.getCourierId() != null ? assignCourierRequest.getCourierId().toString() : null;
+            actionLogService.logAction(
+                user.getUserId(),
+                AuditActions.ORDER_COURIER_ASSIGN,
+                "order",
+                orderId,
+                orderId,
+                fromValue,
+                toValue,
+                null
+            );
+        }
         return ResponseEntity.ok(orderMapper.toDto(updated));
     }
 

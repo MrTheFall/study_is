@@ -65,6 +65,7 @@ export function AppShell() {
       { to: '/inventory', label: 'Инвентарь', visible: manager },
       { to: '/couriers', label: 'Курьеры', visible: manager },
       { to: '/analytics', label: 'Аналитика', visible: manager },
+      { to: '/audit', label: 'Журнал действий', visible: manager },
       { to: '/reviews/manage', label: 'Отзывы (менеджер)', visible: manager },
       { to: '/pos', label: 'Касса', visible: manager },
       { to: '/orders', label: 'Заказы', visible: manager },

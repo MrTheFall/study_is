@@ -6,7 +6,9 @@ import com.krusty.crab.dto.generated.LowStockItem;
 import com.krusty.crab.mapper.InventoryMapper;
 import com.krusty.crab.mapper.InventoryTransactionMapper;
 import com.krusty.crab.security.UserPrincipal;
+import com.krusty.crab.service.EmployeeActionLogService;
 import com.krusty.crab.service.InventoryService;
+import com.krusty.crab.util.AuditActions;
 import com.krusty.crab.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,7 @@ public class InventoryController implements InventoryApi {
     private final InventoryService inventoryService;
     private final InventoryMapper inventoryMapper;
     private final InventoryTransactionMapper inventoryTransactionMapper;
+    private final EmployeeActionLogService actionLogService;
 
     @Override
     public ResponseEntity<List<com.krusty.crab.dto.generated.InventoryRecord>> getInventory(Boolean lowStock, Double thresholdFactor) {
@@ -58,6 +61,13 @@ public class InventoryController implements InventoryApi {
             user.getUserId(),
             inventoryUpdateRequest.getReason()
         );
+        String details = String.format(
+            "ingredientId=%s, delta=%s, reason=%s",
+            ingredientId,
+            inventoryUpdateRequest.getDelta(),
+            inventoryUpdateRequest.getReason()
+        );
+        actionLogService.logAction(user.getUserId(), AuditActions.INVENTORY_ADJUST, "inventory", ingredientId, null, null, null, details);
         com.krusty.crab.dto.generated.InventoryRecord dto = inventoryMapper.toDto(record);
         return ResponseEntity.ok(dto);
     }

@@ -24,6 +24,7 @@ import { PaymentResultPage } from './pages/PaymentResultPage';
 import { ShiftsPage } from './pages/ShiftsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { ForbiddenPage } from './pages/ForbiddenPage';
+import { AuditLogPage } from './pages/AuditLogPage';
 import { GetCurrentUser200ResponseUserTypeEnum } from './api/generated/api';
 
 function MenuRoute() {
@@ -154,6 +155,14 @@ function App() {
             element={
               <ProtectedRoute requireManager>
                 <AnalyticsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/audit"
+            element={
+              <ProtectedRoute requireManager>
+                <AuditLogPage />
               </ProtectedRoute>
             }
           />

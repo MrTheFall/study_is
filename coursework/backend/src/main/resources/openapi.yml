@@ -44,6 +44,8 @@ tags:
     description: Очередь заказов для кухни
   - name: analytics
     description: Аналитика и отчеты
+  - name: audit
+    description: Журнал действий сотрудников и изменений заказов
   - name: finance
     description: Финансы и расходы
 
@@ -1764,6 +1766,69 @@ paths:
               schema:
                 $ref: '#/components/schemas/FinancialSummary'
 
+  # ========== AUDIT ==========
+  /audit/logs:
+    get:
+      tags:
+        - audit
+      summary: Журнал действий сотрудников
+      description: Получение журнала действий сотрудников и изменений заказов
+      operationId: getAuditLogs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: employeeId
+          in: query
+          description: Фильтр по сотруднику (исполнитель)
+          schema:
+            type: integer
+        - name: orderId
+          in: query
+          description: Фильтр по заказу
+          schema:
+            type: integer
+        - name: action
+          in: query
+          description: Фильтр по типу действия
+          schema:
+            type: string
+        - name: from
+          in: query
+          description: Начало периода
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: Конец периода
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          description: Максимум записей
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 500
+        - name: offset
+          in: query
+          description: Смещение (пагинация)
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: Журнал действий
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditLogEntry'
+
   # ========== FINANCE ==========
   /salary-payments:
     get:
@@ -2425,6 +2490,33 @@ components:
           type: string
           format: date-time
         viewedAt:
+          type: string
+          format: date-time
+
+    AuditLogEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        employeeId:
+          type: integer
+        employeeName:
+          type: string
+        action:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: integer
+        orderId:
+          type: integer
+        fromValue:
+          type: string
+        toValue:
+          type: string
+        details:
+          type: string
+        createdAt:
           type: string
           format: date-time
 

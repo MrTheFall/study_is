@@ -3,7 +3,9 @@ package com.krusty.crab.controller;
 import com.krusty.crab.api.FinanceApi;
 import com.krusty.crab.dto.generated.SalaryPaymentCreateRequest;
 import com.krusty.crab.mapper.SalaryPaymentMapper;
+import com.krusty.crab.service.EmployeeActionLogService;
 import com.krusty.crab.service.SalaryPaymentService;
+import com.krusty.crab.util.AuditActions;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,7 @@ public class FinanceController implements FinanceApi {
 
     private final SalaryPaymentService salaryPaymentService;
     private final SalaryPaymentMapper salaryPaymentMapper;
+    private final EmployeeActionLogService actionLogService;
 
     @Override
     public ResponseEntity<List<com.krusty.crab.dto.generated.SalaryPayment>> getSalaryPayments(
@@ -43,6 +46,20 @@ public class FinanceController implements FinanceApi {
             salaryPaymentCreateRequest.getAmount(),
             salaryPaymentCreateRequest.getNote(),
             salaryPaymentCreateRequest.getPaidAt()
+        );
+        String details = String.format(
+            "employeeId=%s, amount=%s",
+            salaryPaymentCreateRequest.getEmployeeId(),
+            salaryPaymentCreateRequest.getAmount()
+        );
+        actionLogService.logCurrentEmployeeAction(
+            AuditActions.SALARY_PAYMENT_CREATE,
+            "salary_payment",
+            payment.getId(),
+            null,
+            null,
+            null,
+            details
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(salaryPaymentMapper.toDto(payment));
     }
