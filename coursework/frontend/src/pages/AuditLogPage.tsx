@@ -191,11 +191,7 @@ export function AuditLogPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Сотрудник (ID)</label>
-              <Input
-                value={employeeId}
-                onChange={(e) => setEmployeeId(e.target.value)}
-                placeholder="Например, 2"
-              />
+              <Input value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} placeholder="Например, 2" />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Заказ (ID)</label>

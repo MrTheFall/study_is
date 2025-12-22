@@ -304,10 +304,15 @@ public class OrdersController implements OrdersApi {
     @PreAuthorize("hasRole('Manager') or hasRole('Cashier')")
     public ResponseEntity<com.krusty.crab.dto.generated.Order> assignCourierToOrder(Integer orderId, AssignCourierRequest assignCourierRequest) {
         log.info("Assigning courier {} to order {}", assignCourierRequest.getCourierId(), orderId);
-        Order before = orderService.getOrderById(orderId);
-        Integer previousCourierId = before.getCourier() != null ? before.getCourier().getId() : null;
-        Order updated = orderService.assignCourierToOrder(orderId, assignCourierRequest.getCourierId());
         UserPrincipal user = SecurityUtil.getCurrentUser();
+        Integer previousCourierId = null;
+        if ("EMPLOYEE".equals(user.getUserType())) {
+            Order before = orderService.getOrderById(orderId);
+            if (before != null && before.getCourier() != null) {
+                previousCourierId = before.getCourier().getId();
+            }
+        }
+        Order updated = orderService.assignCourierToOrder(orderId, assignCourierRequest.getCourierId());
         if ("EMPLOYEE".equals(user.getUserType())) {
             String fromValue = previousCourierId != null ? previousCourierId.toString() : null;
             String toValue = assignCourierRequest.getCourierId() != null ? assignCourierRequest.getCourierId().toString() : null;

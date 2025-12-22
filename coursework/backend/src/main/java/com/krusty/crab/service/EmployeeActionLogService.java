@@ -1,5 +1,6 @@
 package com.krusty.crab.service;
 
+import com.krusty.crab.entity.Employee;
 import com.krusty.crab.entity.EmployeeActionLog;
 import com.krusty.crab.repository.EmployeeActionLogRepository;
 import com.krusty.crab.repository.EmployeeRepository;
@@ -36,8 +37,13 @@ public class EmployeeActionLogService {
             return;
         }
 
+        Employee employee = employeeRepository.findById(employeeId).orElse(null);
+        if (employee == null) {
+            return;
+        }
+
         EmployeeActionLog entry = EmployeeActionLog.builder()
-            .employee(employeeRepository.getReferenceById(employeeId))
+            .employee(employee)
             .action(action)
             .entityType(entityType)
             .entityId(entityId)
