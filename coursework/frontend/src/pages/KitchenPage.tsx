@@ -21,7 +21,7 @@ export function KitchenPage() {
 
   useEffect(() => {
     loadQueue();
-    const interval = setInterval(loadQueue, 5000); 
+    const interval = setInterval(loadQueue, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -148,9 +148,7 @@ export function KitchenPage() {
         </Button>
       </div>
 
-      {error && (
-        <RetryAlert message={error} onRetry={loadQueue} />
-      )}
+      {error && <RetryAlert message={error} onRetry={loadQueue} />}
 
       {queue.length === 0 ? (
         <EmptyState
@@ -159,26 +157,28 @@ export function KitchenPage() {
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {([
-            {
-              key: 'confirmed' as const,
-              title: 'Новые',
-              description: 'Confirmed — ждут начала приготовления',
-              items: groups.confirmed,
-            },
-            {
-              key: 'preparing' as const,
-              title: 'В работе',
-              description: 'Preparing — готовятся сейчас',
-              items: groups.preparing,
-            },
-            {
-              key: 'ready' as const,
-              title: 'Готовые',
-              description: 'Ready — ждут выдачи/доставки',
-              items: groups.ready,
-            },
-          ] as const).map((col) => (
+          {(
+            [
+              {
+                key: 'confirmed' as const,
+                title: 'Новые',
+                description: 'Confirmed — ждут начала приготовления',
+                items: groups.confirmed,
+              },
+              {
+                key: 'preparing' as const,
+                title: 'В работе',
+                description: 'Preparing — готовятся сейчас',
+                items: groups.preparing,
+              },
+              {
+                key: 'ready' as const,
+                title: 'Готовые',
+                description: 'Ready — ждут выдачи/доставки',
+                items: groups.ready,
+              },
+            ] as const
+          ).map((col) => (
             <div key={col.key} className="space-y-3">
               <div className="flex items-end justify-between gap-3">
                 <div>
@@ -270,7 +270,9 @@ export function KitchenPage() {
                           <div className="space-y-2 mb-4">
                             {item.items?.map((orderItem, itemIdx) => (
                               <div key={itemIdx} className="flex justify-between gap-3">
-                                <span className="min-w-0 truncate">{orderItem.name || `Позиция #${orderItem.menuItemId}`}</span>
+                                <span className="min-w-0 truncate">
+                                  {orderItem.name || `Позиция #${orderItem.menuItemId}`}
+                                </span>
                                 <span className="font-semibold whitespace-nowrap">x{orderItem.quantity}</span>
                               </div>
                             ))}

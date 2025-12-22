@@ -1,18 +1,37 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { menuApi, ordersApi, authApi, paymentsApi, clientsApi } from '@/api/client';
-import { GetCurrentUser200ResponseUserTypeEnum, MenuItem, OrderType, PaymentMethod, OrderStatus } from '@/api/generated/api';
+import {
+  GetCurrentUser200ResponseUserTypeEnum,
+  MenuItem,
+  OrderType,
+  PaymentMethod,
+  OrderStatus,
+} from '@/api/generated/api';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/Dialog';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { RetryAlert } from '@/components/ui/RetryAlert';
 import { formatCurrency } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/apiError';
-import { formatCardNumberInput, formatExpiryInput, isValidLuhn, sanitizeCardNumber, validateExpiry } from '@/lib/cardUtils';
+import {
+  formatCardNumberInput,
+  formatExpiryInput,
+  isValidLuhn,
+  sanitizeCardNumber,
+  validateExpiry,
+} from '@/lib/cardUtils';
 import { useToast } from '@/components/ui/toast';
 
 type LoginDialogMode = 'loginRequired' | 'clientOnly';
@@ -255,7 +274,9 @@ export function MenuPage() {
       }
       const expiryCheck = validateExpiry(sanitizedExpiry);
       if (!expiryCheck.valid) {
-        setPaymentError(expiryCheck.reason === 'expired' ? 'Срок действия карты истек' : 'Срок действия в формате ММ/ГГ');
+        setPaymentError(
+          expiryCheck.reason === 'expired' ? 'Срок действия карты истек' : 'Срок действия в формате ММ/ГГ'
+        );
         return;
       }
       if (!/^[0-9]{3,4}$/.test(sanitizedCvv)) {
@@ -448,7 +469,7 @@ export function MenuPage() {
 
       {cart.size > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="font-semibold">Корзина</p>
@@ -541,7 +562,9 @@ export function MenuPage() {
       <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{loginDialogMode === 'loginRequired' ? 'Требуется вход' : 'Оформление недоступно'}</DialogTitle>
+            <DialogTitle>
+              {loginDialogMode === 'loginRequired' ? 'Требуется вход' : 'Оформление недоступно'}
+            </DialogTitle>
             <DialogDescription>
               {loginDialogMode === 'loginRequired'
                 ? 'Для оформления заказа необходимо войти в систему.'

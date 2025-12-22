@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 import { analyticsApi } from '@/api/client';
-import { FinancialSummary, ReportView, SalesByEmployeeItem, SalesByTimeOfDayItem, SalesSummary, TopMenuItem } from '@/api/generated/api';
+import {
+  FinancialSummary,
+  ReportView,
+  SalesByEmployeeItem,
+  SalesByTimeOfDayItem,
+  SalesSummary,
+  TopMenuItem,
+} from '@/api/generated/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -44,18 +51,17 @@ export function AnalyticsPage() {
     setLoading(true);
     setError(null);
     try {
-      const from = fromDate
-        ? toIsoStartOfDay(fromDate)
-        : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const from = fromDate ? toIsoStartOfDay(fromDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const to = toDate ? toIsoEndOfDay(toDate) : new Date().toISOString();
 
-      const [summaryResponse, topItemsResponse, byEmployeeResponse, byTimeOfDayResponse, financialResponse] = await Promise.all([
-        analyticsApi.getSalesSummary(from, to),
-        analyticsApi.getTopMenuItems(from, to, 10),
-        analyticsApi.getSalesByEmployee(from, to),
-        analyticsApi.getSalesByTimeOfDay(from, to),
-        analyticsApi.getFinancialSummary(from, to),
-      ]);
+      const [summaryResponse, topItemsResponse, byEmployeeResponse, byTimeOfDayResponse, financialResponse] =
+        await Promise.all([
+          analyticsApi.getSalesSummary(from, to),
+          analyticsApi.getTopMenuItems(from, to, 10),
+          analyticsApi.getSalesByEmployee(from, to),
+          analyticsApi.getSalesByTimeOfDay(from, to),
+          analyticsApi.getFinancialSummary(from, to),
+        ]);
 
       setSalesSummary(summaryResponse.data);
       setTopItems(topItemsResponse.data);
@@ -122,12 +128,7 @@ export function AnalyticsPage() {
             onChange={(e) => setDateFrom(e.target.value)}
             className="sm:max-w-[180px]"
           />
-          <Input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="sm:max-w-[180px]"
-          />
+          <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="sm:max-w-[180px]" />
           <Button onClick={loadAnalytics} disabled={loading || !dateFrom || !dateTo}>
             Обновить
           </Button>
@@ -146,235 +147,150 @@ export function AnalyticsPage() {
       </div>
 
       {error && (
-        <RetryAlert title="Не удалось загрузить аналитику" message={error} onRetry={loadAnalytics} retryDisabled={loading} />
+        <RetryAlert
+          title="Не удалось загрузить аналитику"
+          message={error}
+          onRetry={loadAnalytics}
+          retryDisabled={loading}
+        />
       )}
 
-        {salesSummary && (
-          salesSummary.hasData === false ? (
-            <Card className="mb-8">
+      {salesSummary &&
+        (salesSummary.hasData === false ? (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Продажи</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-center text-gray-500">Нет данных за выбранный период</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card>
               <CardHeader>
-                <CardTitle>Продажи</CardTitle>
+                <CardTitle>Общая выручка</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-center text-gray-500">Нет данных за выбранный период</p>
+                <p className="text-3xl font-bold">{formatCurrency(salesSummary.revenue!)}</p>
               </CardContent>
             </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Общая выручка</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{formatCurrency(salesSummary.revenue!)}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Количество заказов</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{salesSummary.ordersCnt || 0}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Средний чек</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">
-                    {formatCurrency(salesSummary.avgTicket!)}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          )
-        )}
-
-        {financialSummary && (
-          financialSummary.hasData === false ? (
-            <Card className="mb-8">
+            <Card>
               <CardHeader>
-                <CardTitle>Финансы</CardTitle>
+                <CardTitle>Количество заказов</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-center text-gray-500">Нет данных за выбранный период</p>
+                <p className="text-3xl font-bold">{salesSummary.ordersCnt || 0}</p>
               </CardContent>
             </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Выручка</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{formatCurrency(financialSummary.revenue || 0)}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Расходы (ингредиенты)</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{formatCurrency(financialSummary.ingredientExpenses || 0)}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Расходы (зарплата)</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{formatCurrency(financialSummary.salaryExpenses || 0)}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Прибыль</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{formatCurrency(financialSummary.profit || 0)}</p>
-                </CardContent>
-              </Card>
-            </div>
-          )
-        )}
+            <Card>
+              <CardHeader>
+                <CardTitle>Средний чек</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{formatCurrency(salesSummary.avgTicket!)}</p>
+              </CardContent>
+            </Card>
+          </div>
+        ))}
 
+      {financialSummary &&
+        (financialSummary.hasData === false ? (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Финансы</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-center text-gray-500">Нет данных за выбранный период</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Выручка</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{formatCurrency(financialSummary.revenue || 0)}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Расходы (ингредиенты)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{formatCurrency(financialSummary.ingredientExpenses || 0)}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Расходы (зарплата)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{formatCurrency(financialSummary.salaryExpenses || 0)}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Прибыль</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{formatCurrency(financialSummary.profit || 0)}</p>
+              </CardContent>
+            </Card>
+          </div>
+        ))}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Топ блюд</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {topItems.length === 0 ? (
+              <p className="text-center text-gray-500">Нет данных</p>
+            ) : (
+              topItems.map((item, idx) => (
+                <div key={idx} className="flex justify-between items-center p-4 border rounded-md">
+                  <div>
+                    <p className="font-semibold">{item.name || `Блюдо #${item.menuItemId}`}</p>
+                    <p className="text-sm text-gray-500">
+                      Количество: {item.quantity || 0} | Выручка: {formatCurrency(item.revenue!)}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
         <Card>
           <CardHeader>
-            <CardTitle>Топ блюд</CardTitle>
+            <CardTitle>Продажи по сотрудникам</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {topItems.length === 0 ? (
-                <p className="text-center text-gray-500">Нет данных</p>
-              ) : (
-                topItems.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center p-4 border rounded-md">
-                    <div>
-                      <p className="font-semibold">{item.name || `Блюдо #${item.menuItemId}`}</p>
-                      <p className="text-sm text-gray-500">
-                        Количество: {item.quantity || 0} | Выручка: {formatCurrency(item.revenue!)}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Продажи по сотрудникам</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {salesByEmployee.length === 0 ? (
-                <p className="text-center text-gray-500">Нет данных</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-2 pr-4">Сотрудник</th>
-                        <th className="text-right py-2 pr-4">Заказы</th>
-                        <th className="text-right py-2 pr-4">Выручка</th>
-                        <th className="text-right py-2 pr-4">Средний чек</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {salesByEmployee.map((row) => (
-                        <tr key={row.employeeId} className="border-b last:border-b-0">
-                          <td className="py-2 pr-4">{row.employeeName || `Сотрудник #${row.employeeId}`}</td>
-                          <td className="py-2 pr-4 text-right">{row.ordersCnt || 0}</td>
-                          <td className="py-2 pr-4 text-right">{formatCurrency(row.revenue || 0)}</td>
-                          <td className="py-2 pr-4 text-right">{formatCurrency(row.avgTicket || 0)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Продажи по времени суток</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {salesByTimeOfDay.length === 0 ? (
-                <p className="text-center text-gray-500">Нет данных</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-2 pr-4">Время суток</th>
-                        <th className="text-right py-2 pr-4">Заказы</th>
-                        <th className="text-right py-2 pr-4">Выручка</th>
-                        <th className="text-right py-2 pr-4">Средний чек</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {salesByTimeOfDay.map((row, idx) => (
-                        <tr key={`${row.bucket}-${idx}`} className="border-b last:border-b-0">
-                          <td className="py-2 pr-4">{formatTimeOfDayBucket(row.bucket)}</td>
-                          <td className="py-2 pr-4 text-right">{row.ordersCnt || 0}</td>
-                          <td className="py-2 pr-4 text-right">{formatCurrency(row.revenue || 0)}</td>
-                          <td className="py-2 pr-4 text-right">{formatCurrency(row.avgTicket || 0)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>История просмотров отчётов</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {reportViews.length === 0 ? (
+            {salesByEmployee.length === 0 ? (
               <p className="text-center text-gray-500">Нет данных</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-2 pr-4">Время</th>
-                      <th className="text-left py-2 pr-4">Отчёт</th>
-                      <th className="text-left py-2 pr-4">Период</th>
                       <th className="text-left py-2 pr-4">Сотрудник</th>
+                      <th className="text-right py-2 pr-4">Заказы</th>
+                      <th className="text-right py-2 pr-4">Выручка</th>
+                      <th className="text-right py-2 pr-4">Средний чек</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {reportViews.map((v) => (
-                      <tr key={v.id} className="border-b last:border-b-0">
-                        <td className="py-2 pr-4 whitespace-nowrap">
-                          {v.viewedAt ? new Date(v.viewedAt).toLocaleString() : '—'}
-                        </td>
-                        <td className="py-2 pr-4">
-                          {v.report === 'sales_summary'
-                            ? 'Сводка продаж'
-                            : v.report === 'top_menu_items'
-                              ? 'Топ блюд'
-                              : v.report === 'sales_by_employee'
-                                ? 'Продажи по сотрудникам'
-                                : v.report === 'sales_by_time_of_day'
-                                  ? 'Продажи по времени суток'
-                                  : v.report === 'financial_summary'
-                                    ? 'Финансовый отчёт'
-                              : v.report || '—'}
-                        </td>
-                        <td className="py-2 pr-4">
-                          {v.from ? new Date(v.from).toLocaleDateString() : '—'} –{' '}
-                          {v.to ? new Date(v.to).toLocaleDateString() : '—'}
-                        </td>
-                        <td className="py-2 pr-4">{v.employeeName ? v.employeeName : '—'}</td>
+                    {salesByEmployee.map((row) => (
+                      <tr key={row.employeeId} className="border-b last:border-b-0">
+                        <td className="py-2 pr-4">{row.employeeName || `Сотрудник #${row.employeeId}`}</td>
+                        <td className="py-2 pr-4 text-right">{row.ordersCnt || 0}</td>
+                        <td className="py-2 pr-4 text-right">{formatCurrency(row.revenue || 0)}</td>
+                        <td className="py-2 pr-4 text-right">{formatCurrency(row.avgTicket || 0)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -383,6 +299,92 @@ export function AnalyticsPage() {
             )}
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Продажи по времени суток</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {salesByTimeOfDay.length === 0 ? (
+              <p className="text-center text-gray-500">Нет данных</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 pr-4">Время суток</th>
+                      <th className="text-right py-2 pr-4">Заказы</th>
+                      <th className="text-right py-2 pr-4">Выручка</th>
+                      <th className="text-right py-2 pr-4">Средний чек</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {salesByTimeOfDay.map((row, idx) => (
+                      <tr key={`${row.bucket}-${idx}`} className="border-b last:border-b-0">
+                        <td className="py-2 pr-4">{formatTimeOfDayBucket(row.bucket)}</td>
+                        <td className="py-2 pr-4 text-right">{row.ordersCnt || 0}</td>
+                        <td className="py-2 pr-4 text-right">{formatCurrency(row.revenue || 0)}</td>
+                        <td className="py-2 pr-4 text-right">{formatCurrency(row.avgTicket || 0)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>История просмотров отчётов</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {reportViews.length === 0 ? (
+            <p className="text-center text-gray-500">Нет данных</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2 pr-4">Время</th>
+                    <th className="text-left py-2 pr-4">Отчёт</th>
+                    <th className="text-left py-2 pr-4">Период</th>
+                    <th className="text-left py-2 pr-4">Сотрудник</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportViews.map((v) => (
+                    <tr key={v.id} className="border-b last:border-b-0">
+                      <td className="py-2 pr-4 whitespace-nowrap">
+                        {v.viewedAt ? new Date(v.viewedAt).toLocaleString() : '—'}
+                      </td>
+                      <td className="py-2 pr-4">
+                        {v.report === 'sales_summary'
+                          ? 'Сводка продаж'
+                          : v.report === 'top_menu_items'
+                            ? 'Топ блюд'
+                            : v.report === 'sales_by_employee'
+                              ? 'Продажи по сотрудникам'
+                              : v.report === 'sales_by_time_of_day'
+                                ? 'Продажи по времени суток'
+                                : v.report === 'financial_summary'
+                                  ? 'Финансовый отчёт'
+                                  : v.report || '—'}
+                      </td>
+                      <td className="py-2 pr-4">
+                        {v.from ? new Date(v.from).toLocaleDateString() : '—'} –{' '}
+                        {v.to ? new Date(v.to).toLocaleDateString() : '—'}
+                      </td>
+                      <td className="py-2 pr-4">{v.employeeName ? v.employeeName : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

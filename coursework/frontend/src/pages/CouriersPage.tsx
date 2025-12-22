@@ -152,7 +152,8 @@ export function CouriersPage() {
       })
       .filter((courier) => {
         if (!q) return true;
-        const hay = `${courier.id ?? ''} ${courier.name ?? ''} ${courier.phone ?? ''} ${courier.vehicleInfo ?? ''}`.toLowerCase();
+        const hay =
+          `${courier.id ?? ''} ${courier.name ?? ''} ${courier.phone ?? ''} ${courier.vehicleInfo ?? ''}`.toLowerCase();
         return hay.includes(q);
       })
       .sort((a, b) => {
@@ -194,9 +195,7 @@ export function CouriersPage() {
         </Button>
       </div>
 
-      {error && (
-        <RetryAlert message={error} onRetry={loadCouriers} />
-      )}
+      {error && <RetryAlert message={error} onRetry={loadCouriers} />}
 
       {couriers.length > 0 && (
         <Card>
@@ -224,8 +223,10 @@ export function CouriersPage() {
               </div>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="text-sm text-gray-500">Показано: {visibleCouriers.length} из {couriers.length}</div>
-              {(query.trim() || statusFilter !== 'all') ? (
+              <div className="text-sm text-gray-500">
+                Показано: {visibleCouriers.length} из {couriers.length}
+              </div>
+              {query.trim() || statusFilter !== 'all' ? (
                 <Button variant="outline" size="sm" onClick={resetFilters}>
                   Сбросить
                 </Button>
@@ -235,121 +236,121 @@ export function CouriersPage() {
         </Card>
       )}
 
-        {showForm && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>{editingCourierId ? `Курьер #${editingCourierId}` : 'Новый курьер'}</CardTitle>
-              <CardDescription>Имя, телефон и способ доставки</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Input
-                placeholder="Имя"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+      {showForm && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>{editingCourierId ? `Курьер #${editingCourierId}` : 'Новый курьер'}</CardTitle>
+            <CardDescription>Имя, телефон и способ доставки</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Input
+              placeholder="Имя"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            />
+            <Input
+              placeholder="Телефон"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            />
+            <Input
+              placeholder="Транспорт (например, Bike)"
+              value={formData.vehicleInfo}
+              onChange={(e) => setFormData({ ...formData, vehicleInfo: e.target.value })}
+            />
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={formData.available}
+                onChange={(e) => setFormData({ ...formData, available: e.target.checked })}
               />
-              <Input
-                placeholder="Телефон"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              />
-              <Input
-                placeholder="Транспорт (например, Bike)"
-                value={formData.vehicleInfo}
-                onChange={(e) => setFormData({ ...formData, vehicleInfo: e.target.value })}
-              />
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={formData.available}
-                  onChange={(e) => setFormData({ ...formData, available: e.target.checked })}
-                />
-                Доступен
-              </label>
-              <div className="flex gap-2">
-                <Button onClick={submitForm}>{editingCourierId ? 'Сохранить' : 'Создать'}</Button>
-                {editingCourierId && (
-                  <Button variant="outline" onClick={resetForm}>
-                    Отмена
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              Доступен
+            </label>
+            <div className="flex gap-2">
+              <Button onClick={submitForm}>{editingCourierId ? 'Сохранить' : 'Создать'}</Button>
+              {editingCourierId && (
+                <Button variant="outline" onClick={resetForm}>
+                  Отмена
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-        {couriers.length === 0 ? (
-          <EmptyState title="Курьеров пока нет" description="Добавьте первого курьера, чтобы назначать доставку." />
-        ) : visibleCouriers.length === 0 ? (
-          <EmptyState
-            title="Ничего не найдено"
-            description="Попробуйте изменить фильтры или сбросить поиск."
-            action={
-              <Button variant="outline" onClick={resetFilters}>
-                Сбросить фильтры
-              </Button>
-            }
-          />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visibleCouriers.map((courier) => (
-              <Card key={courier.id}>
-                <CardHeader>
-                  <CardTitle>{courier.name || `Курьер #${courier.id}`}</CardTitle>
-                  <CardDescription>
-                    {courier.busy ? 'Занят' : courier.available === false ? 'Недоступен' : 'Свободен'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600">Телефон: {courier.phone || '—'}</p>
-                  <p className="text-sm text-gray-600">Транспорт: {courier.vehicleInfo || '—'}</p>
-                  <label className="mt-4 flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={courier.available !== false}
-                      disabled={courier.busy === true}
-                      onChange={(e) => toggleAvailability(courier, e.target.checked)}
-                    />
-                    Доступен {courier.busy ? '(нельзя изменить, занят)' : ''}
-                  </label>
-                  <div className="mt-4 flex gap-2">
-                    <Button variant="outline" onClick={() => startEdit(courier)}>
-                      Редактировать
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => requestDeleteCourier(courier)}
-                      className="text-red-600 hover:text-red-700 hover:border-red-700"
-                      disabled={courier.busy === true}
-                    >
-                      Удалить
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        <ConfirmDialog
-          open={deleteDialogOpen}
-          onOpenChange={(open) => {
-            setDeleteDialogOpen(open);
-            if (!open) {
-              setDeletingCourier(null);
-            }
-          }}
-          title={
-            deletingCourier?.name
-              ? `Удалить курьера «${deletingCourier.name}»?`
-              : deletingCourier?.id
-                ? `Удалить курьера #${deletingCourier.id}?`
-                : 'Удалить курьера?'
+      {couriers.length === 0 ? (
+        <EmptyState title="Курьеров пока нет" description="Добавьте первого курьера, чтобы назначать доставку." />
+      ) : visibleCouriers.length === 0 ? (
+        <EmptyState
+          title="Ничего не найдено"
+          description="Попробуйте изменить фильтры или сбросить поиск."
+          action={
+            <Button variant="outline" onClick={resetFilters}>
+              Сбросить фильтры
+            </Button>
           }
-          description="Действие необратимо."
-          confirmText="Удалить"
-          confirmDisabled={deleting}
-          onConfirm={() => void confirmDeleteCourier()}
         />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {visibleCouriers.map((courier) => (
+            <Card key={courier.id}>
+              <CardHeader>
+                <CardTitle>{courier.name || `Курьер #${courier.id}`}</CardTitle>
+                <CardDescription>
+                  {courier.busy ? 'Занят' : courier.available === false ? 'Недоступен' : 'Свободен'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600">Телефон: {courier.phone || '—'}</p>
+                <p className="text-sm text-gray-600">Транспорт: {courier.vehicleInfo || '—'}</p>
+                <label className="mt-4 flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={courier.available !== false}
+                    disabled={courier.busy === true}
+                    onChange={(e) => toggleAvailability(courier, e.target.checked)}
+                  />
+                  Доступен {courier.busy ? '(нельзя изменить, занят)' : ''}
+                </label>
+                <div className="mt-4 flex gap-2">
+                  <Button variant="outline" onClick={() => startEdit(courier)}>
+                    Редактировать
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => requestDeleteCourier(courier)}
+                    className="text-red-600 hover:text-red-700 hover:border-red-700"
+                    disabled={courier.busy === true}
+                  >
+                    Удалить
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) {
+            setDeletingCourier(null);
+          }
+        }}
+        title={
+          deletingCourier?.name
+            ? `Удалить курьера «${deletingCourier.name}»?`
+            : deletingCourier?.id
+              ? `Удалить курьера #${deletingCourier.id}?`
+              : 'Удалить курьера?'
+        }
+        description="Действие необратимо."
+        confirmText="Удалить"
+        confirmDisabled={deleting}
+        onConfirm={() => void confirmDeleteCourier()}
+      />
     </div>
   );
 }

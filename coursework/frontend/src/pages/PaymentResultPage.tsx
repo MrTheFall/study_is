@@ -67,12 +67,8 @@ export function PaymentResultPage() {
     <div className="max-w-2xl space-y-6">
       <div>
         <h1 className={`text-3xl font-bold ${label.tone}`}>{label.title}</h1>
-        <p className="text-gray-600 mt-2">
-          {orderId ? `Заказ #${orderId}` : 'Не удалось определить номер заказа'}
-        </p>
-        {messageParam && (
-          <p className="text-sm text-gray-500 mt-2">{messageParam}</p>
-        )}
+        <p className="text-gray-600 mt-2">{orderId ? `Заказ #${orderId}` : 'Не удалось определить номер заказа'}</p>
+        {messageParam && <p className="text-sm text-gray-500 mt-2">{messageParam}</p>}
       </div>
 
       {error && (
@@ -101,9 +97,7 @@ export function PaymentResultPage() {
       )}
 
       <div className="flex flex-wrap gap-3">
-        <Button onClick={() => navigate(orderId ? `/orders?orderId=${orderId}` : '/orders')}>
-          К заказам
-        </Button>
+        <Button onClick={() => navigate(orderId ? `/orders?orderId=${orderId}` : '/orders')}>К заказам</Button>
         <Button variant="outline" onClick={() => navigate('/menu')}>
           В меню
         </Button>

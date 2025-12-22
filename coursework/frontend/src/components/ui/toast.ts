@@ -26,4 +26,3 @@ export function useToast(): ToastApi {
   }
   return ctx;
 }
-

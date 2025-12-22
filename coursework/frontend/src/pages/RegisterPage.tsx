@@ -117,24 +117,15 @@ export function RegisterPage() {
               <label className="block text-sm font-medium mb-1">Имя</label>
               <Input {...form.register('name')} placeholder="Введите имя" />
               {form.formState.errors.name && (
-                <p className="text-red-500 text-sm mt-1">
-                  {form.formState.errors.name.message}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{form.formState.errors.name.message}</p>
               )}
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Телефон</label>
-              <Input
-                {...phoneRegister}
-                placeholder="+7 (999) 123-45-67"
-                inputMode="tel"
-                autoComplete="tel"
-              />
+              <Input {...phoneRegister} placeholder="+7 (999) 123-45-67" inputMode="tel" autoComplete="tel" />
               {form.formState.errors.phone && (
-                <p className="text-red-500 text-sm mt-1">
-                  {form.formState.errors.phone.message}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{form.formState.errors.phone.message}</p>
               )}
             </div>
 
@@ -148,9 +139,7 @@ export function RegisterPage() {
                 autoComplete="email"
               />
               {form.formState.errors.email && (
-                <p className="text-red-500 text-sm mt-1">
-                  {form.formState.errors.email.message}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{form.formState.errors.email.message}</p>
               )}
             </div>
 
@@ -158,9 +147,7 @@ export function RegisterPage() {
               <label className="block text-sm font-medium mb-1">Пароль</label>
               <Input type="password" {...form.register('password')} placeholder="••••••••" />
               {form.formState.errors.password && (
-                <p className="text-red-500 text-sm mt-1">
-                  {form.formState.errors.password.message}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{form.formState.errors.password.message}</p>
               )}
             </div>
 
@@ -168,9 +155,7 @@ export function RegisterPage() {
               <label className="block text-sm font-medium mb-1">Адрес доставки</label>
               <Input {...form.register('defaultAddress')} placeholder="Введите адрес" />
               {form.formState.errors.defaultAddress && (
-                <p className="text-red-500 text-sm mt-1">
-                  {form.formState.errors.defaultAddress.message}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{form.formState.errors.defaultAddress.message}</p>
               )}
             </div>
 

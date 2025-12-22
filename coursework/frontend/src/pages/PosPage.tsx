@@ -5,7 +5,14 @@ import { MenuItem, OrderStatus, OrderType, PaymentMethod } from '@/api/generated
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { RetryAlert } from '@/components/ui/RetryAlert';
@@ -57,9 +64,9 @@ export function PosPage() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [isCreatingClient, setIsCreatingClient] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [submittingStep, setSubmittingStep] = useState<'creatingOrder' | 'processingPayment' | 'confirmingOrder' | null>(
-    null
-  );
+  const [submittingStep, setSubmittingStep] = useState<
+    'creatingOrder' | 'processingPayment' | 'confirmingOrder' | null
+  >(null);
   const submitLockRef = useRef(false);
   const [draft, setDraft] = useState<PosDraft | null>(null);
   const [submitError, setSubmitError] = useState<PosSubmitError | null>(null);
@@ -302,7 +309,9 @@ export function PosPage() {
           }
           throw new Error('Не удалось определить клиента');
         } catch (lookupErr) {
-          throw new Error(getApiErrorMessage(lookupErr, 'Клиент с таким телефоном уже существует, но найти его не удалось'));
+          throw new Error(
+            getApiErrorMessage(lookupErr, 'Клиент с таким телефоном уже существует, но найти его не удалось')
+          );
         }
       }
       throw new Error(getApiErrorMessage(e, 'Не удалось создать гостя'));
@@ -561,9 +570,7 @@ export function PosPage() {
         </div>
       </div>
 
-      {error && (
-        <RetryAlert message={error} onRetry={loadMenu} retryDisabled={isBusy} />
-      )}
+      {error && <RetryAlert message={error} onRetry={loadMenu} retryDisabled={isBusy} />}
 
       <Card>
         <CardHeader>
@@ -637,9 +644,7 @@ export function PosPage() {
                   onChange={(e) => setCustomerIdInput(e.target.value)}
                   disabled={controlsDisabled}
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  Если ID неизвестен, выберите “Гость”.
-                </p>
+                <p className="mt-1 text-xs text-gray-500">Если ID неизвестен, выберите “Гость”.</p>
               </div>
             ) : (
               <>
@@ -736,12 +741,7 @@ export function PosPage() {
                     <CardTitle className="text-lg">Корзина</CardTitle>
                     <CardDescription>Позиций: {totalItems}</CardDescription>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearCart}
-                    disabled={controlsDisabled || cart.size === 0}
-                  >
+                  <Button variant="ghost" size="sm" onClick={clearCart} disabled={controlsDisabled || cart.size === 0}>
                     Очистить
                   </Button>
                 </div>
@@ -860,7 +860,9 @@ export function PosPage() {
               <p className="font-semibold">Итого: {formatCurrency(total)}</p>
               {isCreatingClient && <p className="text-xs text-gray-500">Создаем гостя...</p>}
               {submittingStep === 'creatingOrder' && <p className="text-xs text-gray-500">Создаем заказ...</p>}
-              {submittingStep === 'processingPayment' && <p className="text-xs text-gray-500">Обрабатываем оплату...</p>}
+              {submittingStep === 'processingPayment' && (
+                <p className="text-xs text-gray-500">Обрабатываем оплату...</p>
+              )}
               {submittingStep === 'confirmingOrder' && <p className="text-xs text-gray-500">Отправляем на кухню...</p>}
             </div>
             <Button

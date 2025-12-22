@@ -43,10 +43,7 @@ export function LoginPage() {
   const reasonParam = search.get('reason');
   const returnTo = returnToParam && returnToParam.startsWith('/') ? returnToParam : '/';
 
-  const notice =
-    reasonParam === 'expired'
-      ? 'Сессия истекла. Войдите снова, чтобы продолжить.'
-      : null;
+  const notice = reasonParam === 'expired' ? 'Сессия истекла. Войдите снова, чтобы продолжить.' : null;
 
   const clientForm = useForm<ClientLoginForm>({
     resolver: zodResolver(clientLoginSchema),
@@ -69,12 +66,12 @@ export function LoginPage() {
       setError(null);
       const response = await authApi.loginClient({ email: data.email, password: data.password });
       const token = response.data.token!;
-      
+
       if (!token) {
         setError('Токен не получен');
         return;
       }
-      
+
       localStorage.setItem('token', token);
 
       const userResponse = await authApi.getCurrentUser();
@@ -91,14 +88,14 @@ export function LoginPage() {
       setError(null);
       const response = await authApi.loginEmployee({ login: data.login, password: data.password });
       const token = response.data.token!;
-      
+
       if (!token) {
         setError('Токен не получен');
         return;
       }
-      
+
       localStorage.setItem('token', token);
-      
+
       try {
         const userResponse = await authApi.getCurrentUser();
         setAuth(token, userResponse.data);
@@ -108,7 +105,7 @@ export function LoginPage() {
         setError('Не удалось получить данные пользователя. Попробуйте войти ещё раз.');
         return;
       }
-      
+
       navigate(returnTo, { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Ошибка входа');
@@ -121,24 +118,14 @@ export function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Вход в систему</CardTitle>
-          <CardDescription>
-            Войдите как {isClient ? 'клиент' : 'сотрудник'}
-          </CardDescription>
+          <CardDescription>Войдите как {isClient ? 'клиент' : 'сотрудник'}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-2 mb-6">
-            <Button
-              variant={isClient ? 'default' : 'outline'}
-              onClick={() => setIsClient(true)}
-              className="flex-1"
-            >
+            <Button variant={isClient ? 'default' : 'outline'} onClick={() => setIsClient(true)} className="flex-1">
               Клиент
             </Button>
-            <Button
-              variant={!isClient ? 'default' : 'outline'}
-              onClick={() => setIsClient(false)}
-              className="flex-1"
-            >
+            <Button variant={!isClient ? 'default' : 'outline'} onClick={() => setIsClient(false)} className="flex-1">
               Сотрудник
             </Button>
           </div>
@@ -166,22 +153,14 @@ export function LoginPage() {
                   autoComplete="email"
                 />
                 {clientForm.formState.errors.email && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {clientForm.formState.errors.email.message}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{clientForm.formState.errors.email.message}</p>
                 )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Пароль</label>
-                <Input
-                  type="password"
-                  {...clientForm.register('password')}
-                  placeholder="••••••••"
-                />
+                <Input type="password" {...clientForm.register('password')} placeholder="••••••••" />
                 {clientForm.formState.errors.password && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {clientForm.formState.errors.password.message}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{clientForm.formState.errors.password.message}</p>
                 )}
               </div>
               <Button type="submit" className="w-full">
@@ -192,27 +171,16 @@ export function LoginPage() {
             <form onSubmit={employeeForm.handleSubmit(onEmployeeSubmit)} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Логин</label>
-                <Input
-                  {...employeeForm.register('login')}
-                  placeholder="Введите логин"
-                />
+                <Input {...employeeForm.register('login')} placeholder="Введите логин" />
                 {employeeForm.formState.errors.login && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {employeeForm.formState.errors.login.message}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{employeeForm.formState.errors.login.message}</p>
                 )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Пароль</label>
-                <Input
-                  type="password"
-                  {...employeeForm.register('password')}
-                  placeholder="••••••••"
-                />
+                <Input type="password" {...employeeForm.register('password')} placeholder="••••••••" />
                 {employeeForm.formState.errors.password && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {employeeForm.formState.errors.password.message}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{employeeForm.formState.errors.password.message}</p>
                 )}
               </div>
               <Button type="submit" className="w-full">
@@ -231,11 +199,7 @@ export function LoginPage() {
               </Link>
             </div>
             <div className="text-center">
-              <Button
-                variant="outline"
-                onClick={() => navigate('/menu')}
-                className="w-full"
-              >
+              <Button variant="outline" onClick={() => navigate('/menu')} className="w-full">
                 Посмотреть меню без входа
               </Button>
             </div>

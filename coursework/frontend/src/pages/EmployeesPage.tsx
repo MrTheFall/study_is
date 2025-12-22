@@ -5,7 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Input } from '@/components/ui/Input';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/Dialog';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { RetryAlert } from '@/components/ui/RetryAlert';
@@ -143,8 +150,7 @@ export function EmployeesPage() {
     } catch (e: any) {
       console.error('Ошибка сохранения сотрудника:', e);
       setFormError(e.response?.data?.message || 'Не удалось сохранить сотрудника');
-    }
-    finally {
+    } finally {
       setSaving(false);
     }
   };
@@ -182,45 +188,43 @@ export function EmployeesPage() {
   return (
     <>
       <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold">Сотрудники</h1>
-          <p className="text-sm text-gray-500 mt-1">Роли, контакты и зарплаты</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={loadEmployees}>
-            Обновить
-          </Button>
-          <Button onClick={openCreate}>Добавить сотрудника</Button>
-        </div>
-      </div>
-
-      {error && (
-        <RetryAlert message={error} onRetry={loadEmployees} />
-      )}
-
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-3 md:items-end">
-            <div className="flex-1">
-              <label className="block text-sm font-medium mb-1">Поиск</label>
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Имя, логин или роль"
-              />
-            </div>
-            <Button variant="outline" onClick={() => setSearch('')}>
-              Сбросить
-            </Button>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold">Сотрудники</h1>
+            <p className="text-sm text-gray-500 mt-1">Роли, контакты и зарплаты</p>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={loadEmployees}>
+              Обновить
+            </Button>
+            <Button onClick={openCreate}>Добавить сотрудника</Button>
+          </div>
+        </div>
+
+        {error && <RetryAlert message={error} onRetry={loadEmployees} />}
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row gap-3 md:items-end">
+              <div className="flex-1">
+                <label className="block text-sm font-medium mb-1">Поиск</label>
+                <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Имя, логин или роль" />
+              </div>
+              <Button variant="outline" onClick={() => setSearch('')}>
+                Сбросить
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {filteredEmployees.length === 0 ? (
           <EmptyState
             title={search.trim() ? 'Ничего не найдено' : 'Сотрудников пока нет'}
-            description={search.trim() ? 'Попробуйте изменить запрос.' : 'Добавьте сотрудников, чтобы управлять сменами и зарплатами.'}
+            description={
+              search.trim()
+                ? 'Попробуйте изменить запрос.'
+                : 'Добавьте сотрудников, чтобы управлять сменами и зарплатами.'
+            }
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -242,11 +246,7 @@ export function EmployeesPage() {
                       <p className="text-sm text-gray-600">Принят: {new Date(employee.hiredAt).toLocaleDateString()}</p>
                     )}
                     <div className="mt-4 flex gap-2">
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => openEdit(employee)}
-                      >
+                      <Button variant="outline" className="flex-1" onClick={() => openEdit(employee)}>
                         Редактировать
                       </Button>
                       <Button
@@ -281,7 +281,9 @@ export function EmployeesPage() {
           <DialogHeader>
             <DialogTitle>{editingEmployee ? 'Редактировать сотрудника' : 'Новый сотрудник'}</DialogTitle>
             <DialogDescription>
-              {editingEmployee ? 'Пароль можно не менять (оставьте пустым).' : 'Пароль обязателен для нового сотрудника.'}
+              {editingEmployee
+                ? 'Пароль можно не менять (оставьте пустым).'
+                : 'Пароль обязателен для нового сотрудника.'}
             </DialogDescription>
           </DialogHeader>
 

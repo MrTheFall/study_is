@@ -7,7 +7,14 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Input } from '@/components/ui/Input';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/Dialog';
 import { RetryAlert } from '@/components/ui/RetryAlert';
 import { formatCurrency } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/apiError';
@@ -103,7 +110,8 @@ export function MenuManagementPage() {
     if (price < 0) return { ok: false, message: 'Цена не может быть отрицательной' };
 
     const prep = state.prepTimeMinutes.trim() ? Number(state.prepTimeMinutes) : 0;
-    if (!Number.isFinite(prep) || !Number.isInteger(prep)) return { ok: false, message: 'Время приготовления должно быть целым числом' };
+    if (!Number.isFinite(prep) || !Number.isInteger(prep))
+      return { ok: false, message: 'Время приготовления должно быть целым числом' };
     if (prep < 0) return { ok: false, message: 'Время приготовления не может быть отрицательным' };
 
     return {
@@ -198,33 +206,27 @@ export function MenuManagementPage() {
   return (
     <>
       <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold">Управление меню</h1>
-          <p className="text-sm text-gray-500 mt-1">Создавайте блюда, меняйте цену и доступность</p>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold">Управление меню</h1>
+            <p className="text-sm text-gray-500 mt-1">Создавайте блюда, меняйте цену и доступность</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={loadMenu}>
+              Обновить
+            </Button>
+            <Button onClick={openCreate}>Добавить блюдо</Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={loadMenu}>
-            Обновить
-          </Button>
-          <Button onClick={openCreate}>Добавить блюдо</Button>
-        </div>
-      </div>
 
-      {error && (
-        <RetryAlert message={error} onRetry={loadMenu} />
-      )}
+        {error && <RetryAlert message={error} onRetry={loadMenu} />}
 
-      <Card>
+        <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row gap-3 md:items-end">
               <div className="flex-1">
                 <label className="block text-sm font-medium mb-1">Поиск</label>
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Например: Patty"
-                />
+                <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Например: Patty" />
               </div>
               <div className="w-full md:w-60">
                 <label className="block text-sm font-medium mb-1">Фильтр</label>
@@ -243,12 +245,16 @@ export function MenuManagementPage() {
               </Button>
             </div>
           </CardContent>
-      </Card>
+        </Card>
 
         {filteredItems.length === 0 ? (
           <EmptyState
             title={search.trim() ? 'Ничего не найдено' : 'Блюд пока нет'}
-            description={search.trim() ? 'Попробуйте изменить запрос или фильтр.' : 'Добавьте первое блюдо, чтобы оно появилось в меню.'}
+            description={
+              search.trim()
+                ? 'Попробуйте изменить запрос или фильтр.'
+                : 'Добавьте первое блюдо, чтобы оно появилось в меню.'
+            }
             action={<Button onClick={openCreate}>Добавить блюдо</Button>}
           />
         ) : (
@@ -267,9 +273,7 @@ export function MenuManagementPage() {
                   ) : (
                     <p className="text-sm text-gray-500 mb-4">Без описания</p>
                   )}
-                  <div className="text-sm text-gray-600 mb-4">
-                    Время приготовления: {item.prepTimeMinutes ?? 0} мин
-                  </div>
+                  <div className="text-sm text-gray-600 mb-4">Время приготовления: {item.prepTimeMinutes ?? 0} мин</div>
                   <div className="flex gap-2">
                     <Button variant="outline" className="flex-1" onClick={() => openEdit(item)}>
                       Редактировать
@@ -284,11 +288,7 @@ export function MenuManagementPage() {
                     </Button>
                   </div>
                   <div className="mt-2">
-                    <Button
-                      variant="destructive"
-                      className="w-full"
-                      onClick={() => requestDeleteItem(item)}
-                    >
+                    <Button variant="destructive" className="w-full" onClick={() => requestDeleteItem(item)}>
                       Удалить
                     </Button>
                   </div>
@@ -364,7 +364,9 @@ export function MenuManagementPage() {
             <div className="flex items-center justify-between rounded-md border border-gray-200 p-3">
               <div>
                 <div className="text-sm font-medium">Доступность</div>
-                <div className="text-xs text-gray-500">Если ингредиентов нет на складе — блюдо автоматически станет недоступным</div>
+                <div className="text-xs text-gray-500">
+                  Если ингредиентов нет на складе — блюдо автоматически станет недоступным
+                </div>
               </div>
               <button
                 type="button"
@@ -381,17 +383,11 @@ export function MenuManagementPage() {
                 />
               </button>
             </div>
-            {formError && (
-              <p className="text-sm text-red-600">{formError}</p>
-            )}
+            {formError && <p className="text-sm text-red-600">{formError}</p>}
           </div>
 
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDialogOpen(false)}
-              disabled={saving}
-            >
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>
               Отмена
             </Button>
             <Button onClick={saveItem} disabled={saving}>

@@ -6,7 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/Dialog';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { RetryAlert } from '@/components/ui/RetryAlert';
@@ -232,7 +239,9 @@ export function ShiftsPage() {
   };
 
   const formatShiftDate = (date: string) =>
-    new Intl.DateTimeFormat('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(`${date}T00:00:00`));
+    new Intl.DateTimeFormat('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' }).format(
+      new Date(`${date}T00:00:00`)
+    );
 
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const [removingAssignment, setRemovingAssignment] = useState<{
@@ -246,7 +255,8 @@ export function ShiftsPage() {
     setRemovingAssignment({
       employeeShiftId: assignment.employeeShiftId,
       shiftId,
-      employeeLabel: assignment.employee.fullName || assignment.employee.login || `Сотрудник #${assignment.employee.id}`,
+      employeeLabel:
+        assignment.employee.fullName || assignment.employee.login || `Сотрудник #${assignment.employee.id}`,
     });
     setRemoveDialogOpen(true);
   };
@@ -275,58 +285,57 @@ export function ShiftsPage() {
   return (
     <>
       <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold">Смены</h1>
-          <p className="text-gray-600 mt-1">Создание смен и назначение сотрудников.</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={loadShifts}>
-            Обновить
-          </Button>
-          {isManager() && (
-            <Button onClick={() => setShowForm(!showForm)}>
-              {showForm ? 'Отмена' : 'Создать смену'}
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold">Смены</h1>
+            <p className="text-gray-600 mt-1">Создание смен и назначение сотрудников.</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={loadShifts}>
+              Обновить
             </Button>
-          )}
+            {isManager() && (
+              <Button onClick={() => setShowForm(!showForm)}>{showForm ? 'Отмена' : 'Создать смену'}</Button>
+            )}
+          </div>
         </div>
-      </div>
 
-      {error && (
-        <RetryAlert message={error} onRetry={loadShifts} />
-      )}
+        {error && <RetryAlert message={error} onRetry={loadShifts} />}
 
-	      <div className="flex flex-col sm:flex-row gap-4 items-end">
-	          <div className="flex-1">
-	            <label className="block text-sm font-medium mb-1">Фильтр по дате</label>
-	            <Input
-	              type="date"
-	              value={filterDate}
-	              onChange={(e) => {
-	                setFilterDate(e.target.value);
+        <div className="flex flex-col sm:flex-row gap-4 items-end">
+          <div className="flex-1">
+            <label className="block text-sm font-medium mb-1">Фильтр по дате</label>
+            <Input
+              type="date"
+              value={filterDate}
+              onChange={(e) => {
+                setFilterDate(e.target.value);
                 if (e.target.value) {
                   navigate(`/shifts?date=${e.target.value}`, { replace: true });
                 } else {
                   navigate('/shifts', { replace: true });
                 }
-	              }}
-	            />
-	          </div>
+              }}
+            />
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setFilterDate(todayStr);
+              navigate(`/shifts?date=${todayStr}`, { replace: true });
+            }}
+            disabled={filterDate === todayStr}
+          >
+            Сегодня
+          </Button>
+          {filterDate && (
             <Button
               variant="outline"
               onClick={() => {
-                setFilterDate(todayStr);
-                navigate(`/shifts?date=${todayStr}`, { replace: true });
+                setFilterDate('');
+                navigate('/shifts', { replace: true });
               }}
-              disabled={filterDate === todayStr}
             >
-              Сегодня
-            </Button>
-	          {filterDate && (
-	            <Button variant="outline" onClick={() => {
-	              setFilterDate('');
-	              navigate('/shifts', { replace: true });
-            }}>
               Сбросить фильтр
             </Button>
           )}
@@ -384,74 +393,70 @@ export function ShiftsPage() {
                   <CardDescription>
                     {shift.shiftDate ? formatShiftDate(shift.shiftDate) : 'Дата не указана'}
                     {shift.startTime && shift.endTime && (
-                      <> | {shift.startTime} - {shift.endTime}</>
+                      <>
+                        {' '}
+                        | {shift.startTime} - {shift.endTime}
+                      </>
                     )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {shift.note && (
-                    <p className="text-sm text-gray-600 mb-2">
-                      Примечание: {shift.note}
-                    </p>
-                  )}
+                  {shift.note && <p className="text-sm text-gray-600 mb-2">Примечание: {shift.note}</p>}
 
-	                  {isManager() && shift.id && (
-	                    <div className="mt-4 space-y-3">
-	                      <div>
-	                        <div className="text-sm font-medium mb-1">Назначены:</div>
-	                        {(assignmentsByShiftId[shift.id] || []).length === 0 ? (
-	                          <p className="text-sm text-gray-500">Пока никто не назначен</p>
-	                        ) : (
-	                          <div className="flex flex-wrap gap-2">
-	                            {(assignmentsByShiftId[shift.id] || []).map((a) => (
-	                              <span
-	                                key={a.employeeShiftId}
-	                                className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700"
-	                                title={a.employee.login || undefined}
-	                              >
-	                                {a.employee.fullName || `Сотрудник #${a.employee.id}`}
-                                  <button
-                                    type="button"
-                                    className="ml-1 text-gray-500 hover:text-red-600"
-                                    onClick={() => requestRemoveAssignment(shift.id!, a)}
-                                    aria-label="Снять со смены"
-                                  >
-                                    ×
-                                  </button>
-	                              </span>
-	                            ))}
-	                          </div>
-	                        )}
-	                      </div>
+                  {isManager() && shift.id && (
+                    <div className="mt-4 space-y-3">
+                      <div>
+                        <div className="text-sm font-medium mb-1">Назначены:</div>
+                        {(assignmentsByShiftId[shift.id] || []).length === 0 ? (
+                          <p className="text-sm text-gray-500">Пока никто не назначен</p>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {(assignmentsByShiftId[shift.id] || []).map((a) => (
+                              <span
+                                key={a.employeeShiftId}
+                                className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700"
+                                title={a.employee.login || undefined}
+                              >
+                                {a.employee.fullName || `Сотрудник #${a.employee.id}`}
+                                <button
+                                  type="button"
+                                  className="ml-1 text-gray-500 hover:text-red-600"
+                                  onClick={() => requestRemoveAssignment(shift.id!, a)}
+                                  aria-label="Снять со смены"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
-	                        <div className="md:col-span-2">
-	                          <label className="block text-sm font-medium mb-1">Назначить сотрудника</label>
-	                          <Select
-	                            value={assignSelection[shift.id] ?? ''}
-	                            onChange={(e) => setAssignSelection((prev) => ({ ...prev, [shift.id!]: e.target.value }))}
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium mb-1">Назначить сотрудника</label>
+                          <Select
+                            value={assignSelection[shift.id] ?? ''}
+                            onChange={(e) => setAssignSelection((prev) => ({ ...prev, [shift.id!]: e.target.value }))}
                           >
-	                            <option value="">— выберите —</option>
-	                            {employees
-	                              .filter((e) => {
-	                                const id = e.id;
-	                                if (!id) return false;
-	                                const assigned = (assignmentsByShiftId[shift.id!] || []).some(
-                                      (a) => a.employee.id === id
-                                    );
-	                                return !assigned;
-	                              })
-	                              .map((e) => (
-	                                <option key={e.id} value={String(e.id)}>
-	                                  {e.fullName || `Сотрудник #${e.id}`} ({e.login || 'логин не указан'})
-	                                </option>
-	                              ))}
-	                          </Select>
-	                        </div>
-	                        <Button
-	                          onClick={() => assignEmployee(shift.id!)}
-	                          disabled={assigningShiftId === shift.id}
-                        >
+                            <option value="">— выберите —</option>
+                            {employees
+                              .filter((e) => {
+                                const id = e.id;
+                                if (!id) return false;
+                                const assigned = (assignmentsByShiftId[shift.id!] || []).some(
+                                  (a) => a.employee.id === id
+                                );
+                                return !assigned;
+                              })
+                              .map((e) => (
+                                <option key={e.id} value={String(e.id)}>
+                                  {e.fullName || `Сотрудник #${e.id}`} ({e.login || 'логин не указан'})
+                                </option>
+                              ))}
+                          </Select>
+                        </div>
+                        <Button onClick={() => assignEmployee(shift.id!)} disabled={assigningShiftId === shift.id}>
                           {assigningShiftId === shift.id ? 'Назначаем…' : 'Назначить'}
                         </Button>
                       </div>
@@ -532,8 +537,8 @@ export function ShiftsPage() {
         </DialogContent>
       </Dialog>
 
-	      <ConfirmDialog
-	        open={deleteDialogOpen}
+      <ConfirmDialog
+        open={deleteDialogOpen}
         onOpenChange={(open) => {
           setDeleteDialogOpen(open);
           if (!open) {
@@ -545,25 +550,25 @@ export function ShiftsPage() {
         confirmText="Удалить"
         confirmDisabled={deleting}
         onConfirm={() => void confirmDeleteShift()}
-	      />
+      />
 
-        <ConfirmDialog
-          open={removeDialogOpen}
-          onOpenChange={(open) => {
-            if (!open && removing) return;
-            setRemoveDialogOpen(open);
-            if (!open) {
-              setRemovingAssignment(null);
-            }
-          }}
-          title={`Снять сотрудника со смены #${removingAssignment?.shiftId ?? '—'}?`}
-          description={removingAssignment ? `Сотрудник: ${removingAssignment.employeeLabel}` : undefined}
-          confirmText={removing ? 'Снимаем…' : 'Снять'}
-          cancelText="Отмена"
-          confirmVariant="destructive"
-          confirmDisabled={!removingAssignment || removing}
-          onConfirm={confirmRemoveAssignment}
-        />
+      <ConfirmDialog
+        open={removeDialogOpen}
+        onOpenChange={(open) => {
+          if (!open && removing) return;
+          setRemoveDialogOpen(open);
+          if (!open) {
+            setRemovingAssignment(null);
+          }
+        }}
+        title={`Снять сотрудника со смены #${removingAssignment?.shiftId ?? '—'}?`}
+        description={removingAssignment ? `Сотрудник: ${removingAssignment.employeeLabel}` : undefined}
+        confirmText={removing ? 'Снимаем…' : 'Снять'}
+        cancelText="Отмена"
+        confirmVariant="destructive"
+        confirmDisabled={!removingAssignment || removing}
+        onConfirm={confirmRemoveAssignment}
+      />
     </>
   );
 }

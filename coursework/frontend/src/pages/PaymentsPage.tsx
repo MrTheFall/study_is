@@ -81,9 +81,7 @@ export function PaymentsPage() {
         </div>
       </div>
 
-      {loadError && (
-        <RetryAlert message={loadError} onRetry={loadPayments} />
-      )}
+      {loadError && <RetryAlert message={loadError} onRetry={loadPayments} />}
 
       {failedPayments.length > 0 && (
         <Card className="border-red-300">
@@ -99,7 +97,9 @@ export function PaymentsPage() {
                   className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-md border border-red-200 bg-red-50 p-3"
                 >
                   <div className="text-sm">
-                    <div className="font-medium">Платеж #{p.id} • Заказ #{p.orderId}</div>
+                    <div className="font-medium">
+                      Платеж #{p.id} • Заказ #{p.orderId}
+                    </div>
                     <div className="text-gray-700">Сумма: {formatCurrency(p.amount || 0)}</div>
                   </div>
                   {p.orderId ? (
@@ -149,7 +149,9 @@ export function PaymentsPage() {
         {payments.length === 0 ? (
           <EmptyState
             title={page === 1 ? 'Платежей пока нет' : 'На этой странице платежей нет'}
-            description={page === 1 ? 'Оплаты появятся здесь после обработки заказов.' : 'Перейдите на предыдущую страницу.'}
+            description={
+              page === 1 ? 'Оплаты появятся здесь после обработки заказов.' : 'Перейдите на предыдущую страницу.'
+            }
           />
         ) : (
           payments.map((payment) => (
@@ -163,14 +165,8 @@ export function PaymentsPage() {
                   Метод: {payment.method === 'card' ? 'Карта' : payment.method === 'cash' ? 'Наличные' : 'Онлайн'}
                 </p>
                 <p className="text-sm text-gray-600">Сумма: {formatCurrency(payment.amount!)}</p>
-                <p className="text-sm text-gray-600">
-                  Статус: {payment.success ? 'Успешно' : 'Ошибка'}
-                </p>
-                {payment.paidAt && (
-                  <p className="text-sm text-gray-600">
-                    Оплачен: {formatDate(payment.paidAt)}
-                  </p>
-                )}
+                <p className="text-sm text-gray-600">Статус: {payment.success ? 'Успешно' : 'Ошибка'}</p>
+                {payment.paidAt && <p className="text-sm text-gray-600">Оплачен: {formatDate(payment.paidAt)}</p>}
               </CardContent>
             </Card>
           ))

@@ -37,14 +37,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     localStorage.removeItem('user');
     set({ token: null, user: null, isAuthenticated: false });
   },
-      isClient: () => {
-        const user = get().user;
-        return user?.userType === GetCurrentUser200ResponseUserTypeEnum.Client;
-      },
-      isEmployee: () => {
-        const user = get().user;
-        return user?.userType === GetCurrentUser200ResponseUserTypeEnum.Employee;
-      },
+  isClient: () => {
+    const user = get().user;
+    return user?.userType === GetCurrentUser200ResponseUserTypeEnum.Client;
+  },
+  isEmployee: () => {
+    const user = get().user;
+    return user?.userType === GetCurrentUser200ResponseUserTypeEnum.Employee;
+  },
   isManager: () => {
     const user = get().user;
     return user?.role === 'Manager' || user?.role === 'MANAGER';
@@ -58,4 +58,3 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     return user?.role === 'Cook' || user?.role === 'COOK';
   },
 }));
-

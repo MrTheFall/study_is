@@ -21,4 +21,3 @@ export function formatDate(date: string | Date): string {
     minute: '2-digit',
   }).format(typeof date === 'string' ? new Date(date) : date);
 }
-

@@ -188,84 +188,78 @@ export function ProfilePage() {
       </div>
 
       <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Профиль</CardTitle>
-            <CardDescription>Имя, телефон и адрес доставки по умолчанию</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
-              <Input value={client?.email || ''} readOnly />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Имя</label>
-              <Input
-                value={profile.name}
-                onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Телефон</label>
-              <Input
-                value={profile.phone}
-                onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Адрес доставки</label>
-              <Input
-                value={profile.defaultAddress}
-                onChange={(e) => setProfile((p) => ({ ...p, defaultAddress: e.target.value }))}
-                placeholder="Например: Bikini Bottom, Coral St. 123"
-              />
-            </div>
-
-            {profileError && <p className="text-sm text-red-600">{profileError}</p>}
-            {profileSaved && <p className="text-sm text-green-700">Профиль обновлён</p>}
-
-            <div className="flex justify-end">
-              <Button onClick={saveProfile} disabled={savingProfile || !isDirty}>
-                {savingProfile ? 'Сохранение…' : 'Сохранить изменения'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Смена пароля</CardTitle>
-            <CardDescription>Требуется текущий пароль</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <CardHeader>
+          <CardTitle className="text-xl">Профиль</CardTitle>
+          <CardDescription>Имя, телефон и адрес доставки по умолчанию</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Email</label>
+            <Input value={client?.email || ''} readOnly />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Имя</label>
+            <Input value={profile.name} onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Телефон</label>
+            <Input value={profile.phone} onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Адрес доставки</label>
             <Input
-              type="password"
-              placeholder="Текущий пароль"
-              value={passwordForm.currentPassword}
-              onChange={(e) => setPasswordForm((p) => ({ ...p, currentPassword: e.target.value }))}
+              value={profile.defaultAddress}
+              onChange={(e) => setProfile((p) => ({ ...p, defaultAddress: e.target.value }))}
+              placeholder="Например: Bikini Bottom, Coral St. 123"
             />
-            <Input
-              type="password"
-              placeholder="Новый пароль"
-              value={passwordForm.newPassword}
-              onChange={(e) => setPasswordForm((p) => ({ ...p, newPassword: e.target.value }))}
-            />
-            <Input
-              type="password"
-              placeholder="Повторите новый пароль"
-              value={passwordForm.confirmNewPassword}
-              onChange={(e) => setPasswordForm((p) => ({ ...p, confirmNewPassword: e.target.value }))}
-            />
+          </div>
 
-            {passwordError && <p className="text-sm text-red-600">{passwordError}</p>}
-            {passwordSaved && <p className="text-sm text-green-700">Пароль изменён</p>}
+          {profileError && <p className="text-sm text-red-600">{profileError}</p>}
+          {profileSaved && <p className="text-sm text-green-700">Профиль обновлён</p>}
 
-            <div className="flex justify-end">
-              <Button onClick={changePassword} disabled={savingPassword}>
-                {savingPassword ? 'Сохранение…' : 'Сменить пароль'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+          <div className="flex justify-end">
+            <Button onClick={saveProfile} disabled={savingProfile || !isDirty}>
+              {savingProfile ? 'Сохранение…' : 'Сохранить изменения'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Смена пароля</CardTitle>
+          <CardDescription>Требуется текущий пароль</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Input
+            type="password"
+            placeholder="Текущий пароль"
+            value={passwordForm.currentPassword}
+            onChange={(e) => setPasswordForm((p) => ({ ...p, currentPassword: e.target.value }))}
+          />
+          <Input
+            type="password"
+            placeholder="Новый пароль"
+            value={passwordForm.newPassword}
+            onChange={(e) => setPasswordForm((p) => ({ ...p, newPassword: e.target.value }))}
+          />
+          <Input
+            type="password"
+            placeholder="Повторите новый пароль"
+            value={passwordForm.confirmNewPassword}
+            onChange={(e) => setPasswordForm((p) => ({ ...p, confirmNewPassword: e.target.value }))}
+          />
+
+          {passwordError && <p className="text-sm text-red-600">{passwordError}</p>}
+          {passwordSaved && <p className="text-sm text-green-700">Пароль изменён</p>}
+
+          <div className="flex justify-end">
+            <Button onClick={changePassword} disabled={savingPassword}>
+              {savingPassword ? 'Сохранение…' : 'Сменить пароль'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

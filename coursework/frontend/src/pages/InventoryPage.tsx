@@ -76,11 +76,7 @@ export function InventoryPage() {
       const ingredientId = options?.ingredientId ?? transactionsIngredientId;
       const limit = options?.limit ?? transactionsLimit;
       const offset = options?.offset ?? transactionsOffset;
-      const response = await inventoryApi.getInventoryTransactions(
-        ingredientId ?? undefined,
-        limit,
-        offset
-      );
+      const response = await inventoryApi.getInventoryTransactions(ingredientId ?? undefined, limit, offset);
       const data = response.data || [];
       setTransactions(data);
       setIngredientNameById((prev) => {
@@ -181,9 +177,7 @@ export function InventoryPage() {
         </Button>
       </div>
 
-      {error && (
-        <RetryAlert message={error} onRetry={reloadAll} />
-      )}
+      {error && <RetryAlert message={error} onRetry={reloadAll} />}
 
       {lowStock.length > 0 && (
         <Card className="border-yellow-500">
@@ -268,9 +262,7 @@ export function InventoryPage() {
           </div>
 
           {transactions.length === 0 ? (
-            <div className="text-sm text-gray-600">
-              {transactionsLoading ? 'Загрузка...' : 'Нет записей'}
-            </div>
+            <div className="text-sm text-gray-600">{transactionsLoading ? 'Загрузка...' : 'Нет записей'}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
@@ -290,10 +282,10 @@ export function InventoryPage() {
                       <td className="py-2 pr-4 whitespace-nowrap">
                         {t.createdAt ? new Date(t.createdAt).toLocaleString() : '—'}
                       </td>
-                      <td className="py-2 pr-4">
-                        {t.ingredientName ? t.ingredientName : `#${t.ingredientId}`}
-                      </td>
-                      <td className={`py-2 pr-4 font-semibold ${t.delta && t.delta > 0 ? 'text-green-700' : 'text-red-700'}`}>
+                      <td className="py-2 pr-4">{t.ingredientName ? t.ingredientName : `#${t.ingredientId}`}</td>
+                      <td
+                        className={`py-2 pr-4 font-semibold ${t.delta && t.delta > 0 ? 'text-green-700' : 'text-red-700'}`}
+                      >
                         {t.delta}
                       </td>
                       <td className="py-2 pr-4">{t.employeeName ? t.employeeName : 'Система'}</td>
@@ -314,44 +306,45 @@ export function InventoryPage() {
         </CardContent>
       </Card>
 
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-          <div className="w-full sm:w-96">
-            <label className="block text-sm font-medium mb-1">Поиск по ингредиентам</label>
-            <Input
-              placeholder="Название или ID ингредиента..."
-              value={inventoryQuery}
-              onChange={(e) => setInventoryQuery(e.target.value)}
-            />
-          </div>
-          <div className="text-sm text-gray-500">
-            {inventory.length > 0 ? `Показано: ${filteredInventory.length} из ${inventory.length}` : 'Нет данных'}
-          </div>
-        </div>
-
-        {inventory.length === 0 ? (
-          <EmptyState
-            title="Нет данных об остатках"
-            description="Попробуйте обновить страницу или проверить подключение к серверу."
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div className="w-full sm:w-96">
+          <label className="block text-sm font-medium mb-1">Поиск по ингредиентам</label>
+          <Input
+            placeholder="Название или ID ингредиента..."
+            value={inventoryQuery}
+            onChange={(e) => setInventoryQuery(e.target.value)}
           />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredInventory.map((item) => {
-              const ingredientId = item.ingredientId;
-              const ingredientName =
-                typeof ingredientId === 'number' ? ingredientNameById[ingredientId] : undefined;
-              const low = typeof ingredientId === 'number' ? lowStockById[ingredientId] : undefined;
-              const deltaRaw = typeof ingredientId === 'number' ? deltaByIngredientId[ingredientId] ?? '' : '';
-              const deltaValue = deltaRaw.trim() ? Number(deltaRaw.replace(',', '.')) : null;
-              const deltaValid = deltaValue != null && Number.isFinite(deltaValue) && deltaValue !== 0;
-              const reason = typeof ingredientId === 'number' ? reasonByIngredientId[ingredientId] : undefined;
-              const isAdjusting = typeof ingredientId === 'number' ? Boolean(adjustingByIngredientId[ingredientId]) : false;
+        </div>
+        <div className="text-sm text-gray-500">
+          {inventory.length > 0 ? `Показано: ${filteredInventory.length} из ${inventory.length}` : 'Нет данных'}
+        </div>
+      </div>
 
-              return (
+      {inventory.length === 0 ? (
+        <EmptyState
+          title="Нет данных об остатках"
+          description="Попробуйте обновить страницу или проверить подключение к серверу."
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredInventory.map((item) => {
+            const ingredientId = item.ingredientId;
+            const ingredientName = typeof ingredientId === 'number' ? ingredientNameById[ingredientId] : undefined;
+            const low = typeof ingredientId === 'number' ? lowStockById[ingredientId] : undefined;
+            const deltaRaw = typeof ingredientId === 'number' ? (deltaByIngredientId[ingredientId] ?? '') : '';
+            const deltaValue = deltaRaw.trim() ? Number(deltaRaw.replace(',', '.')) : null;
+            const deltaValid = deltaValue != null && Number.isFinite(deltaValue) && deltaValue !== 0;
+            const reason = typeof ingredientId === 'number' ? reasonByIngredientId[ingredientId] : undefined;
+            const isAdjusting =
+              typeof ingredientId === 'number' ? Boolean(adjustingByIngredientId[ingredientId]) : false;
+
+            return (
               <Card key={item.id} className={low ? 'border-yellow-500' : undefined}>
                 <CardHeader>
                   <CardTitle>{ingredientName ? ingredientName : `Ингредиент #${ingredientId}`}</CardTitle>
                   <CardDescription>
-                    {typeof ingredientId === 'number' ? `ID ингредиента: ${ingredientId}` : 'ID ингредиента: —'} • ID записи: {item.id}
+                    {typeof ingredientId === 'number' ? `ID ингредиента: ${ingredientId}` : 'ID ингредиента: —'} • ID
+                    записи: {item.id}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -396,9 +389,7 @@ export function InventoryPage() {
                           {isAdjusting ? 'Применение...' : 'Применить'}
                         </Button>
                       </div>
-                      <p className="text-xs text-gray-500">
-                        Положительное значение — приход, отрицательное — расход.
-                      </p>
+                      <p className="text-xs text-gray-500">Положительное значение — приход, отрицательное — расход.</p>
                     </div>
                     <div>
                       <Input
@@ -417,9 +408,9 @@ export function InventoryPage() {
                 </CardContent>
               </Card>
             );
-            })}
-          </div>
-        )}
+          })}
+        </div>
+      )}
     </div>
   );
 }

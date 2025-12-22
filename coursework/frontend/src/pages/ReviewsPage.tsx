@@ -11,7 +11,14 @@ import { formatDate } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { useToast } from '@/components/ui/toast';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/Dialog';
 
 export function ReviewsPage() {
   const toast = useToast();
@@ -81,8 +88,7 @@ export function ReviewsPage() {
       if (typeof order.id !== 'number') return false;
       if (reviewsByOrderId[order.id]) return false;
 
-      const statusValue =
-        typeof order.status === 'string' ? order.status : (order.status as any)?.value || 'pending';
+      const statusValue = typeof order.status === 'string' ? order.status : (order.status as any)?.value || 'pending';
       const statusStr = String(statusValue);
 
       if (order.paymentMethod === PaymentMethod.Online) {
@@ -151,23 +157,16 @@ export function ReviewsPage() {
         </div>
       </div>
 
-      {loadError && (
-        <RetryAlert message={loadError} onRetry={loadData} />
-      )}
+      {loadError && <RetryAlert message={loadError} onRetry={loadData} />}
 
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">Заказы, ожидающие отзыв</CardTitle>
-          <CardDescription>
-            Выберите заказ из списка — вводить ID вручную не нужно.
-          </CardDescription>
+          <CardDescription>Выберите заказ из списка — вводить ID вручную не нужно.</CardDescription>
         </CardHeader>
         <CardContent>
           {reviewableOrders.length === 0 ? (
-            <EmptyState
-              title="Нет заказов для отзыва"
-              description="Отзывы доступны после завершения заказа."
-            />
+            <EmptyState title="Нет заказов для отзыва" description="Отзывы доступны после завершения заказа." />
           ) : (
             <div className="space-y-3">
               {reviewableOrders.map((order) => (
@@ -177,9 +176,7 @@ export function ReviewsPage() {
                 >
                   <div>
                     <div className="font-medium">Заказ #{order.id}</div>
-                    <div className="text-sm text-gray-600">
-                      {order.createdAt ? formatDate(order.createdAt) : '—'}
-                    </div>
+                    <div className="text-sm text-gray-600">{order.createdAt ? formatDate(order.createdAt) : '—'}</div>
                   </div>
                   <Button variant="outline" onClick={() => openReviewDialog(order.id!)}>
                     Оставить отзыв
@@ -191,30 +188,28 @@ export function ReviewsPage() {
         </CardContent>
       </Card>
 
-        <div className="space-y-4">
-          {reviews.length === 0 ? (
-            <EmptyState title="Отзывов пока нет" description="Оставьте первый отзыв по завершённому заказу." />
-          ) : (
-            reviews.map((review) => (
-              <Card key={review.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle>Заказ #{review.orderId}</CardTitle>
-                      <CardDescription>{formatDate(review.createdAt!)}</CardDescription>
-                    </div>
-                    <div className="text-2xl">
-                      {'⭐'.repeat(review.rating!)}
-                    </div>
+      <div className="space-y-4">
+        {reviews.length === 0 ? (
+          <EmptyState title="Отзывов пока нет" description="Оставьте первый отзыв по завершённому заказу." />
+        ) : (
+          reviews.map((review) => (
+            <Card key={review.id}>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle>Заказ #{review.orderId}</CardTitle>
+                    <CardDescription>{formatDate(review.createdAt!)}</CardDescription>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <p>{review.comment}</p>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+                  <div className="text-2xl">{'⭐'.repeat(review.rating!)}</div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p>{review.comment}</p>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
 
       <Dialog
         open={reviewDialogOpen}

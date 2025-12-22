@@ -17,4 +17,3 @@ export function getApiErrorMessage(error: unknown, fallback = 'Произошл�
 
   return fallback;
 }
-

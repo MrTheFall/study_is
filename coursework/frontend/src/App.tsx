@@ -101,9 +101,7 @@ function App() {
           <Route
             path="/reviews"
             element={
-              <ProtectedRoute
-                allowedRoles={[GetCurrentUser200ResponseUserTypeEnum.Client]}
-              >
+              <ProtectedRoute allowedRoles={[GetCurrentUser200ResponseUserTypeEnum.Client]}>
                 <ReviewsPage />
               </ProtectedRoute>
             }
@@ -119,9 +117,7 @@ function App() {
           <Route
             path="/profile"
             element={
-              <ProtectedRoute
-                allowedRoles={[GetCurrentUser200ResponseUserTypeEnum.Client]}
-              >
+              <ProtectedRoute allowedRoles={[GetCurrentUser200ResponseUserTypeEnum.Client]}>
                 <ProfilePage />
               </ProtectedRoute>
             }

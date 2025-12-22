@@ -93,17 +93,12 @@ export function AppShell() {
       <header className="sticky top-0 z-40 border-b bg-white/95 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between gap-4">
-            <NavLink
-              to={isAuthenticated ? '/' : '/menu'}
-              className="text-xl font-bold text-primary-600"
-            >
+            <NavLink to={isAuthenticated ? '/' : '/menu'} className="text-xl font-bold text-primary-600">
               Красти Крабс
             </NavLink>
 
             <div className="flex items-center gap-3">
-              {userCaption ? (
-                <span className="hidden sm:inline text-sm text-gray-600">{userCaption}</span>
-              ) : null}
+              {userCaption ? <span className="hidden sm:inline text-sm text-gray-600">{userCaption}</span> : null}
 
               {isAuthenticated ? (
                 <Button variant="outline" size="sm" onClick={handleLogout}>

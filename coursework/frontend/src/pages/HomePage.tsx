@@ -51,7 +51,10 @@ export function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {isManager() && (
             <>
-              <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/menu/manage')}>
+              <Card
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigate('/menu/manage')}
+              >
                 <CardHeader>
                   <CardTitle>Меню</CardTitle>
                   <CardDescription>Управление блюдами и доступностью</CardDescription>
@@ -69,7 +72,10 @@ export function HomePage() {
                   <CardDescription>Отчеты и статистика</CardDescription>
                 </CardHeader>
               </Card>
-              <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/reviews/manage')}>
+              <Card
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigate('/reviews/manage')}
+              >
                 <CardHeader>
                   <CardTitle>Отзывы</CardTitle>
                   <CardDescription>Просмотр обратной связи</CardDescription>

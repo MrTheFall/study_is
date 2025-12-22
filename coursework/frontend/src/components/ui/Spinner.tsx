@@ -18,13 +18,8 @@ export function Spinner({
     <div
       role="status"
       aria-label="Загрузка"
-      className={cn(
-        'animate-spin rounded-full border-gray-300 border-t-primary-600',
-        sizeClassName[size],
-        className
-      )}
+      className={cn('animate-spin rounded-full border-gray-300 border-t-primary-600', sizeClassName[size], className)}
       {...props}
     />
   );
 }
-

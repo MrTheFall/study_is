@@ -1,4 +1,11 @@
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 
 export function ConfirmDialog({
@@ -41,4 +48,3 @@ export function ConfirmDialog({
     </Dialog>
   );
 }
-
