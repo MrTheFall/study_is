@@ -660,9 +660,6 @@ export function PosPage() {
                     onChange={(e) => setCustomerPhone(e.target.value)}
                     disabled={controlsDisabled}
                   />
-                  <p className="mt-1 text-xs text-gray-500">
-                    Телефон обязателен для режима “Гость” (чтобы не создавать случайные аккаунты).
-                  </p>
                 </div>
               </>
             )}
