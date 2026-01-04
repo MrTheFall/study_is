@@ -56,7 +56,7 @@ public class FinanceController implements FinanceApi {
                 "employeeId=%s, amount=%s",
                 salaryPaymentCreateRequest.getEmployeeId(), salaryPaymentCreateRequest.getAmount());
         actionLogService.logCurrentEmployeeAction(
-                AuditActions.SALARY_PAYMENT_CREATE, "salary_payment", payment.getId(), null, null, null, details);
+                AuditActions.SALARY_PAYMENT_CREATE, "salary_payment", payment.getId(), details);
         return ResponseEntity.status(HttpStatus.CREATED).body(salaryPaymentMapper.toDto(payment));
     }
 }

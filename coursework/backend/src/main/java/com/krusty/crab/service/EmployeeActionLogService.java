@@ -22,6 +22,39 @@ public class EmployeeActionLogService {
     private final EmployeeRepository employeeRepository;
 
     @Transactional
+    public void logAction(Integer employeeId, String action, String entityType, Integer entityId, String details) {
+        logAction(employeeId, action, entityType, entityId, null, null, null, details);
+    }
+
+    @Transactional
+    public void logAction(
+            Integer employeeId, String action, String entityType, Integer entityId, Integer orderId, String details) {
+        logAction(employeeId, action, entityType, entityId, orderId, null, null, details);
+    }
+
+    @Transactional
+    public void logAction(
+            Integer employeeId,
+            String action,
+            String entityType,
+            Integer entityId,
+            Integer orderId,
+            String fromValue,
+            String toValue) {
+        logAction(employeeId, action, entityType, entityId, orderId, fromValue, toValue, null);
+    }
+
+    @Transactional
+    public void logOrderAction(Integer employeeId, String action, Integer orderId, String details) {
+        logAction(employeeId, action, "order", orderId, orderId, null, null, details);
+    }
+
+    @Transactional
+    public void logOrderAction(Integer employeeId, String action, Integer orderId, String fromValue, String toValue) {
+        logAction(employeeId, action, "order", orderId, orderId, fromValue, toValue, null);
+    }
+
+    @Transactional
     public void logAction(
             Integer employeeId,
             String action,
@@ -53,6 +86,26 @@ public class EmployeeActionLogService {
                 .build();
 
         actionLogRepository.save(entry);
+    }
+
+    @Transactional
+    public void logCurrentEmployeeAction(String action, String entityType, Integer entityId) {
+        logCurrentEmployeeAction(action, entityType, entityId, null, null, null, null);
+    }
+
+    @Transactional
+    public void logCurrentEmployeeAction(String action, String entityType, Integer entityId, String details) {
+        logCurrentEmployeeAction(action, entityType, entityId, null, null, null, details);
+    }
+
+    @Transactional
+    public void logCurrentEmployeeOrderAction(String action, Integer orderId, String details) {
+        logCurrentEmployeeAction(action, "order", orderId, orderId, null, null, details);
+    }
+
+    @Transactional
+    public void logCurrentEmployeeOrderAction(String action, Integer orderId, String fromValue, String toValue) {
+        logCurrentEmployeeAction(action, "order", orderId, orderId, fromValue, toValue, null);
     }
 
     @Transactional

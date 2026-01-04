@@ -37,7 +37,7 @@ public class EmployeesController implements EmployeesApi {
                 employeeMapper.toEntityWithPassword(employeeCreateRequest, employeeCreateRequest.getPassword());
         Employee saved = employeeService.createEmployee(employee);
         actionLogService.logCurrentEmployeeAction(
-                AuditActions.EMPLOYEE_CREATE, "employee", saved.getId(), null, null, null, "login=" + saved.getLogin());
+                AuditActions.EMPLOYEE_CREATE, "employee", saved.getId(), "login=" + saved.getLogin());
         com.krusty.crab.dto.generated.Employee dto = employeeMapper.toDto(saved);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
@@ -68,7 +68,7 @@ public class EmployeesController implements EmployeesApi {
         employeeMapper.updateEntityWithPassword(employeeCreateRequest, employee);
         Employee updated = employeeService.updateEmployee(employeeId, employee);
         actionLogService.logCurrentEmployeeAction(
-                AuditActions.EMPLOYEE_UPDATE, "employee", employeeId, null, null, null, "login=" + updated.getLogin());
+                AuditActions.EMPLOYEE_UPDATE, "employee", employeeId, "login=" + updated.getLogin());
         com.krusty.crab.dto.generated.Employee dto = employeeMapper.toDto(updated);
         return ResponseEntity.ok(dto);
     }
@@ -78,8 +78,7 @@ public class EmployeesController implements EmployeesApi {
     public ResponseEntity<Void> deleteEmployee(Integer employeeId) {
         log.info("Deleting employee with ID: {}", employeeId);
         employeeService.deleteEmployee(employeeId);
-        actionLogService.logCurrentEmployeeAction(
-                AuditActions.EMPLOYEE_DELETE, "employee", employeeId, null, null, null, null);
+        actionLogService.logCurrentEmployeeAction(AuditActions.EMPLOYEE_DELETE, "employee", employeeId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 

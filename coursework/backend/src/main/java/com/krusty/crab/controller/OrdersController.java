@@ -66,8 +66,7 @@ public class OrdersController implements OrdersApi {
                     placeOrderRequest.getPaymentMethod() != null
                             ? placeOrderRequest.getPaymentMethod().getValue()
                             : null);
-            actionLogService.logAction(
-                    user.getUserId(), AuditActions.ORDER_CREATE, "order", orderId, orderId, null, null, details);
+            actionLogService.logOrderAction(user.getUserId(), AuditActions.ORDER_CREATE, orderId, details);
         }
         PlaceOrder201Response response = orderMapper.toPlaceOrderResponse(orderId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -199,15 +198,12 @@ public class OrdersController implements OrdersApi {
         orderService.updateOrderStatus(orderId, newStatus, acceptedByEmployeeId);
         if ("EMPLOYEE".equals(user.getUserType())
                 && (currentStatus == null || !currentStatus.equalsIgnoreCase(newStatus.getValue()))) {
-            actionLogService.logAction(
+            actionLogService.logOrderAction(
                     user.getUserId(),
                     AuditActions.ORDER_STATUS_CHANGE,
-                    "order",
-                    orderId,
                     orderId,
                     currentStatus,
-                    newStatus.getValue(),
-                    null);
+                    newStatus.getValue());
         }
         Order updatedOrder = orderService.getOrderById(orderId);
         com.krusty.crab.dto.generated.Order dto = orderMapper.toDto(updatedOrder);
@@ -253,15 +249,12 @@ public class OrdersController implements OrdersApi {
             String prevMethod =
                     order.getPaymentMethod() != null ? order.getPaymentMethod().getValue() : null;
             if (prevMethod == null || !prevMethod.equalsIgnoreCase(newMethod.getValue())) {
-                actionLogService.logAction(
+                actionLogService.logOrderAction(
                         user.getUserId(),
                         AuditActions.ORDER_PAYMENT_METHOD_CHANGE,
-                        "order",
-                        orderId,
                         orderId,
                         prevMethod,
-                        newMethod.getValue(),
-                        null);
+                        newMethod.getValue());
             }
         }
         return ResponseEntity.ok(orderMapper.toDto(updated));
@@ -326,15 +319,12 @@ public class OrdersController implements OrdersApi {
             String toValue = assignCourierRequest.getCourierId() != null
                     ? assignCourierRequest.getCourierId().toString()
                     : null;
-            actionLogService.logAction(
+            actionLogService.logOrderAction(
                     user.getUserId(),
                     AuditActions.ORDER_COURIER_ASSIGN,
-                    "order",
-                    orderId,
                     orderId,
                     fromValue,
-                    toValue,
-                    null);
+                    toValue);
         }
         return ResponseEntity.ok(orderMapper.toDto(updated));
     }

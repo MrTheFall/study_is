@@ -83,7 +83,7 @@ public class MenuController implements MenuApi {
         MenuItem item = menuMapper.toEntity(menuItemCreateRequest);
         MenuItem saved = menuService.createMenuItem(item);
         actionLogService.logCurrentEmployeeAction(
-                AuditActions.MENU_ITEM_CREATE, "menu_item", saved.getId(), null, null, null, "name=" + saved.getName());
+                AuditActions.MENU_ITEM_CREATE, "menu_item", saved.getId(), "name=" + saved.getName());
         com.krusty.crab.dto.generated.MenuItem dto = menuMapper.toDto(saved);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
@@ -97,7 +97,7 @@ public class MenuController implements MenuApi {
         menuMapper.updateEntityFromRequest(menuItemCreateRequest, item);
         MenuItem updated = menuService.updateMenuItem(menuItemId, item);
         actionLogService.logCurrentEmployeeAction(
-                AuditActions.MENU_ITEM_UPDATE, "menu_item", menuItemId, null, null, null, "name=" + updated.getName());
+                AuditActions.MENU_ITEM_UPDATE, "menu_item", menuItemId, "name=" + updated.getName());
         com.krusty.crab.dto.generated.MenuItem dto = menuMapper.toDto(updated);
         return ResponseEntity.ok(dto);
     }
@@ -107,8 +107,7 @@ public class MenuController implements MenuApi {
     public ResponseEntity<Void> deleteMenuItem(Integer menuItemId) {
         log.info("Deleting menu item with ID: {}", menuItemId);
         menuService.deleteMenuItem(menuItemId);
-        actionLogService.logCurrentEmployeeAction(
-                AuditActions.MENU_ITEM_DELETE, "menu_item", menuItemId, null, null, null, null);
+        actionLogService.logCurrentEmployeeAction(AuditActions.MENU_ITEM_DELETE, "menu_item", menuItemId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

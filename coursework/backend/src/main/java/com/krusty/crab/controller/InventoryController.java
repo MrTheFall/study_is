@@ -64,8 +64,7 @@ public class InventoryController implements InventoryApi {
         String details = String.format(
                 "ingredientId=%s, delta=%s, reason=%s",
                 ingredientId, inventoryUpdateRequest.getDelta(), inventoryUpdateRequest.getReason());
-        actionLogService.logAction(
-                user.getUserId(), AuditActions.INVENTORY_ADJUST, "inventory", ingredientId, null, null, null, details);
+        actionLogService.logAction(user.getUserId(), AuditActions.INVENTORY_ADJUST, "inventory", ingredientId, details);
         com.krusty.crab.dto.generated.InventoryRecord dto = inventoryMapper.toDto(record);
         return ResponseEntity.ok(dto);
     }

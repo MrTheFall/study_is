@@ -88,15 +88,7 @@ public class PaymentsController implements PaymentsApi {
         UserPrincipal user = SecurityContext.getCurrentUser();
         if ("EMPLOYEE".equals(user.getUserType())) {
             String details = String.format("method=%s, amount=%s", method.getValue(), order.getTotalAmount());
-            actionLogService.logAction(
-                    user.getUserId(),
-                    AuditActions.PAYMENT_PROCESS,
-                    "order",
-                    order.getId(),
-                    order.getId(),
-                    null,
-                    null,
-                    details);
+            actionLogService.logOrderAction(user.getUserId(), AuditActions.PAYMENT_PROCESS, order.getId(), details);
         }
         com.krusty.crab.dto.generated.Payment dto = paymentMapper.toDto(payment);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
@@ -166,15 +158,7 @@ public class PaymentsController implements PaymentsApi {
             String details = String.format(
                     "method=%s, amountReceived=%s",
                     PaymentMethod.CASH.getValue(), cashPaymentRequest.getAmountReceived());
-            actionLogService.logAction(
-                    user.getUserId(),
-                    AuditActions.PAYMENT_PROCESS,
-                    "order",
-                    order.getId(),
-                    order.getId(),
-                    null,
-                    null,
-                    details);
+            actionLogService.logOrderAction(user.getUserId(), AuditActions.PAYMENT_PROCESS, order.getId(), details);
         }
         return ResponseEntity.ok(response);
     }

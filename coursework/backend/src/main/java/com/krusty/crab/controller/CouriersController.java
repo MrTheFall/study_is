@@ -40,7 +40,7 @@ public class CouriersController implements CouriersApi {
         Courier courier = courierMapper.toEntity(courierCreateRequest);
         Courier saved = courierService.createCourier(courier);
         actionLogService.logCurrentEmployeeAction(
-                AuditActions.COURIER_CREATE, "courier", saved.getId(), null, null, null, "phone=" + saved.getPhone());
+                AuditActions.COURIER_CREATE, "courier", saved.getId(), "phone=" + saved.getPhone());
         return ResponseEntity.status(HttpStatus.CREATED).body(courierMapper.toDto(saved));
     }
 
@@ -60,7 +60,7 @@ public class CouriersController implements CouriersApi {
         Courier courierData = courierMapper.toEntity(courierCreateRequest);
         Courier updated = courierService.updateCourier(courierId, courierData);
         actionLogService.logCurrentEmployeeAction(
-                AuditActions.COURIER_UPDATE, "courier", courierId, null, null, null, "phone=" + updated.getPhone());
+                AuditActions.COURIER_UPDATE, "courier", courierId, "phone=" + updated.getPhone());
         return ResponseEntity.ok(courierMapper.toDto(updated));
     }
 
@@ -69,8 +69,7 @@ public class CouriersController implements CouriersApi {
     public ResponseEntity<Void> deleteCourier(Integer courierId) {
         log.info("Deleting courier {}", courierId);
         courierService.deleteCourier(courierId);
-        actionLogService.logCurrentEmployeeAction(
-                AuditActions.COURIER_DELETE, "courier", courierId, null, null, null, null);
+        actionLogService.logCurrentEmployeeAction(AuditActions.COURIER_DELETE, "courier", courierId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }
