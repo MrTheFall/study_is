@@ -107,7 +107,7 @@ public class OnlinePaymentCallbackController {
             case SUCCEEDED -> "success";
             case CANCELLED -> "cancelled";
             case FAILED -> "failed";
-            default -> "pending";
+            case CREATED, CHALLENGE_REQUIRED -> "pending";
         };
     }
 
