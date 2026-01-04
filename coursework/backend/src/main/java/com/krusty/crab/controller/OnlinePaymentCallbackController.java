@@ -64,10 +64,13 @@ public class OnlinePaymentCallbackController {
     }
 
     private BigDecimal parseAmount(String amount) {
+        if (amount == null || amount.isBlank()) {
+            throw new ValidationException("amount", "is required");
+        }
         try {
             return new BigDecimal(amount);
         } catch (NumberFormatException e) {
-            throw new ValidationException("Invalid amount");
+            throw new ValidationException("amount", String.format("must be a valid decimal, got '%s'", amount));
         }
     }
 
