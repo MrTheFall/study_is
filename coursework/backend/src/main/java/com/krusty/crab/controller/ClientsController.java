@@ -81,7 +81,7 @@ public class ClientsController implements ClientsApi {
     }
 
     @Override
-    @PreAuthorize("hasRole('Manager') or (hasRole('CLIENT') and authentication.principal.userId == #p0)")
+    @PreAuthorize("hasRole('CLIENT') and authentication.principal.userId == #p0")
     public ResponseEntity<Void> changeClientPassword(Integer clientId, ChangePasswordRequest changePasswordRequest) {
         log.info("Changing password for client ID: {}", clientId);
         clientService.changePassword(
