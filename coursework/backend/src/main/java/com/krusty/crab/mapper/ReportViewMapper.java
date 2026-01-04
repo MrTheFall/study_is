@@ -1,19 +1,22 @@
 package com.krusty.crab.mapper;
 
 import com.krusty.crab.entity.ReportView;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface ReportViewMapper {
 
-    @Mapping(target = "employeeId", expression = "java(entity.getEmployee() != null ? entity.getEmployee().getId() : null)")
-    @Mapping(target = "employeeName", expression = "java(entity.getEmployee() != null ? entity.getEmployee().getFullName() : null)")
+    @Mapping(
+            target = "employeeId",
+            expression = "java(entity.getEmployee() != null ? entity.getEmployee().getId() : null)")
+    @Mapping(
+            target = "employeeName",
+            expression = "java(entity.getEmployee() != null ? entity.getEmployee().getFullName() : null)")
     @Mapping(target = "from", expression = "java(mapDateTime(entity.getFromTs()))")
     @Mapping(target = "to", expression = "java(mapDateTime(entity.getToTs()))")
     @Mapping(target = "viewedAt", expression = "java(mapDateTime(entity.getViewedAt()))")

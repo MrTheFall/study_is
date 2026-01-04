@@ -1,18 +1,18 @@
 package com.krusty.crab.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.*;
 
 @Entity
-@Table(name = "clients",
-    uniqueConstraints = {
-        @UniqueConstraint(name = "uq_clients_email", columnNames = "email"),
-        @UniqueConstraint(name = "uq_clients_phone", columnNames = "phone")
-    })
+@Table(
+        name = "clients",
+        uniqueConstraints = {
+            @UniqueConstraint(name = "uq_clients_email", columnNames = "email"),
+            @UniqueConstraint(name = "uq_clients_phone", columnNames = "phone")
+        })
 @Getter
 @Setter
 @NoArgsConstructor

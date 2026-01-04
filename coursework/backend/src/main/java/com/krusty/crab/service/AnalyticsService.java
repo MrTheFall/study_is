@@ -1,25 +1,24 @@
 package com.krusty.crab.service;
 
 import com.krusty.crab.dto.generated.FinancialSummary;
-import com.krusty.crab.dto.generated.SalesSummary;
 import com.krusty.crab.dto.generated.SalesByEmployeeItem;
 import com.krusty.crab.dto.generated.SalesByTimeOfDayItem;
+import com.krusty.crab.dto.generated.SalesSummary;
 import com.krusty.crab.dto.generated.TopMenuItem;
 import com.krusty.crab.entity.Employee;
 import com.krusty.crab.entity.ReportView;
 import com.krusty.crab.repository.AnalyticsRepository;
 import com.krusty.crab.repository.EmployeeRepository;
 import com.krusty.crab.repository.ReportViewRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -124,8 +123,8 @@ public class AnalyticsService {
         BigDecimal ingredientExpenses = row[3] != null ? (BigDecimal) row[3] : BigDecimal.ZERO;
         BigDecimal salaryExpenses = row[4] != null ? (BigDecimal) row[4] : BigDecimal.ZERO;
         boolean hasData = revenue.compareTo(BigDecimal.ZERO) != 0
-            || ingredientExpenses.compareTo(BigDecimal.ZERO) != 0
-            || salaryExpenses.compareTo(BigDecimal.ZERO) != 0;
+                || ingredientExpenses.compareTo(BigDecimal.ZERO) != 0
+                || salaryExpenses.compareTo(BigDecimal.ZERO) != 0;
 
         FinancialSummary summary = new FinancialSummary();
         summary.setFrom(row[0] != null ? ((LocalDateTime) row[0]).atOffset(ZoneOffset.UTC) : null);
@@ -146,12 +145,12 @@ public class AnalyticsService {
         }
 
         ReportView view = ReportView.builder()
-            .employee(employee)
-            .report(report)
-            .fromTs(from)
-            .toTs(to)
-            .viewedAt(LocalDateTime.now(ZoneOffset.UTC))
-            .build();
+                .employee(employee)
+                .report(report)
+                .fromTs(from)
+                .toTs(to)
+                .viewedAt(LocalDateTime.now(ZoneOffset.UTC))
+                .build();
         reportViewRepository.save(view);
     }
 

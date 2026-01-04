@@ -8,14 +8,13 @@ import com.krusty.crab.exception.ValidationException;
 import com.krusty.crab.repository.ClientRepository;
 import com.krusty.crab.repository.OrderRepository;
 import com.krusty.crab.util.PasswordUtil;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -26,20 +25,21 @@ public class ClientService {
     private final OrderRepository orderRepository;
 
     public Client getClientById(Integer id) {
-        return clientRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Client", id));
+        return clientRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Client", id));
     }
 
     public Client getClientByEmail(String email) {
-        return clientRepository.findByEmail(email)
-            .orElseThrow(() -> new EntityNotFoundException("Client", "email", email));
+        return clientRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("Client", "email", email));
     }
 
     public Client lookupClient(String email, String phone) {
         String normalizedEmail = email != null ? email.trim() : null;
         String normalizedPhone = phone != null ? phone.trim() : null;
 
-        if ((normalizedEmail == null || normalizedEmail.isBlank()) && (normalizedPhone == null || normalizedPhone.isBlank())) {
+        if ((normalizedEmail == null || normalizedEmail.isBlank())
+                && (normalizedPhone == null || normalizedPhone.isBlank())) {
             throw new ValidationException("email or phone is required");
         }
 

@@ -2,11 +2,10 @@ package com.krusty.crab.entity;
 
 import com.krusty.crab.entity.enums.BankPaymentStatus;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import lombok.*;
 
 @Entity
 @Table(name = "bank_payment_sessions")

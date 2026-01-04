@@ -9,14 +9,13 @@ import com.krusty.crab.service.EmployeeActionLogService;
 import com.krusty.crab.service.EmployeeService;
 import com.krusty.crab.service.ShiftService;
 import com.krusty.crab.util.AuditActions;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,19 +30,14 @@ public class EmployeesController implements EmployeesApi {
 
     @Override
     @PreAuthorize("hasRole('Manager')")
-    public ResponseEntity<com.krusty.crab.dto.generated.Employee> createEmployee(EmployeeCreateRequest employeeCreateRequest) {
+    public ResponseEntity<com.krusty.crab.dto.generated.Employee> createEmployee(
+            EmployeeCreateRequest employeeCreateRequest) {
         log.info("Creating employee: {}", employeeCreateRequest.getLogin());
-        Employee employee = employeeMapper.toEntityWithPassword(employeeCreateRequest, employeeCreateRequest.getPassword());
+        Employee employee =
+                employeeMapper.toEntityWithPassword(employeeCreateRequest, employeeCreateRequest.getPassword());
         Employee saved = employeeService.createEmployee(employee);
         actionLogService.logCurrentEmployeeAction(
-            AuditActions.EMPLOYEE_CREATE,
-            "employee",
-            saved.getId(),
-            null,
-            null,
-            null,
-            "login=" + saved.getLogin()
-        );
+                AuditActions.EMPLOYEE_CREATE, "employee", saved.getId(), null, null, null, "login=" + saved.getLogin());
         com.krusty.crab.dto.generated.Employee dto = employeeMapper.toDto(saved);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
@@ -67,20 +61,14 @@ public class EmployeesController implements EmployeesApi {
 
     @Override
     @PreAuthorize("hasRole('Manager')")
-    public ResponseEntity<com.krusty.crab.dto.generated.Employee> updateEmployee(Integer employeeId, EmployeeCreateRequest employeeCreateRequest) {
+    public ResponseEntity<com.krusty.crab.dto.generated.Employee> updateEmployee(
+            Integer employeeId, EmployeeCreateRequest employeeCreateRequest) {
         log.info("Updating employee with ID: {}", employeeId);
         Employee employee = employeeService.getEmployeeById(employeeId);
         employeeMapper.updateEntityWithPassword(employeeCreateRequest, employee);
         Employee updated = employeeService.updateEmployee(employeeId, employee);
         actionLogService.logCurrentEmployeeAction(
-            AuditActions.EMPLOYEE_UPDATE,
-            "employee",
-            employeeId,
-            null,
-            null,
-            null,
-            "login=" + updated.getLogin()
-        );
+                AuditActions.EMPLOYEE_UPDATE, "employee", employeeId, null, null, null, "login=" + updated.getLogin());
         com.krusty.crab.dto.generated.Employee dto = employeeMapper.toDto(updated);
         return ResponseEntity.ok(dto);
     }
@@ -90,7 +78,8 @@ public class EmployeesController implements EmployeesApi {
     public ResponseEntity<Void> deleteEmployee(Integer employeeId) {
         log.info("Deleting employee with ID: {}", employeeId);
         employeeService.deleteEmployee(employeeId);
-        actionLogService.logCurrentEmployeeAction(AuditActions.EMPLOYEE_DELETE, "employee", employeeId, null, null, null, null);
+        actionLogService.logCurrentEmployeeAction(
+                AuditActions.EMPLOYEE_DELETE, "employee", employeeId, null, null, null, null);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 

@@ -7,15 +7,14 @@ import com.krusty.crab.mapper.MenuMapper;
 import com.krusty.crab.service.EmployeeActionLogService;
 import com.krusty.crab.service.MenuService;
 import com.krusty.crab.util.AuditActions;
+import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -41,9 +40,9 @@ public class MenuController implements MenuApi {
 
         List<com.krusty.crab.dto.generated.MenuItem> dtoList = menuMapper.toDtoList(items);
         List<Integer> menuItemIds = dtoList.stream()
-            .map(com.krusty.crab.dto.generated.MenuItem::getId)
-            .filter(java.util.Objects::nonNull)
-            .collect(java.util.stream.Collectors.toList());
+                .map(com.krusty.crab.dto.generated.MenuItem::getId)
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toList());
 
         Set<Integer> outOfStockIds = menuService.getOutOfStockMenuItemIds(menuItemIds);
         for (com.krusty.crab.dto.generated.MenuItem dto : dtoList) {
@@ -55,8 +54,8 @@ public class MenuController implements MenuApi {
 
         if (requestedAvailableOnly) {
             dtoList = dtoList.stream()
-                .filter(dto -> Boolean.TRUE.equals(dto.getAvailable()))
-                .collect(java.util.stream.Collectors.toList());
+                    .filter(dto -> Boolean.TRUE.equals(dto.getAvailable()))
+                    .collect(java.util.stream.Collectors.toList());
         }
 
         return ResponseEntity.ok(dtoList);
@@ -78,39 +77,27 @@ public class MenuController implements MenuApi {
 
     @Override
     @PreAuthorize("hasRole('Manager')")
-    public ResponseEntity<com.krusty.crab.dto.generated.MenuItem> createMenuItem(MenuItemCreateRequest menuItemCreateRequest) {
+    public ResponseEntity<com.krusty.crab.dto.generated.MenuItem> createMenuItem(
+            MenuItemCreateRequest menuItemCreateRequest) {
         log.info("Creating menu item: {}", menuItemCreateRequest.getName());
         MenuItem item = menuMapper.toEntity(menuItemCreateRequest);
         MenuItem saved = menuService.createMenuItem(item);
         actionLogService.logCurrentEmployeeAction(
-            AuditActions.MENU_ITEM_CREATE,
-            "menu_item",
-            saved.getId(),
-            null,
-            null,
-            null,
-            "name=" + saved.getName()
-        );
+                AuditActions.MENU_ITEM_CREATE, "menu_item", saved.getId(), null, null, null, "name=" + saved.getName());
         com.krusty.crab.dto.generated.MenuItem dto = menuMapper.toDto(saved);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
     @Override
     @PreAuthorize("hasRole('Manager')")
-    public ResponseEntity<com.krusty.crab.dto.generated.MenuItem> updateMenuItem(Integer menuItemId, MenuItemCreateRequest menuItemCreateRequest) {
+    public ResponseEntity<com.krusty.crab.dto.generated.MenuItem> updateMenuItem(
+            Integer menuItemId, MenuItemCreateRequest menuItemCreateRequest) {
         log.info("Updating menu item with ID: {}", menuItemId);
         MenuItem item = menuService.getMenuItemById(menuItemId);
         menuMapper.updateEntityFromRequest(menuItemCreateRequest, item);
         MenuItem updated = menuService.updateMenuItem(menuItemId, item);
         actionLogService.logCurrentEmployeeAction(
-            AuditActions.MENU_ITEM_UPDATE,
-            "menu_item",
-            menuItemId,
-            null,
-            null,
-            null,
-            "name=" + updated.getName()
-        );
+                AuditActions.MENU_ITEM_UPDATE, "menu_item", menuItemId, null, null, null, "name=" + updated.getName());
         com.krusty.crab.dto.generated.MenuItem dto = menuMapper.toDto(updated);
         return ResponseEntity.ok(dto);
     }
@@ -120,7 +107,8 @@ public class MenuController implements MenuApi {
     public ResponseEntity<Void> deleteMenuItem(Integer menuItemId) {
         log.info("Deleting menu item with ID: {}", menuItemId);
         menuService.deleteMenuItem(menuItemId);
-        actionLogService.logCurrentEmployeeAction(AuditActions.MENU_ITEM_DELETE, "menu_item", menuItemId, null, null, null, null);
+        actionLogService.logCurrentEmployeeAction(
+                AuditActions.MENU_ITEM_DELETE, "menu_item", menuItemId, null, null, null, null);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

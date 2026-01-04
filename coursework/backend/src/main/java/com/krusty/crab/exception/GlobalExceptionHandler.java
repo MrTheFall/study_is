@@ -114,8 +114,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
         log.error("Method argument type mismatch: parameter '{}' with value '{}'", ex.getName(), ex.getValue());
-        String message = String.format("Invalid value '%s' for parameter '%s'. Expected type: %s",
-            ex.getValue(), ex.getName(), ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown");
+        String message = String.format(
+                "Invalid value '%s' for parameter '%s'. Expected type: %s",
+                ex.getValue(),
+                ex.getName(),
+                ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown");
         ErrorResponse error = new ErrorResponse("BAD_REQUEST", message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }

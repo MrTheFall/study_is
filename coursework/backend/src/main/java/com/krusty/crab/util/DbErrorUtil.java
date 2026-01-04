@@ -2,8 +2,7 @@ package com.krusty.crab.util;
 
 public final class DbErrorUtil {
 
-    private DbErrorUtil() {
-    }
+    private DbErrorUtil() {}
 
     public static String extractMeaningfulMessage(Throwable ex) {
         if (ex == null) {

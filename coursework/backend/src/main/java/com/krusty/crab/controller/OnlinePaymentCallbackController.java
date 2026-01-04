@@ -5,16 +5,15 @@ import com.krusty.crab.entity.enums.OnlinePaymentStatus;
 import com.krusty.crab.exception.ValidationException;
 import com.krusty.crab.service.OnlinePaymentService;
 import jakarta.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.math.BigDecimal;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,33 +23,30 @@ public class OnlinePaymentCallbackController {
     private final OnlinePaymentService onlinePaymentService;
 
     @PostMapping(
-        value = "/payments/online/return",
-        consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
-        produces = MediaType.TEXT_HTML_VALUE
-    )
+            value = "/payments/online/return",
+            consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
+            produces = MediaType.TEXT_HTML_VALUE)
     public ResponseEntity<String> handleReturn(
-        @RequestParam(name = "transactionId") String transactionId,
-        @RequestParam(name = "orderId") String orderId,
-        @RequestParam(name = "amount") String amount,
-        @RequestParam(name = "status") String status,
-        @RequestParam(name = "timestamp") String timestamp,
-        @RequestParam(name = "nonce") String nonce,
-        @RequestParam(name = "signature") String signature,
-        HttpServletRequest request
-    ) {
+            @RequestParam(name = "transactionId") String transactionId,
+            @RequestParam(name = "orderId") String orderId,
+            @RequestParam(name = "amount") String amount,
+            @RequestParam(name = "status") String status,
+            @RequestParam(name = "timestamp") String timestamp,
+            @RequestParam(name = "nonce") String nonce,
+            @RequestParam(name = "signature") String signature,
+            HttpServletRequest request) {
         OnlinePaymentStatus finalStatus = OnlinePaymentStatus.FAILED;
         String errorMessage = null;
 
         try {
             BankPaymentResultPayload payload = new BankPaymentResultPayload(
-                UUID.fromString(transactionId),
-                Integer.parseInt(orderId),
-                parseAmount(amount),
-                status,
-                Long.parseLong(timestamp),
-                nonce,
-                signature
-            );
+                    UUID.fromString(transactionId),
+                    Integer.parseInt(orderId),
+                    parseAmount(amount),
+                    status,
+                    Long.parseLong(timestamp),
+                    nonce,
+                    signature);
             finalStatus = onlinePaymentService.finalizeFromBank(payload);
         } catch (Exception e) {
             log.warn("Failed to finalize online payment: {}", e.getMessage());
@@ -76,16 +72,14 @@ public class OnlinePaymentCallbackController {
     }
 
     private String buildFrontendRedirect(
-        String orderId,
-        OnlinePaymentStatus status,
-        String message,
-        HttpServletRequest request
-    ) {
+            String orderId, OnlinePaymentStatus status, String message, HttpServletRequest request) {
         String baseUrl = resolveFrontendBaseUrl(request);
         String statusParam = mapStatus(status);
         StringBuilder sb = new StringBuilder(baseUrl)
-            .append("/payment/result?orderId=").append(urlEncode(orderId))
-            .append("&status=").append(urlEncode(statusParam));
+                .append("/payment/result?orderId=")
+                .append(urlEncode(orderId))
+                .append("&status=")
+                .append(urlEncode(statusParam));
 
         if (message != null && !message.isBlank()) {
             sb.append("&message=").append(urlEncode(message));
@@ -99,8 +93,8 @@ public class OnlinePaymentCallbackController {
         String host = request != null ? request.getServerName() : "localhost";
         int port = request != null ? request.getServerPort() : 80;
 
-        boolean defaultPort = ("http".equalsIgnoreCase(scheme) && port == 80)
-            || ("https".equalsIgnoreCase(scheme) && port == 443);
+        boolean defaultPort =
+                ("http".equalsIgnoreCase(scheme) && port == 80) || ("https".equalsIgnoreCase(scheme) && port == 443);
         String portSegment = defaultPort ? "" : ":" + port;
         return scheme + "://" + host + portSegment;
     }
@@ -130,7 +124,8 @@ public class OnlinePaymentCallbackController {
                 </script>
               </body>
             </html>
-            """.formatted(redirectUrl);
+            """
+                .formatted(redirectUrl);
     }
 
     private String urlEncode(String value) {

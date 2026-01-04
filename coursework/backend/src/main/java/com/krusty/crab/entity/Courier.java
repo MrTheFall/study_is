@@ -1,10 +1,9 @@
 package com.krusty.crab.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.ArrayList;
 import java.util.List;
+import lombok.*;
 
 @Entity
 @Table(name = "couriers", uniqueConstraints = @UniqueConstraint(name = "uq_couriers_phone", columnNames = "phone"))

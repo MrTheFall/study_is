@@ -4,6 +4,8 @@ import com.krusty.crab.dto.bank.BankPaymentResultPayload;
 import com.krusty.crab.entity.BankPaymentSession;
 import com.krusty.crab.entity.enums.BankPaymentStatus;
 import com.krusty.crab.util.BankPayloadUtil;
+import java.time.Instant;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,9 +14,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
-import java.time.Instant;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -39,25 +38,17 @@ public class BankNotificationService {
         String nonce = UUID.randomUUID().toString().replace("-", "");
 
         BankPaymentResultPayload payload = new BankPaymentResultPayload(
-            session.getId(),
-            session.getOrderId(),
-            session.getAmount(),
-            status.getValue(),
-            timestamp,
-            nonce,
-            null
-        );
+                session.getId(), session.getOrderId(), session.getAmount(), status.getValue(), timestamp, nonce, null);
 
         String signature = bankSignatureService.sign(BankPayloadUtil.buildSignaturePayload(payload));
         BankPaymentResultPayload signed = new BankPaymentResultPayload(
-            payload.transactionId(),
-            payload.orderId(),
-            payload.amount(),
-            payload.status(),
-            payload.timestamp(),
-            payload.nonce(),
-            signature
-        );
+                payload.transactionId(),
+                payload.orderId(),
+                payload.amount(),
+                payload.status(),
+                payload.timestamp(),
+                payload.nonce(),
+                signature);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

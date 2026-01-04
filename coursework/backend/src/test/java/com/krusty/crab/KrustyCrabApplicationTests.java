@@ -12,5 +12,4 @@ class KrustyCrabApplicationTests {
     void contextLoads() {
         // Тест проверяет, что Spring контекст загружается без ошибок
     }
-
 }

@@ -1,10 +1,9 @@
 package com.krusty.crab.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import lombok.*;
 
 @Entity
 @Table(name = "inventory_records")
@@ -20,8 +19,11 @@ public class InventoryRecord {
     private Integer id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ingredient_id", nullable = false, unique = true,
-        foreignKey = @ForeignKey(name = "fk_inventory_ingredient"))
+    @JoinColumn(
+            name = "ingredient_id",
+            nullable = false,
+            unique = true,
+            foreignKey = @ForeignKey(name = "fk_inventory_ingredient"))
     private Ingredient ingredient;
 
     @Column(name = "quantity", nullable = false, precision = 14, scale = 3)

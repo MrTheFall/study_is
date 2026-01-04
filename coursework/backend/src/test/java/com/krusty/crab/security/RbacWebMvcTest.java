@@ -1,5 +1,15 @@
 package com.krusty.crab.security;
 
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.krusty.crab.dto.generated.Client;
 import com.krusty.crab.dto.generated.Employee;
 import com.krusty.crab.dto.generated.Order;
@@ -16,32 +26,21 @@ import com.krusty.crab.service.EmployeeService;
 import com.krusty.crab.service.InventoryService;
 import com.krusty.crab.service.OrderService;
 import com.krusty.crab.service.ShiftService;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
-
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -97,24 +96,22 @@ class RbacWebMvcTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context)
-            .apply(springSecurity())
-            .build();
+                .apply(springSecurity())
+                .build();
     }
 
     @Test
     void inventory_unauthenticated_returns401() throws Exception {
         mockMvc.perform(get("/inventory").accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isUnauthorized())
-            .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
     }
 
     @Test
     void inventory_client_forbidden_returns403() throws Exception {
-        mockMvc.perform(get("/inventory")
-                .with(authentication(clientAuth(100)))
-                .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+        mockMvc.perform(get("/inventory").with(authentication(clientAuth(100))).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
     }
 
     @Test
@@ -123,18 +120,18 @@ class RbacWebMvcTest {
         when(inventoryMapper.toDtoList(anyList())).thenReturn(List.of());
 
         mockMvc.perform(get("/inventory")
-                .with(authentication(managerAuth(10002)))
-                .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk());
+                        .with(authentication(managerAuth(10002)))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
     }
 
     @Test
     void kitchenQueue_client_forbidden_returns403() throws Exception {
         mockMvc.perform(get("/kitchen/queue")
-                .with(authentication(clientAuth(100)))
-                .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+                        .with(authentication(clientAuth(100)))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
     }
 
     @Test
@@ -142,9 +139,9 @@ class RbacWebMvcTest {
         when(orderService.getKitchenQueue()).thenReturn(List.of());
 
         mockMvc.perform(get("/kitchen/queue")
-                .with(authentication(cookAuth(10004)))
-                .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk());
+                        .with(authentication(cookAuth(10004)))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -153,9 +150,9 @@ class RbacWebMvcTest {
         when(courierMapper.toDtoList(anyList())).thenReturn(List.of());
 
         mockMvc.perform(get("/couriers")
-                .with(authentication(cashierAuth(10003)))
-                .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk());
+                        .with(authentication(cashierAuth(10003)))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -171,23 +168,23 @@ class RbacWebMvcTest {
         when(orderMapper.toDto(orderEntity)).thenReturn(dto);
 
         mockMvc.perform(patch("/orders/{id}/courier", 1)
-                .with(authentication(cashierAuth(10003)))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+                        .with(authentication(cashierAuth(10003)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
                     {"courierId":1}
                     """)
-                .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.courierId").value(1));
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.courierId").value(1));
     }
 
     @Test
     void clientProfile_otherClient_forbidden_returns403() throws Exception {
         mockMvc.perform(get("/clients/101")
-                .with(authentication(clientAuth(100)))
-                .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+                        .with(authentication(clientAuth(100)))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
     }
 
     @Test
@@ -204,18 +201,18 @@ class RbacWebMvcTest {
         when(clientMapper.toDto(clientEntity)).thenReturn(dto);
 
         mockMvc.perform(get("/clients/100")
-                .with(authentication(clientAuth(100)))
-                .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk());
+                        .with(authentication(clientAuth(100)))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
     }
 
     @Test
     void employeeProfile_otherEmployee_forbidden_returns403() throws Exception {
         mockMvc.perform(get("/employees/10004")
-                .with(authentication(cashierAuth(10003)))
-                .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+                        .with(authentication(cashierAuth(10003)))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
     }
 
     @Test
@@ -232,77 +229,70 @@ class RbacWebMvcTest {
         when(employeeMapper.toDto(employeeEntity)).thenReturn(dto);
 
         mockMvc.perform(get("/employees/10003")
-                .with(authentication(cashierAuth(10003)))
-                .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk());
+                        .with(authentication(cashierAuth(10003)))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
     }
 
     @Test
     void authMe_unauthenticated_returns401() throws Exception {
         mockMvc.perform(get("/auth/me").accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isUnauthorized())
-            .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
     }
 
     @Test
     void authMe_authenticated_returns200() throws Exception {
-        mockMvc.perform(get("/auth/me")
-                .with(authentication(managerAuth(10002)))
-                .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.userId").value(10002))
-            .andExpect(jsonPath("$.userType").value("EMPLOYEE"))
-            .andExpect(jsonPath("$.role").value("Manager"));
+        mockMvc.perform(get("/auth/me").with(authentication(managerAuth(10002))).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(10002))
+                .andExpect(jsonPath("$.userType").value("EMPLOYEE"))
+                .andExpect(jsonPath("$.role").value("Manager"));
     }
 
     @Test
     void loginClient_invalidPassword_returns401() throws Exception {
         when(authService.loginClient("client@example.com", "wrong"))
-            .thenThrow(new BadCredentialsException("Invalid email or password"));
+                .thenThrow(new BadCredentialsException("Invalid email or password"));
 
         mockMvc.perform(post("/auth/login/client")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(
+                                """
                     {"email":"client@example.com","password":"wrong"}
                     """)
-                .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isUnauthorized())
-            .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
     }
 
     private static Authentication clientAuth(int clientId) {
         UserPrincipal principal = new UserPrincipal(clientId, "client@example.com", "CLIENT", null);
         return new UsernamePasswordAuthenticationToken(
-            principal,
-            null,
-            List.of(new SimpleGrantedAuthority("ROLE_CLIENT"))
-        );
+                principal, null, List.of(new SimpleGrantedAuthority("ROLE_CLIENT")));
     }
 
     private static Authentication cookAuth(int employeeId) {
         UserPrincipal principal = new UserPrincipal(employeeId, "cook", "EMPLOYEE", "Cook");
         return new UsernamePasswordAuthenticationToken(
-            principal,
-            null,
-            List.of(new SimpleGrantedAuthority("ROLE_EMPLOYEE"), new SimpleGrantedAuthority("ROLE_Cook"))
-        );
+                principal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_EMPLOYEE"), new SimpleGrantedAuthority("ROLE_Cook")));
     }
 
     private static Authentication cashierAuth(int employeeId) {
         UserPrincipal principal = new UserPrincipal(employeeId, "cashier", "EMPLOYEE", "Cashier");
         return new UsernamePasswordAuthenticationToken(
-            principal,
-            null,
-            List.of(new SimpleGrantedAuthority("ROLE_EMPLOYEE"), new SimpleGrantedAuthority("ROLE_Cashier"))
-        );
+                principal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_EMPLOYEE"), new SimpleGrantedAuthority("ROLE_Cashier")));
     }
 
     private static Authentication managerAuth(int employeeId) {
         UserPrincipal principal = new UserPrincipal(employeeId, "manager", "EMPLOYEE", "Manager");
         return new UsernamePasswordAuthenticationToken(
-            principal,
-            null,
-            List.of(new SimpleGrantedAuthority("ROLE_EMPLOYEE"), new SimpleGrantedAuthority("ROLE_Manager"))
-        );
+                principal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_EMPLOYEE"), new SimpleGrantedAuthority("ROLE_Manager")));
     }
 }

@@ -6,15 +6,14 @@ import com.krusty.crab.exception.EntityNotFoundException;
 import com.krusty.crab.exception.ValidationException;
 import com.krusty.crab.repository.EmployeeRepository;
 import com.krusty.crab.repository.SalaryPaymentRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -35,22 +34,24 @@ public class SalaryPaymentService {
             throw new ValidationException("amount must be non-negative");
         }
 
-        Employee employee = employeeRepository.findById(employeeId)
-            .orElseThrow(() -> new EntityNotFoundException("Employee", employeeId));
+        Employee employee = employeeRepository
+                .findById(employeeId)
+                .orElseThrow(() -> new EntityNotFoundException("Employee", employeeId));
 
         LocalDateTime paidAtLocal = paidAt != null ? paidAt.toLocalDateTime() : LocalDateTime.now(ZoneOffset.UTC);
 
         SalaryPayment payment = SalaryPayment.builder()
-            .employee(employee)
-            .amount(amount)
-            .note(note)
-            .paidAt(paidAtLocal)
-            .build();
+                .employee(employee)
+                .amount(amount)
+                .note(note)
+                .paidAt(paidAtLocal)
+                .build();
 
         return salaryPaymentRepository.save(payment);
     }
 
-    public List<SalaryPayment> list(Integer employeeId, OffsetDateTime from, OffsetDateTime to, Integer limit, Integer offset) {
+    public List<SalaryPayment> list(
+            Integer employeeId, OffsetDateTime from, OffsetDateTime to, Integer limit, Integer offset) {
         int resolvedLimit = limit != null ? limit : 50;
         int resolvedOffset = offset != null ? offset : 0;
         if (resolvedLimit < 1) resolvedLimit = 1;

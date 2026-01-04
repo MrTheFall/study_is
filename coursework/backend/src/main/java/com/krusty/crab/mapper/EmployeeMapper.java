@@ -1,14 +1,13 @@
 package com.krusty.crab.mapper;
 
 import com.krusty.crab.dto.generated.EmployeeCreateRequest;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
-
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface EmployeeMapper {
@@ -43,12 +42,14 @@ public interface EmployeeMapper {
         return employee;
     }
 
-    default void updateEntityWithPassword(EmployeeCreateRequest request, @MappingTarget com.krusty.crab.entity.Employee entity) {
+    default void updateEntityWithPassword(
+            EmployeeCreateRequest request, @MappingTarget com.krusty.crab.entity.Employee entity) {
         updateEntityFromRequest(request, entity);
         if (request.getPassword() != null && !request.getPassword().isEmpty()) {
             entity.setPasswordHash(com.krusty.crab.util.PasswordUtil.encode(request.getPassword()));
         }
     }
 
-    java.util.List<com.krusty.crab.dto.generated.Employee> toDtoList(java.util.List<com.krusty.crab.entity.Employee> entities);
+    java.util.List<com.krusty.crab.dto.generated.Employee> toDtoList(
+            java.util.List<com.krusty.crab.entity.Employee> entities);
 }

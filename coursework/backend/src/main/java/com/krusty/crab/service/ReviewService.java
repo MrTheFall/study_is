@@ -5,13 +5,12 @@ import com.krusty.crab.exception.EntityNotFoundException;
 import com.krusty.crab.exception.ReviewException;
 import com.krusty.crab.repository.OrderRepository;
 import com.krusty.crab.repository.ReviewRepository;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -22,8 +21,7 @@ public class ReviewService {
     private final OrderRepository orderRepository;
 
     public Review getReviewById(Integer id) {
-        return reviewRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Review", id));
+        return reviewRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Review", id));
     }
 
     public List<Review> getReviewsByClientId(Integer clientId) {
@@ -40,11 +38,14 @@ public class ReviewService {
 
     @Transactional
     public Review createReview(Review review) {
-        orderRepository.findById(review.getOrder().getId())
-            .orElseThrow(() -> new EntityNotFoundException("Order", review.getOrder().getId()));
+        orderRepository
+                .findById(review.getOrder().getId())
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Order", review.getOrder().getId()));
 
         List<Review> existing = reviewRepository.findByOrderId(review.getOrder().getId());
-        if (existing.stream().anyMatch(r -> r.getClient().getId().equals(review.getClient().getId()))) {
+        if (existing.stream()
+                .anyMatch(r -> r.getClient().getId().equals(review.getClient().getId()))) {
             throw new ReviewException("Review already exists for this order and client");
         }
 
@@ -56,7 +57,10 @@ public class ReviewService {
         newReview.setCreatedAt(LocalDateTime.now());
 
         Review saved = reviewRepository.save(newReview);
-        log.info("Review created with ID: {} for order: {}", saved.getId(), review.getOrder().getId());
+        log.info(
+                "Review created with ID: {} for order: {}",
+                saved.getId(),
+                review.getOrder().getId());
         return saved;
     }
 

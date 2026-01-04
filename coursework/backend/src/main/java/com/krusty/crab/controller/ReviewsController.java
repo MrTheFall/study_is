@@ -2,16 +2,18 @@ package com.krusty.crab.controller;
 
 import com.krusty.crab.api.ReviewsApi;
 import com.krusty.crab.dto.generated.ReviewCreateRequest;
-import com.krusty.crab.entity.Review;
 import com.krusty.crab.entity.Client;
 import com.krusty.crab.entity.Order;
+import com.krusty.crab.entity.Review;
 import com.krusty.crab.exception.ValidationException;
 import com.krusty.crab.mapper.ReviewMapper;
 import com.krusty.crab.security.UserPrincipal;
-import com.krusty.crab.service.ReviewService;
 import com.krusty.crab.service.ClientService;
 import com.krusty.crab.service.OrderService;
+import com.krusty.crab.service.ReviewService;
 import com.krusty.crab.util.SecurityUtil;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,9 +21,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -60,7 +59,8 @@ public class ReviewsController implements ReviewsApi {
     }
 
     @Override
-    @PreAuthorize("hasRole('Manager') or (hasRole('CLIENT') and (#p0 == null or authentication.principal.userId == #p0))")
+    @PreAuthorize(
+            "hasRole('Manager') or (hasRole('CLIENT') and (#p0 == null or authentication.principal.userId == #p0))")
     public ResponseEntity<List<com.krusty.crab.dto.generated.Review>> getAllReviews(Integer clientId, Integer orderId) {
         log.info("Getting reviews, clientId: {}, orderId: {}", clientId, orderId);
         UserPrincipal user = SecurityUtil.getCurrentUser();
@@ -77,8 +77,8 @@ public class ReviewsController implements ReviewsApi {
         List<Review> reviews;
         if (clientId != null && orderId != null) {
             reviews = reviewService.getReviewsByClientId(clientId).stream()
-                .filter(r -> r.getOrder().getId().equals(orderId))
-                .collect(Collectors.toList());
+                    .filter(r -> r.getOrder().getId().equals(orderId))
+                    .collect(Collectors.toList());
         } else if (clientId != null) {
             reviews = reviewService.getReviewsByClientId(clientId);
         } else if (orderId != null) {
@@ -102,7 +102,8 @@ public class ReviewsController implements ReviewsApi {
     private void assertReviewAccess(Review review) {
         UserPrincipal user = SecurityUtil.getCurrentUser();
         if ("CLIENT".equals(user.getUserType())) {
-            Integer reviewClientId = review.getClient() != null ? review.getClient().getId() : null;
+            Integer reviewClientId =
+                    review.getClient() != null ? review.getClient().getId() : null;
             if (reviewClientId == null || !reviewClientId.equals(user.getUserId())) {
                 throw new AccessDeniedException("Access denied");
             }
@@ -116,12 +117,13 @@ public class ReviewsController implements ReviewsApi {
 
     private void assertOrderReviewable(Order order) {
         String status = order.getStatus() != null ? order.getStatus().getValue() : null;
-        boolean finished = status != null
-            && ("delivered".equalsIgnoreCase(status) || "completed".equalsIgnoreCase(status));
+        boolean finished =
+                status != null && ("delivered".equalsIgnoreCase(status) || "completed".equalsIgnoreCase(status));
         if (!finished) {
             throw new ValidationException("Review can only be created after the order is finished");
         }
-        if (order.getPayment() == null || !Boolean.TRUE.equals(order.getPayment().getSuccess())) {
+        if (order.getPayment() == null
+                || !Boolean.TRUE.equals(order.getPayment().getSuccess())) {
             throw new ValidationException("Only paid orders can be reviewed");
         }
     }

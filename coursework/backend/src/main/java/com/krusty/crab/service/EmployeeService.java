@@ -7,13 +7,12 @@ import com.krusty.crab.exception.EntityNotFoundException;
 import com.krusty.crab.repository.EmployeeRepository;
 import com.krusty.crab.repository.RoleRepository;
 import com.krusty.crab.util.PasswordUtil;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,13 +23,13 @@ public class EmployeeService {
     private final RoleRepository roleRepository;
 
     public Employee getEmployeeById(Integer id) {
-        return employeeRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Employee", id));
+        return employeeRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Employee", id));
     }
 
     public Employee getEmployeeByLogin(String login) {
-        return employeeRepository.findByLogin(login)
-            .orElseThrow(() -> new EntityNotFoundException("Employee", "login", login));
+        return employeeRepository
+                .findByLogin(login)
+                .orElseThrow(() -> new EntityNotFoundException("Employee", "login", login));
     }
 
     public List<Employee> getAllEmployees() {
@@ -43,8 +42,10 @@ public class EmployeeService {
             throw new DuplicateEntityException("Employee", "login", employee.getLogin());
         }
 
-        Role role = roleRepository.findById(employee.getRole().getId())
-            .orElseThrow(() -> new EntityNotFoundException("Role", employee.getRole().getId()));
+        Role role = roleRepository
+                .findById(employee.getRole().getId())
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Role", employee.getRole().getId()));
 
         Employee newEmployee = new Employee();
         newEmployee.setFullName(employee.getFullName());
@@ -53,9 +54,8 @@ public class EmployeeService {
         newEmployee.setSalary(employee.getSalary() != null ? employee.getSalary() : java.math.BigDecimal.ZERO);
         newEmployee.setContactPhone(employee.getContactPhone());
         newEmployee.setHiredAt(employee.getHiredAt() != null ? employee.getHiredAt() : LocalDateTime.now());
-        newEmployee.setPasswordHash(password != null && !password.isEmpty()
-            ? PasswordUtil.encode(password)
-            : employee.getPasswordHash());
+        newEmployee.setPasswordHash(
+                password != null && !password.isEmpty() ? PasswordUtil.encode(password) : employee.getPasswordHash());
 
         Employee saved = employeeRepository.save(newEmployee);
         log.info("Employee created with ID: {}", saved.getId());
@@ -83,8 +83,10 @@ public class EmployeeService {
             employee.setPasswordHash(employeeData.getPasswordHash());
         }
         if (employeeData.getRole() != null && employeeData.getRole().getId() != null) {
-            roleRepository.findById(employeeData.getRole().getId())
-                .orElseThrow(() -> new EntityNotFoundException("Role", employeeData.getRole().getId()));
+            roleRepository
+                    .findById(employeeData.getRole().getId())
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Role", employeeData.getRole().getId()));
             employee.setRole(employeeData.getRole());
         }
         if (employeeData.getSalary() != null) {

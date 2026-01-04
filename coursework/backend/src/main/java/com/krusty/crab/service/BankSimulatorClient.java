@@ -3,6 +3,9 @@ package com.krusty.crab.service;
 import com.krusty.crab.dto.bank.BankPaymentInitRequest;
 import com.krusty.crab.dto.bank.BankPaymentInitResponse;
 import com.krusty.crab.exception.PaymentException;
+import java.time.Instant;
+import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,10 +14,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-
-import java.time.Instant;
-import java.util.Map;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -36,25 +35,23 @@ public class BankSimulatorClient {
         String nonce = UUID.randomUUID().toString().replace("-", "");
 
         Map<String, String> signaturePayload = Map.of(
-            "merchantId", request.merchantId(),
-            "orderId", request.orderId().toString(),
-            "amount", request.amount().stripTrailingZeros().toPlainString(),
-            "currency", request.currency(),
-            "returnUrl", request.returnUrl(),
-            "callbackUrl", request.callbackUrl(),
-            "timestamp", String.valueOf(timestamp),
-            "nonce", nonce
-        );
+                "merchantId", request.merchantId(),
+                "orderId", request.orderId().toString(),
+                "amount", request.amount().stripTrailingZeros().toPlainString(),
+                "currency", request.currency(),
+                "returnUrl", request.returnUrl(),
+                "callbackUrl", request.callbackUrl(),
+                "timestamp", String.valueOf(timestamp),
+                "nonce", nonce);
         String signature = bankSignatureService.sign(signaturePayload);
 
         if ("internal".equalsIgnoreCase(mode)) {
             return bankSimulatorService.initiatePayment(
-                request,
-                signature,
-                String.valueOf(timestamp),
-                nonce,
-                publicBaseUrl != null ? publicBaseUrl : baseUrl
-            );
+                    request,
+                    signature,
+                    String.valueOf(timestamp),
+                    nonce,
+                    publicBaseUrl != null ? publicBaseUrl : baseUrl);
         }
 
         HttpHeaders headers = new HttpHeaders();

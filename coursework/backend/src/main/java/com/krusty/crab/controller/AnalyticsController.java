@@ -2,24 +2,23 @@ package com.krusty.crab.controller;
 
 import com.krusty.crab.api.AnalyticsApi;
 import com.krusty.crab.dto.generated.FinancialSummary;
-import com.krusty.crab.dto.generated.SalesSummary;
 import com.krusty.crab.dto.generated.SalesByEmployeeItem;
 import com.krusty.crab.dto.generated.SalesByTimeOfDayItem;
+import com.krusty.crab.dto.generated.SalesSummary;
 import com.krusty.crab.dto.generated.TopMenuItem;
 import com.krusty.crab.mapper.ReportViewMapper;
 import com.krusty.crab.security.UserPrincipal;
 import com.krusty.crab.service.AnalyticsService;
 import com.krusty.crab.util.SecurityUtil;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -59,9 +58,8 @@ public class AnalyticsController implements AnalyticsApi {
 
     @Override
     public ResponseEntity<List<SalesByEmployeeItem>> getSalesByEmployee(
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to
-    ) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
         UserPrincipal user = SecurityUtil.getCurrentUser();
         log.info("Getting sales by employee from {} to {}", from, to);
         LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
@@ -73,9 +71,8 @@ public class AnalyticsController implements AnalyticsApi {
 
     @Override
     public ResponseEntity<List<SalesByTimeOfDayItem>> getSalesByTimeOfDay(
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to
-    ) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
         UserPrincipal user = SecurityUtil.getCurrentUser();
         log.info("Getting sales by time of day from {} to {}", from, to);
         LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
@@ -86,7 +83,8 @@ public class AnalyticsController implements AnalyticsApi {
     }
 
     @Override
-    public ResponseEntity<List<com.krusty.crab.dto.generated.ReportView>> getReportViews(Integer limit, Integer offset) {
+    public ResponseEntity<List<com.krusty.crab.dto.generated.ReportView>> getReportViews(
+            Integer limit, Integer offset) {
         log.info("Getting report views history, limit: {}, offset: {}", limit, offset);
         List<com.krusty.crab.entity.ReportView> views = analyticsService.getReportViews(limit, offset);
         return ResponseEntity.ok(reportViewMapper.toDtoList(views));
@@ -94,9 +92,8 @@ public class AnalyticsController implements AnalyticsApi {
 
     @Override
     public ResponseEntity<FinancialSummary> getFinancialSummary(
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to
-    ) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
         UserPrincipal user = SecurityUtil.getCurrentUser();
         log.info("Getting financial summary from {} to {}", from, to);
         LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;

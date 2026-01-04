@@ -1,13 +1,14 @@
 package com.krusty.crab.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.ArrayList;
 import java.util.List;
+import lombok.*;
 
 @Entity
-@Table(name = "recipes", uniqueConstraints = @UniqueConstraint(name = "uq_recipes_menu_item", columnNames = "menu_item_id"))
+@Table(
+        name = "recipes",
+        uniqueConstraints = @UniqueConstraint(name = "uq_recipes_menu_item", columnNames = "menu_item_id"))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,8 +21,11 @@ public class Recipe {
     private Integer id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "menu_item_id", nullable = false, unique = true,
-        foreignKey = @ForeignKey(name = "fk_recipes_menu_item"))
+    @JoinColumn(
+            name = "menu_item_id",
+            nullable = false,
+            unique = true,
+            foreignKey = @ForeignKey(name = "fk_recipes_menu_item"))
     private MenuItem menuItem;
 
     @Column(name = "name", nullable = false, length = 255)

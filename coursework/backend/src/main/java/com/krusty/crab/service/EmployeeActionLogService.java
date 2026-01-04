@@ -6,14 +6,13 @@ import com.krusty.crab.repository.EmployeeActionLogRepository;
 import com.krusty.crab.repository.EmployeeRepository;
 import com.krusty.crab.security.UserPrincipal;
 import com.krusty.crab.util.SecurityUtil;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,15 +23,14 @@ public class EmployeeActionLogService {
 
     @Transactional
     public void logAction(
-        Integer employeeId,
-        String action,
-        String entityType,
-        Integer entityId,
-        Integer orderId,
-        String fromValue,
-        String toValue,
-        String details
-    ) {
+            Integer employeeId,
+            String action,
+            String entityType,
+            Integer entityId,
+            Integer orderId,
+            String fromValue,
+            String toValue,
+            String details) {
         if (employeeId == null || action == null || action.isBlank()) {
             return;
         }
@@ -43,30 +41,29 @@ public class EmployeeActionLogService {
         }
 
         EmployeeActionLog entry = EmployeeActionLog.builder()
-            .employee(employee)
-            .action(action)
-            .entityType(entityType)
-            .entityId(entityId)
-            .orderId(orderId)
-            .fromValue(fromValue)
-            .toValue(toValue)
-            .details(details)
-            .createdAt(LocalDateTime.now(ZoneOffset.UTC))
-            .build();
+                .employee(employee)
+                .action(action)
+                .entityType(entityType)
+                .entityId(entityId)
+                .orderId(orderId)
+                .fromValue(fromValue)
+                .toValue(toValue)
+                .details(details)
+                .createdAt(LocalDateTime.now(ZoneOffset.UTC))
+                .build();
 
         actionLogRepository.save(entry);
     }
 
     @Transactional
     public void logCurrentEmployeeAction(
-        String action,
-        String entityType,
-        Integer entityId,
-        Integer orderId,
-        String fromValue,
-        String toValue,
-        String details
-    ) {
+            String action,
+            String entityType,
+            Integer entityId,
+            Integer orderId,
+            String fromValue,
+            String toValue,
+            String details) {
         UserPrincipal user;
         try {
             user = SecurityUtil.getCurrentUser();
@@ -82,14 +79,13 @@ public class EmployeeActionLogService {
     }
 
     public List<EmployeeActionLog> getLogs(
-        Integer employeeId,
-        Integer orderId,
-        String action,
-        OffsetDateTime from,
-        OffsetDateTime to,
-        Integer limit,
-        Integer offset
-    ) {
+            Integer employeeId,
+            Integer orderId,
+            String action,
+            OffsetDateTime from,
+            OffsetDateTime to,
+            Integer limit,
+            Integer offset) {
         int resolvedLimit = limit != null ? limit : 50;
         int resolvedOffset = offset != null ? offset : 0;
         if (resolvedLimit < 1) resolvedLimit = 1;
@@ -99,6 +95,7 @@ public class EmployeeActionLogService {
         LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
         LocalDateTime toLocal = to != null ? to.toLocalDateTime() : null;
 
-        return actionLogRepository.findRecent(employeeId, orderId, action, fromLocal, toLocal, resolvedLimit, resolvedOffset);
+        return actionLogRepository.findRecent(
+                employeeId, orderId, action, fromLocal, toLocal, resolvedLimit, resolvedOffset);
     }
 }

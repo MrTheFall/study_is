@@ -1,8 +1,8 @@
 package com.krusty.crab.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.krusty.crab.dto.generated.KitchenQueueItem;
 import com.krusty.crab.dto.generated.OrderItemInfo;
 import com.krusty.crab.dto.generated.PlaceOrderRequest;
@@ -20,11 +20,6 @@ import com.krusty.crab.repository.OrderItemRepository;
 import com.krusty.crab.repository.OrderRepository;
 import com.krusty.crab.util.DbErrorUtil;
 import jakarta.persistence.EntityManager;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataAccessException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -32,6 +27,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -45,21 +44,19 @@ public class OrderService {
     private final EntityManager entityManager;
 
     private static final List<OrderStatus> COURIER_BUSY_STATUSES = List.of(
-        OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
-        OrderStatus.PREPARING,
-        OrderStatus.READY,
-        OrderStatus.DELIVERING
-    );
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY,
+            OrderStatus.DELIVERING);
 
     public OrderService(
-        OrderRepository orderRepository,
-        OrderItemRepository orderItemRepository,
-        CourierRepository courierRepository,
-        EmployeeRepository employeeRepository,
-        ObjectMapper objectMapper,
-        EntityManager entityManager
-    ) {
+            OrderRepository orderRepository,
+            OrderItemRepository orderItemRepository,
+            CourierRepository courierRepository,
+            EmployeeRepository employeeRepository,
+            ObjectMapper objectMapper,
+            EntityManager entityManager) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.courierRepository = courierRepository;
@@ -84,19 +81,21 @@ public class OrderService {
 
             String itemsJsonb = objectMapper.writeValueAsString(itemsJson);
 
-            String paymentMethod = request.getPaymentMethod() != null ? request.getPaymentMethod().getValue() : null;
+            String paymentMethod = request.getPaymentMethod() != null
+                    ? request.getPaymentMethod().getValue()
+                    : null;
 
             Integer orderId = orderRepository.callPlaceOrder(
-                request.getClientId(),
-                request.getType() != null ? request.getType().getValue() : null,
-                request.getDeliveryAddress(),
-                paymentMethod,
-                itemsJsonb
-            );
+                    request.getClientId(),
+                    request.getType() != null ? request.getType().getValue() : null,
+                    request.getDeliveryAddress(),
+                    paymentMethod,
+                    itemsJsonb);
 
             if (createdByEmployeeId != null) {
-                Employee employee = employeeRepository.findById(createdByEmployeeId)
-                    .orElseThrow(() -> new EntityNotFoundException("Employee", createdByEmployeeId));
+                Employee employee = employeeRepository
+                        .findById(createdByEmployeeId)
+                        .orElseThrow(() -> new EntityNotFoundException("Employee", createdByEmployeeId));
                 Order order = getOrderById(orderId);
                 if (order.getCreatedByEmployee() == null) {
                     order.setCreatedByEmployee(employee);
@@ -125,8 +124,9 @@ public class OrderService {
             orderRepository.callUpdateOrderStatus(orderId, newStatus.getValue());
             entityManager.clear();
             if (newStatus == OrderStatus.CONFIRMED && acceptedByEmployeeId != null) {
-                Employee employee = employeeRepository.findById(acceptedByEmployeeId)
-                    .orElseThrow(() -> new EntityNotFoundException("Employee", acceptedByEmployeeId));
+                Employee employee = employeeRepository
+                        .findById(acceptedByEmployeeId)
+                        .orElseThrow(() -> new EntityNotFoundException("Employee", acceptedByEmployeeId));
                 Order order = getOrderById(orderId);
                 if (order.getAcceptedByEmployee() == null) {
                     order.setAcceptedByEmployee(employee);
@@ -143,20 +143,24 @@ public class OrderService {
                 if (errorMessage.contains("transition") && errorMessage.contains("is not allowed")) {
                     String message = "Status transition is not allowed";
                     if (errorMessage.contains("->")) {
-                        message = "Cannot change order status: " + errorMessage.substring(
-                            errorMessage.indexOf("transition") + "transition ".length(),
-                            errorMessage.indexOf(" is not allowed")
-                        ).trim();
+                        message = "Cannot change order status: "
+                                + errorMessage
+                                        .substring(
+                                                errorMessage.indexOf("transition") + "transition ".length(),
+                                                errorMessage.indexOf(" is not allowed"))
+                                        .trim();
                     }
                     throw new OrderException(message);
                 } else if (errorMessage.contains("not found")) {
                     throw new EntityNotFoundException("Order", orderId);
                 } else if (errorMessage.contains("only for delivery orders")) {
-                    throw new OrderException("Statuses 'delivering' and 'delivered' can only be used for delivery orders");
+                    throw new OrderException(
+                            "Statuses 'delivering' and 'delivered' can only be used for delivery orders");
                 }
             }
             log.error("Error updating order status", e);
-            throw new OrderException("Failed to update order status: " + (errorMessage != null ? errorMessage : e.getMessage()), e);
+            throw new OrderException(
+                    "Failed to update order status: " + (errorMessage != null ? errorMessage : e.getMessage()), e);
         } catch (Exception e) {
             log.error("Error updating order status", e);
             throw new OrderException("Failed to update order status: " + e.getMessage(), e);
@@ -172,7 +176,10 @@ public class OrderService {
 
         order.setPaymentMethod(paymentMethod);
         Order saved = orderRepository.save(order);
-        log.info("Order {} payment method updated to {}", orderId, paymentMethod != null ? paymentMethod.getValue() : null);
+        log.info(
+                "Order {} payment method updated to {}",
+                orderId,
+                paymentMethod != null ? paymentMethod.getValue() : null);
         return saved;
     }
 
@@ -229,10 +236,8 @@ public class OrderService {
                 return new ArrayList<>();
             }
 
-            List<Map<String, Object>> itemsList = objectMapper.readValue(
-                itemsJson,
-                new TypeReference<List<Map<String, Object>>>() {}
-            );
+            List<Map<String, Object>> itemsList =
+                    objectMapper.readValue(itemsJson, new TypeReference<List<Map<String, Object>>>() {});
 
             List<OrderItemInfo> items = new ArrayList<>();
             for (Map<String, Object> itemMap : itemsList) {
@@ -252,8 +257,7 @@ public class OrderService {
     }
 
     public Order getOrderById(Integer orderId) {
-        return orderRepository.findById(orderId)
-            .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
+        return orderRepository.findById(orderId).orElseThrow(() -> new EntityNotFoundException("Order", orderId));
     }
 
     public List<Order> getAllOrders() {
@@ -270,8 +274,9 @@ public class OrderService {
 
     public List<Order> getOrdersByStatusAndClient(String status, Integer clientId) {
         return orderRepository.findByClientId(clientId).stream()
-            .filter(order -> order.getStatus() != null && order.getStatus().getValue().equals(status))
-            .collect(java.util.stream.Collectors.toList());
+                .filter(order -> order.getStatus() != null
+                        && order.getStatus().getValue().equals(status))
+                .collect(java.util.stream.Collectors.toList());
     }
 
     public List<OrderItem> getOrderItems(Integer orderId) {
@@ -289,31 +294,31 @@ public class OrderService {
     @Transactional
     public Order assignCourierToOrder(Integer orderId, Integer courierId) {
         Order order = getOrderById(orderId);
-        if (order.getType() == null || !"delivery".equalsIgnoreCase(order.getType().getValue())) {
+        if (order.getType() == null
+                || !"delivery".equalsIgnoreCase(order.getType().getValue())) {
             throw new OrderException("Courier can only be assigned to delivery orders");
         }
         if (order.getStatus() == OrderStatus.DELIVERED
-            || order.getStatus() == OrderStatus.COMPLETED
-            || order.getStatus() == OrderStatus.CANCELLED) {
+                || order.getStatus() == OrderStatus.COMPLETED
+                || order.getStatus() == OrderStatus.CANCELLED) {
             throw new OrderException("Courier cannot be assigned to closed delivery orders");
         }
 
         Courier courier = null;
         if (courierId != null) {
-            courier = courierRepository.findById(courierId)
-                .orElseThrow(() -> new EntityNotFoundException("Courier", courierId));
+            courier = courierRepository
+                    .findById(courierId)
+                    .orElseThrow(() -> new EntityNotFoundException("Courier", courierId));
 
             if (Boolean.FALSE.equals(courier.getAvailable())) {
                 throw new OrderException("Courier is not available");
             }
 
-            Integer currentCourierId = order.getCourier() != null ? order.getCourier().getId() : null;
+            Integer currentCourierId =
+                    order.getCourier() != null ? order.getCourier().getId() : null;
             if (currentCourierId == null || !currentCourierId.equals(courierId)) {
                 boolean busy = orderRepository.existsByCourier_IdAndStatusInAndIdNot(
-                    courierId,
-                    COURIER_BUSY_STATUSES,
-                    orderId
-                );
+                        courierId, COURIER_BUSY_STATUSES, orderId);
                 if (busy) {
                     throw new OrderException("Courier is busy");
                 }

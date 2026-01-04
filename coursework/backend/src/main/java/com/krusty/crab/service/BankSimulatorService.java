@@ -6,14 +6,13 @@ import com.krusty.crab.entity.BankPaymentSession;
 import com.krusty.crab.entity.enums.BankPaymentStatus;
 import com.krusty.crab.exception.ValidationException;
 import com.krusty.crab.repository.BankPaymentSessionRepository;
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,62 +29,58 @@ public class BankSimulatorService {
     private int challengeTtlMinutes;
 
     public BankPaymentInitResponse initiatePayment(
-        BankPaymentInitRequest request,
-        String signature,
-        String timestamp,
-        String nonce,
-        String baseUrl
-    ) {
+            BankPaymentInitRequest request, String signature, String timestamp, String nonce, String baseUrl) {
         validateRequest(request);
 
         long ts = parseTimestamp(timestamp);
         bankSignatureService.validateTimestampOrThrow(ts);
 
         Map<String, String> signaturePayload = Map.of(
-            "merchantId", request.merchantId(),
-            "orderId", request.orderId().toString(),
-            "amount", request.amount().stripTrailingZeros().toPlainString(),
-            "currency", request.currency(),
-            "returnUrl", request.returnUrl(),
-            "callbackUrl", request.callbackUrl(),
-            "timestamp", String.valueOf(ts),
-            "nonce", nonce
-        );
+                "merchantId", request.merchantId(),
+                "orderId", request.orderId().toString(),
+                "amount", request.amount().stripTrailingZeros().toPlainString(),
+                "currency", request.currency(),
+                "returnUrl", request.returnUrl(),
+                "callbackUrl", request.callbackUrl(),
+                "timestamp", String.valueOf(ts),
+                "nonce", nonce);
         bankSignatureService.verifyOrThrow(signaturePayload, signature);
 
         String sanitizedNumber = request.cardNumber().replaceAll("\\s+", "");
         String last4 = sanitizedNumber.length() >= 4
-            ? sanitizedNumber.substring(sanitizedNumber.length() - 4)
-            : sanitizedNumber;
+                ? sanitizedNumber.substring(sanitizedNumber.length() - 4)
+                : sanitizedNumber;
 
-        boolean forceFailure = Boolean.TRUE.equals(request.simulateFailure())
-            || "0000000000000000".equals(sanitizedNumber);
+        boolean forceFailure =
+                Boolean.TRUE.equals(request.simulateFailure()) || "0000000000000000".equals(sanitizedNumber);
 
         LocalDateTime now = LocalDateTime.now();
         BankPaymentSession session = BankPaymentSession.builder()
-            .id(UUID.randomUUID())
-            .orderId(request.orderId())
-            .amount(request.amount())
-            .status(BankPaymentStatus.CHALLENGE_REQUIRED)
-            .merchantId(request.merchantId())
-            .cardLast4(last4)
-            .otpCode(resolveOtp())
-            .returnUrl(request.returnUrl())
-            .callbackUrl(request.callbackUrl())
-            .forceFailure(forceFailure)
-            .createdAt(now)
-            .updatedAt(now)
-            .expiresAt(now.plusMinutes(challengeTtlMinutes))
-            .build();
+                .id(UUID.randomUUID())
+                .orderId(request.orderId())
+                .amount(request.amount())
+                .status(BankPaymentStatus.CHALLENGE_REQUIRED)
+                .merchantId(request.merchantId())
+                .cardLast4(last4)
+                .otpCode(resolveOtp())
+                .returnUrl(request.returnUrl())
+                .callbackUrl(request.callbackUrl())
+                .forceFailure(forceFailure)
+                .createdAt(now)
+                .updatedAt(now)
+                .expiresAt(now.plusMinutes(challengeTtlMinutes))
+                .build();
 
         sessionRepository.save(session);
         String acsUrl = normalizeBaseUrl(baseUrl) + "/bank/3ds/" + session.getId();
-        return new BankPaymentInitResponse(session.getId(), acsUrl, session.getStatus().getValue());
+        return new BankPaymentInitResponse(
+                session.getId(), acsUrl, session.getStatus().getValue());
     }
 
     public BankPaymentSession getSession(UUID transactionId) {
-        return sessionRepository.findById(transactionId)
-            .orElseThrow(() -> new ValidationException("Bank transaction not found"));
+        return sessionRepository
+                .findById(transactionId)
+                .orElseThrow(() -> new ValidationException("Bank transaction not found"));
     }
 
     public boolean isExpired(BankPaymentSession session) {

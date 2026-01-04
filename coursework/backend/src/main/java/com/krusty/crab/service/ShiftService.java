@@ -7,13 +7,12 @@ import com.krusty.crab.exception.ShiftException;
 import com.krusty.crab.repository.EmployeeRepository;
 import com.krusty.crab.repository.EmployeeShiftRepository;
 import com.krusty.crab.repository.ShiftRepository;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -25,8 +24,7 @@ public class ShiftService {
     private final EmployeeRepository employeeRepository;
 
     public Shift getShiftById(Integer id) {
-        return shiftRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Shift", id));
+        return shiftRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Shift", id));
     }
 
     public List<Shift> getShiftsByDate(LocalDate date) {
@@ -97,8 +95,7 @@ public class ShiftService {
     }
 
     public List<EmployeeShift> getEmployeeShifts(Integer employeeId) {
-        employeeRepository.findById(employeeId)
-            .orElseThrow(() -> new EntityNotFoundException("Employee", employeeId));
+        employeeRepository.findById(employeeId).orElseThrow(() -> new EntityNotFoundException("Employee", employeeId));
         return employeeShiftRepository.findByEmployeeId(employeeId);
     }
 
@@ -108,8 +105,7 @@ public class ShiftService {
 
     @Transactional
     public EmployeeShift assignEmployeeToShift(Integer employeeId, Integer shiftId) {
-        employeeRepository.findById(employeeId)
-            .orElseThrow(() -> new EntityNotFoundException("Employee", employeeId));
+        employeeRepository.findById(employeeId).orElseThrow(() -> new EntityNotFoundException("Employee", employeeId));
         Shift shift = getShiftById(shiftId);
 
         List<EmployeeShift> existing = employeeShiftRepository.findByEmployeeId(employeeId);
@@ -133,8 +129,9 @@ public class ShiftService {
 
     @Transactional
     public void removeEmployeeFromShift(Integer employeeShiftId) {
-        EmployeeShift employeeShift = employeeShiftRepository.findById(employeeShiftId)
-            .orElseThrow(() -> new EntityNotFoundException("EmployeeShift", employeeShiftId));
+        EmployeeShift employeeShift = employeeShiftRepository
+                .findById(employeeShiftId)
+                .orElseThrow(() -> new EntityNotFoundException("EmployeeShift", employeeShiftId));
         employeeShiftRepository.delete(employeeShift);
         log.info("EmployeeShift {} deleted", employeeShiftId);
     }

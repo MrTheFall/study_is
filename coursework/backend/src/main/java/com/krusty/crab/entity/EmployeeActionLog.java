@@ -1,9 +1,8 @@
 package com.krusty.crab.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
+import lombok.*;
 
 @Entity
 @Table(name = "employee_action_logs")
@@ -19,8 +18,7 @@ public class EmployeeActionLog {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "employee_id",
-        foreignKey = @ForeignKey(name = "fk_employee_action_logs_employee"))
+    @JoinColumn(name = "employee_id", foreignKey = @ForeignKey(name = "fk_employee_action_logs_employee"))
     private Employee employee;
 
     @Column(name = "action", nullable = false, length = 64)

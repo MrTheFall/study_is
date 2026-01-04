@@ -1,12 +1,11 @@
 package com.krusty.crab.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.*;
 
 @Entity
 @Table(name = "employees", uniqueConstraints = @UniqueConstraint(name = "uq_employees_login", columnNames = "login"))

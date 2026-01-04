@@ -17,7 +17,8 @@ public class SequenceSyncConfig {
     public void syncSequences() {
         log.info("Synchronizing database sequences...");
         try {
-            String sql = """
+            String sql =
+                    """
                 do $$
                 declare
                     max_id integer;

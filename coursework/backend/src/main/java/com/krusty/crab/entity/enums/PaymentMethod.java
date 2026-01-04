@@ -1,9 +1,8 @@
 package com.krusty.crab.entity.enums;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
-import com.fasterxml.jackson.annotation.JsonValue;
-
 
 public enum PaymentMethod {
     CASH("cash"),

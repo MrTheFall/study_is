@@ -8,14 +8,12 @@ import com.krusty.crab.entity.Order;
 import com.krusty.crab.service.AnalyticsService;
 import com.krusty.crab.service.InventoryService;
 import com.krusty.crab.service.OrderService;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
 
 @RestController
 @RequestMapping("/api/test")
@@ -45,15 +43,11 @@ public class TestController {
 
     @GetMapping("/sales-summary")
     public ResponseEntity<SalesSummary> getSalesSummary(
-            @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to) {
+            @RequestParam(required = false) String from, @RequestParam(required = false) String to) {
 
-        LocalDateTime fromDate = from != null
-            ? LocalDateTime.parse(from)
-            : LocalDateTime.now().minusDays(30);
-        LocalDateTime toDate = to != null
-            ? LocalDateTime.parse(to)
-            : LocalDateTime.now();
+        LocalDateTime fromDate =
+                from != null ? LocalDateTime.parse(from) : LocalDateTime.now().minusDays(30);
+        LocalDateTime toDate = to != null ? LocalDateTime.parse(to) : LocalDateTime.now();
 
         SalesSummary summary = analyticsService.getSalesSummary(fromDate, toDate);
         return ResponseEntity.ok(summary);
@@ -65,20 +59,16 @@ public class TestController {
             @RequestParam(required = false) String to,
             @RequestParam(defaultValue = "10") Integer limit) {
 
-        LocalDateTime fromDate = from != null
-            ? LocalDateTime.parse(from)
-            : LocalDateTime.now().minusDays(30);
-        LocalDateTime toDate = to != null
-            ? LocalDateTime.parse(to)
-            : LocalDateTime.now();
+        LocalDateTime fromDate =
+                from != null ? LocalDateTime.parse(from) : LocalDateTime.now().minusDays(30);
+        LocalDateTime toDate = to != null ? LocalDateTime.parse(to) : LocalDateTime.now();
 
         List<TopMenuItem> items = analyticsService.getTopMenuItems(fromDate, toDate, limit);
         return ResponseEntity.ok(items);
     }
 
     @GetMapping("/low-stock")
-    public ResponseEntity<List<LowStockItem>> getLowStock(
-            @RequestParam(defaultValue = "1.0") Double thresholdFactor) {
+    public ResponseEntity<List<LowStockItem>> getLowStock(@RequestParam(defaultValue = "1.0") Double thresholdFactor) {
         List<LowStockItem> items = inventoryService.getLowStock(thresholdFactor);
         return ResponseEntity.ok(items);
     }

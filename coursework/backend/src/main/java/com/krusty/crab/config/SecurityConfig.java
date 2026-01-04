@@ -3,6 +3,8 @@ package com.krusty.crab.config;
 import com.krusty.crab.security.JwtAuthenticationFilter;
 import com.krusty.crab.security.RestAccessDeniedHandler;
 import com.krusty.crab.security.RestAuthenticationEntryPoint;
+import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -17,9 +19,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -36,35 +35,38 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
+        http.csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
                 .logout(logout -> logout.disable())
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(restAuthenticationEntryPoint)
-                        .accessDeniedHandler(restAccessDeniedHandler)
-                )
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/error", "/error/**").permitAll()
-                        .requestMatchers("/bank/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/payments/online/return", "/payments/online/notify").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/login/client", "/auth/login/employee").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/clients").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/menu", "/menu/**").permitAll()
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(restAuthenticationEntryPoint)
+                        .accessDeniedHandler(restAccessDeniedHandler))
+                .authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/**")
+                        .permitAll()
+                        .requestMatchers("/error", "/error/**")
+                        .permitAll()
+                        .requestMatchers("/bank/**")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/payments/online/return", "/payments/online/notify")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/login/client", "/auth/login/employee")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/clients")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/menu", "/menu/**")
+                        .permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/api-docs",
                                 "/api-docs/**",
                                 "/v3/api-docs",
-                                "/v3/api-docs/**"
-                        ).permitAll()
-                        .anyRequest().authenticated()
-                )
+                                "/v3/api-docs/**")
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -74,9 +76,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         List<String> allowedOrigins = Arrays.asList(frontendUrl.split(","));
-        configuration.setAllowedOrigins(allowedOrigins.stream()
-                .map(String::trim)
-                .toList());
+        configuration.setAllowedOrigins(
+                allowedOrigins.stream().map(String::trim).toList());
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));

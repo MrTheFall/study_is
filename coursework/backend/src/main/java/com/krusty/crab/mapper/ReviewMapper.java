@@ -1,13 +1,12 @@
 package com.krusty.crab.mapper;
 
 import com.krusty.crab.dto.generated.ReviewCreateRequest;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.NullValuePropertyMappingStrategy;
-
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface ReviewMapper {
@@ -16,7 +15,11 @@ public interface ReviewMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "order", ignore = true)
     @Mapping(target = "client", ignore = true)
-    @Mapping(target = "rating", expression = "java(request.getRating() != null ? com.krusty.crab.entity.enums.Rating.fromValue(request.getRating()) : null)")
+    @Mapping(
+            target = "rating",
+            expression = "java(request.getRating() != null ? "
+                    + "com.krusty.crab.entity.enums.Rating.fromValue(request.getRating()) "
+                    + ": null)")
     com.krusty.crab.entity.Review toEntity(ReviewCreateRequest request);
 
     @Mapping(target = "orderId", expression = "java(entity.getOrder() != null ? entity.getOrder().getId() : null)")
@@ -30,14 +33,13 @@ public interface ReviewMapper {
     }
 
     default com.krusty.crab.entity.Review toEntityWithRelations(
-            ReviewCreateRequest request,
-            com.krusty.crab.entity.Order order,
-            com.krusty.crab.entity.Client client) {
+            ReviewCreateRequest request, com.krusty.crab.entity.Order order, com.krusty.crab.entity.Client client) {
         com.krusty.crab.entity.Review review = toEntity(request);
         review.setOrder(order);
         review.setClient(client);
         return review;
     }
 
-    java.util.List<com.krusty.crab.dto.generated.Review> toDtoList(java.util.List<com.krusty.crab.entity.Review> entities);
+    java.util.List<com.krusty.crab.dto.generated.Review> toDtoList(
+            java.util.List<com.krusty.crab.entity.Review> entities);
 }

@@ -2,11 +2,10 @@ package com.krusty.crab.entity;
 
 import com.krusty.crab.entity.enums.OnlinePaymentStatus;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import lombok.*;
 
 @Entity
 @Table(name = "online_payment_sessions")
@@ -22,8 +21,10 @@ public class OnlinePaymentSession {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false,
-        foreignKey = @ForeignKey(name = "fk_online_payment_sessions_order"))
+    @JoinColumn(
+            name = "order_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_online_payment_sessions_order"))
     private Order order;
 
     @Column(name = "amount", nullable = false, precision = 14, scale = 2)

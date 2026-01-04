@@ -1,10 +1,9 @@
 package com.krusty.crab.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import lombok.*;
 
 @Entity
 @Table(name = "salary_payments")
@@ -20,8 +19,7 @@ public class SalaryPayment {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "employee_id",
-        foreignKey = @ForeignKey(name = "fk_salary_payments_employee"))
+    @JoinColumn(name = "employee_id", foreignKey = @ForeignKey(name = "fk_salary_payments_employee"))
     private Employee employee;
 
     @Column(name = "amount", nullable = false, precision = 14, scale = 2)

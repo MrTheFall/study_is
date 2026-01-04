@@ -9,15 +9,14 @@ import com.krusty.crab.repository.IngredientRepository;
 import com.krusty.crab.repository.InventoryRepository;
 import com.krusty.crab.repository.InventoryTransactionRepository;
 import com.krusty.crab.util.DbErrorUtil;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -46,8 +45,9 @@ public class InventoryService {
 
     @Transactional
     public void adjustInventory(Integer ingredientId, Double delta, Integer employeeId, String reason) {
-        ingredientRepository.findById(ingredientId)
-            .orElseThrow(() -> new EntityNotFoundException("Ingredient", ingredientId));
+        ingredientRepository
+                .findById(ingredientId)
+                .orElseThrow(() -> new EntityNotFoundException("Ingredient", ingredientId));
 
         if (delta == null) {
             throw new InventoryException("Delta cannot be null");
@@ -55,10 +55,16 @@ public class InventoryService {
 
         try {
             inventoryRepository.callAdjustInventory(ingredientId, delta, reason, employeeId);
-            log.info("Inventory adjusted for ingredient {} by {} (employeeId={}, reason={})", ingredientId, delta, employeeId, reason);
+            log.info(
+                    "Inventory adjusted for ingredient {} by {} (employeeId={}, reason={})",
+                    ingredientId,
+                    delta,
+                    employeeId,
+                    reason);
         } catch (DataAccessException e) {
             String dbMessage = DbErrorUtil.extractMeaningfulMessage(e);
-            throw new InventoryException(dbMessage != null ? dbMessage : "Failed to adjust inventory: " + e.getMessage(), e);
+            throw new InventoryException(
+                    dbMessage != null ? dbMessage : "Failed to adjust inventory: " + e.getMessage(), e);
         } catch (Exception e) {
             throw new InventoryException("Failed to adjust inventory: " + e.getMessage(), e);
         }
@@ -69,8 +75,9 @@ public class InventoryService {
     }
 
     public InventoryRecord getInventoryRecordByIngredientId(Integer ingredientId) {
-        return inventoryRepository.findByIngredientId(ingredientId)
-            .orElseThrow(() -> new EntityNotFoundException("InventoryRecord", "ingredientId", ingredientId));
+        return inventoryRepository
+                .findByIngredientId(ingredientId)
+                .orElseThrow(() -> new EntityNotFoundException("InventoryRecord", "ingredientId", ingredientId));
     }
 
     @Transactional

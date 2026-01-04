@@ -109,6 +109,7 @@ spotless {
 	java {
 		target 'src/**/*.java'
 		targetExclude "$buildDir/**"
+		palantirJavaFormat()
 		trimTrailingWhitespace()
 		endWithNewline()
 	}

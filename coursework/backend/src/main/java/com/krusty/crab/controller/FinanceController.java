@@ -6,14 +6,13 @@ import com.krusty.crab.mapper.SalaryPaymentMapper;
 import com.krusty.crab.service.EmployeeActionLogService;
 import com.krusty.crab.service.SalaryPaymentService;
 import com.krusty.crab.util.AuditActions;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,40 +26,37 @@ public class FinanceController implements FinanceApi {
 
     @Override
     public ResponseEntity<List<com.krusty.crab.dto.generated.SalaryPayment>> getSalaryPayments(
-        Integer employeeId,
-        java.time.OffsetDateTime from,
-        java.time.OffsetDateTime to,
-        Integer limit,
-        Integer offset
-    ) {
-        log.info("Getting salary payments, employeeId: {}, from: {}, to: {}, limit: {}, offset: {}", employeeId, from, to, limit, offset);
-        List<com.krusty.crab.entity.SalaryPayment> payments = salaryPaymentService.list(employeeId, from, to, limit, offset);
+            Integer employeeId,
+            java.time.OffsetDateTime from,
+            java.time.OffsetDateTime to,
+            Integer limit,
+            Integer offset) {
+        log.info(
+                "Getting salary payments, employeeId: {}, from: {}, to: {}, limit: {}, offset: {}",
+                employeeId,
+                from,
+                to,
+                limit,
+                offset);
+        List<com.krusty.crab.entity.SalaryPayment> payments =
+                salaryPaymentService.list(employeeId, from, to, limit, offset);
         return ResponseEntity.ok(salaryPaymentMapper.toDtoList(payments));
     }
 
     @Override
-    public ResponseEntity<com.krusty.crab.dto.generated.SalaryPayment> createSalaryPayment(SalaryPaymentCreateRequest salaryPaymentCreateRequest) {
+    public ResponseEntity<com.krusty.crab.dto.generated.SalaryPayment> createSalaryPayment(
+            SalaryPaymentCreateRequest salaryPaymentCreateRequest) {
         log.info("Creating salary payment for employee {}", salaryPaymentCreateRequest.getEmployeeId());
         com.krusty.crab.entity.SalaryPayment payment = salaryPaymentService.create(
-            salaryPaymentCreateRequest.getEmployeeId(),
-            salaryPaymentCreateRequest.getAmount(),
-            salaryPaymentCreateRequest.getNote(),
-            salaryPaymentCreateRequest.getPaidAt()
-        );
+                salaryPaymentCreateRequest.getEmployeeId(),
+                salaryPaymentCreateRequest.getAmount(),
+                salaryPaymentCreateRequest.getNote(),
+                salaryPaymentCreateRequest.getPaidAt());
         String details = String.format(
-            "employeeId=%s, amount=%s",
-            salaryPaymentCreateRequest.getEmployeeId(),
-            salaryPaymentCreateRequest.getAmount()
-        );
+                "employeeId=%s, amount=%s",
+                salaryPaymentCreateRequest.getEmployeeId(), salaryPaymentCreateRequest.getAmount());
         actionLogService.logCurrentEmployeeAction(
-            AuditActions.SALARY_PAYMENT_CREATE,
-            "salary_payment",
-            payment.getId(),
-            null,
-            null,
-            null,
-            details
-        );
+                AuditActions.SALARY_PAYMENT_CREATE, "salary_payment", payment.getId(), null, null, null, details);
         return ResponseEntity.status(HttpStatus.CREATED).body(salaryPaymentMapper.toDto(payment));
     }
 }

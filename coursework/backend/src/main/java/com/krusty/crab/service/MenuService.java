@@ -4,15 +4,14 @@ import com.krusty.crab.entity.MenuItem;
 import com.krusty.crab.exception.EntityNotFoundException;
 import com.krusty.crab.exception.MenuException;
 import com.krusty.crab.repository.MenuItemRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -30,8 +29,7 @@ public class MenuService {
     }
 
     public MenuItem getMenuItemById(Integer id) {
-        return menuItemRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("MenuItem", id));
+        return menuItemRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("MenuItem", id));
     }
 
     public List<MenuItem> searchMenuItems(String name) {

@@ -8,15 +8,14 @@ import com.krusty.crab.mapper.PaymentMapper;
 import com.krusty.crab.repository.OrderRepository;
 import com.krusty.crab.repository.PaymentRepository;
 import com.krusty.crab.util.DbErrorUtil;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -29,8 +28,7 @@ public class PaymentService {
 
     @Transactional
     public Integer processPayment(Integer orderId, PaymentMethod method, boolean simulateFailure) {
-        orderRepository.findById(orderId)
-            .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
+        orderRepository.findById(orderId).orElseThrow(() -> new EntityNotFoundException("Order", orderId));
 
         if (paymentRepository.existsByOrderId(orderId)) {
             throw new PaymentException("Payment already exists for order " + orderId);
@@ -46,25 +44,21 @@ public class PaymentService {
             return paymentId;
         } catch (DataAccessException e) {
             String dbMessage = DbErrorUtil.extractMeaningfulMessage(e);
-            throw new PaymentException(dbMessage != null ? dbMessage : "Failed to process payment: " + e.getMessage(), e);
+            throw new PaymentException(
+                    dbMessage != null ? dbMessage : "Failed to process payment: " + e.getMessage(), e);
         } catch (Exception e) {
             throw new PaymentException("Failed to process payment: " + e.getMessage(), e);
         }
     }
 
     public Payment getPaymentByOrderId(Integer orderId) {
-        return paymentRepository.findByOrderId(orderId)
-            .orElseThrow(() -> new EntityNotFoundException("Payment", orderId));
+        return paymentRepository
+                .findByOrderId(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Payment", orderId));
     }
 
     public List<Payment> listPayments(
-        Integer clientId,
-        Boolean success,
-        OffsetDateTime from,
-        OffsetDateTime to,
-        Integer limit,
-        Integer offset
-    ) {
+            Integer clientId, Boolean success, OffsetDateTime from, OffsetDateTime to, Integer limit, Integer offset) {
         int resolvedLimit = limit != null ? limit : 50;
         int resolvedOffset = offset != null ? offset : 0;
         if (resolvedLimit < 1) resolvedLimit = 1;
@@ -82,9 +76,10 @@ public class PaymentService {
     }
 
     @Transactional
-    public com.krusty.crab.dto.generated.ChangeResponse processCashPayment(Integer orderId, java.math.BigDecimal amountReceived) {
-        com.krusty.crab.entity.Order order = orderRepository.findById(orderId)
-            .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
+    public com.krusty.crab.dto.generated.ChangeResponse processCashPayment(
+            Integer orderId, java.math.BigDecimal amountReceived) {
+        com.krusty.crab.entity.Order order =
+                orderRepository.findById(orderId).orElseThrow(() -> new EntityNotFoundException("Order", orderId));
 
         if (amountReceived.compareTo(order.getTotalAmount()) < 0) {
             throw new PaymentException("Amount received is less than order total");

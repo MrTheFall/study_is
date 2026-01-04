@@ -12,25 +12,22 @@ import com.krusty.crab.exception.PaymentException;
 import com.krusty.crab.exception.ValidationException;
 import com.krusty.crab.repository.OnlinePaymentSessionRepository;
 import com.krusty.crab.repository.PaymentRepository;
+import java.time.LocalDateTime;
+import java.util.EnumSet;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.EnumSet;
-import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class OnlinePaymentService {
 
-    private static final EnumSet<OnlinePaymentStatus> ACTIVE_STATUSES = EnumSet.of(
-        OnlinePaymentStatus.CREATED,
-        OnlinePaymentStatus.CHALLENGE_REQUIRED
-    );
+    private static final EnumSet<OnlinePaymentStatus> ACTIVE_STATUSES =
+            EnumSet.of(OnlinePaymentStatus.CREATED, OnlinePaymentStatus.CHALLENGE_REQUIRED);
 
     private final OnlinePaymentSessionRepository sessionRepository;
     private final PaymentRepository paymentRepository;
@@ -45,13 +42,12 @@ public class OnlinePaymentService {
     private int challengeTtlMinutes;
 
     public OnlinePaymentSession startPayment(
-        Order order,
-        CardData cardData,
-        boolean simulateFailure,
-        String returnUrl,
-        String callbackUrl,
-        String bankBaseUrl
-    ) {
+            Order order,
+            CardData cardData,
+            boolean simulateFailure,
+            String returnUrl,
+            String callbackUrl,
+            String bankBaseUrl) {
         if (order.getId() == null) {
             throw new ValidationException("orderId is required");
         }
@@ -62,9 +58,9 @@ public class OnlinePaymentService {
         validateCardData(cardData);
 
         OnlinePaymentSession existing = sessionRepository
-            .findFirstByOrderIdAndStatusInOrderByCreatedAtDesc(order.getId(), ACTIVE_STATUSES)
-            .filter(session -> !isExpired(session))
-            .orElse(null);
+                .findFirstByOrderIdAndStatusInOrderByCreatedAtDesc(order.getId(), ACTIVE_STATUSES)
+                .filter(session -> !isExpired(session))
+                .orElse(null);
 
         if (existing != null) {
             return existing;
@@ -72,41 +68,43 @@ public class OnlinePaymentService {
 
         String sanitizedNumber = sanitizeCardNumber(cardData.number());
         String last4 = sanitizedNumber.length() >= 4
-            ? sanitizedNumber.substring(sanitizedNumber.length() - 4)
-            : sanitizedNumber;
+                ? sanitizedNumber.substring(sanitizedNumber.length() - 4)
+                : sanitizedNumber;
 
         BankPaymentInitRequest bankRequest = new BankPaymentInitRequest(
-            merchantId,
-            order.getId(),
-            order.getTotalAmount(),
-            "USD",
-            sanitizedNumber,
-            cardData.expiry(),
-            cardData.cvv(),
-            cardData.holder(),
-            returnUrl,
-            callbackUrl,
-            simulateFailure
-        );
+                merchantId,
+                order.getId(),
+                order.getTotalAmount(),
+                "USD",
+                sanitizedNumber,
+                cardData.expiry(),
+                cardData.cvv(),
+                cardData.holder(),
+                returnUrl,
+                callbackUrl,
+                simulateFailure);
 
         BankPaymentInitResponse bankResponse = bankSimulatorClient.initiatePayment(bankRequest, bankBaseUrl);
 
         LocalDateTime now = LocalDateTime.now();
         OnlinePaymentSession session = OnlinePaymentSession.builder()
-            .id(UUID.randomUUID())
-            .order(order)
-            .amount(order.getTotalAmount())
-            .status(OnlinePaymentStatus.CHALLENGE_REQUIRED)
-            .bankTransactionId(bankResponse.transactionId())
-            .redirectUrl(bankResponse.acsUrl())
-            .cardLast4(last4)
-            .createdAt(now)
-            .updatedAt(now)
-            .expiresAt(now.plusMinutes(challengeTtlMinutes))
-            .build();
+                .id(UUID.randomUUID())
+                .order(order)
+                .amount(order.getTotalAmount())
+                .status(OnlinePaymentStatus.CHALLENGE_REQUIRED)
+                .bankTransactionId(bankResponse.transactionId())
+                .redirectUrl(bankResponse.acsUrl())
+                .cardLast4(last4)
+                .createdAt(now)
+                .updatedAt(now)
+                .expiresAt(now.plusMinutes(challengeTtlMinutes))
+                .build();
 
         sessionRepository.save(session);
-        log.info("Online payment session created for order {} with bank tx {}", order.getId(), bankResponse.transactionId());
+        log.info(
+                "Online payment session created for order {} with bank tx {}",
+                order.getId(),
+                bankResponse.transactionId());
         return session;
     }
 
@@ -114,20 +112,23 @@ public class OnlinePaymentService {
     public OnlinePaymentStatus finalizeFromBank(BankPaymentResultPayload payload) {
         validateBankPayload(payload);
 
-        OnlinePaymentSession session = sessionRepository.findByBankTransactionId(payload.transactionId())
-            .orElseThrow(() -> new PaymentException("Unknown bank transaction " + payload.transactionId()));
+        OnlinePaymentSession session = sessionRepository
+                .findByBankTransactionId(payload.transactionId())
+                .orElseThrow(() -> new PaymentException("Unknown bank transaction " + payload.transactionId()));
 
         if (session.getStatus() == OnlinePaymentStatus.SUCCEEDED
-            || session.getStatus() == OnlinePaymentStatus.CANCELLED
-            || session.getStatus() == OnlinePaymentStatus.FAILED) {
+                || session.getStatus() == OnlinePaymentStatus.CANCELLED
+                || session.getStatus() == OnlinePaymentStatus.FAILED) {
             return session.getStatus();
         }
 
-        if (payload.orderId() == null || !payload.orderId().equals(session.getOrder().getId())) {
+        if (payload.orderId() == null
+                || !payload.orderId().equals(session.getOrder().getId())) {
             throw new ValidationException("Order does not match payment session");
         }
-        if (payload.amount() == null || session.getAmount() == null
-            || payload.amount().compareTo(session.getAmount()) != 0) {
+        if (payload.amount() == null
+                || session.getAmount() == null
+                || payload.amount().compareTo(session.getAmount()) != 0) {
             throw new ValidationException("Amount does not match payment session");
         }
 
@@ -218,5 +219,4 @@ public class OnlinePaymentService {
     }
 
     public record CardData(String number, String expiry, String cvv, String holder) {}
-
 }

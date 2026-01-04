@@ -1,12 +1,6 @@
 package com.krusty.crab.service;
 
 import com.krusty.crab.exception.ValidationException;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Duration;
@@ -14,6 +8,11 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
@@ -44,7 +43,8 @@ public class BankSignatureService {
             throw new ValidationException("Missing signature");
         }
         String expected = sign(payload);
-        if (!MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8), signature.getBytes(StandardCharsets.UTF_8))) {
+        if (!MessageDigest.isEqual(
+                expected.getBytes(StandardCharsets.UTF_8), signature.getBytes(StandardCharsets.UTF_8))) {
             throw new ValidationException("Invalid signature");
         }
     }
@@ -61,8 +61,8 @@ public class BankSignatureService {
     public String canonicalize(Map<String, String> payload) {
         Map<String, String> sorted = new TreeMap<>(payload);
         return sorted.entrySet().stream()
-            .map(entry -> entry.getKey() + "=" + entry.getValue())
-            .collect(Collectors.joining("&"));
+                .map(entry -> entry.getKey() + "=" + entry.getValue())
+                .collect(Collectors.joining("&"));
     }
 
     private static String bytesToHex(byte[] bytes) {

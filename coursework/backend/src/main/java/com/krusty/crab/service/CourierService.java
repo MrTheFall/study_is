@@ -7,13 +7,12 @@ import com.krusty.crab.exception.EntityNotFoundException;
 import com.krusty.crab.exception.ValidationException;
 import com.krusty.crab.repository.CourierRepository;
 import com.krusty.crab.repository.OrderRepository;
+import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,12 +23,11 @@ public class CourierService {
     private final OrderRepository orderRepository;
 
     private static final List<OrderStatus> BUSY_STATUSES = Arrays.asList(
-        OrderStatus.PENDING,
-        OrderStatus.CONFIRMED,
-        OrderStatus.PREPARING,
-        OrderStatus.READY,
-        OrderStatus.DELIVERING
-    );
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PREPARING,
+            OrderStatus.READY,
+            OrderStatus.DELIVERING);
 
     public List<Courier> getAllCouriers() {
         List<Courier> couriers = courierRepository.findAll();
@@ -40,8 +38,9 @@ public class CourierService {
     }
 
     public Courier getCourierById(Integer courierId) {
-        Courier courier = courierRepository.findById(courierId)
-            .orElseThrow(() -> new EntityNotFoundException("Courier", courierId));
+        Courier courier = courierRepository
+                .findById(courierId)
+                .orElseThrow(() -> new EntityNotFoundException("Courier", courierId));
         courier.setBusy(isCourierBusy(courier.getId()));
         return courier;
     }

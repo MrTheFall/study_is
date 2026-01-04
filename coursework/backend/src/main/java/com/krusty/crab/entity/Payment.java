@@ -2,14 +2,12 @@ package com.krusty.crab.entity;
 
 import com.krusty.crab.entity.enums.PaymentMethod;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import lombok.*;
 
 @Entity
-@Table(name = "payments",
-    uniqueConstraints = @UniqueConstraint(name = "uq_payments_order", columnNames = "order_id"))
+@Table(name = "payments", uniqueConstraints = @UniqueConstraint(name = "uq_payments_order", columnNames = "order_id"))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,8 +20,11 @@ public class Payment {
     private Integer id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false, unique = true,
-        foreignKey = @ForeignKey(name = "fk_payments_order"))
+    @JoinColumn(
+            name = "order_id",
+            nullable = false,
+            unique = true,
+            foreignKey = @ForeignKey(name = "fk_payments_order"))
     private Order order;
 
     @Column(name = "method", nullable = false, length = 32)
