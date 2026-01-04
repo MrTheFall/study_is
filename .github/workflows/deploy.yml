@@ -2,12 +2,21 @@ name: Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      allow_non_main:
+        description: Allow deploys from non-main refs
+        required: false
+        default: "false"
 
 jobs:
   deploy:
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
+      - name: Guard non-main deploys
+        if: ${{ github.ref != 'refs/heads/main' && inputs.allow_non_main != 'true' }}
+        run: |
+          echo "Deploys are allowed only from main. Re-run with allow_non_main=true to override."
+          exit 1
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Java
