@@ -9,7 +9,7 @@ import com.krusty.crab.dto.generated.TopMenuItem;
 import com.krusty.crab.mapper.ReportViewMapper;
 import com.krusty.crab.security.UserPrincipal;
 import com.krusty.crab.service.AnalyticsService;
-import com.krusty.crab.util.SecurityUtil;
+import com.krusty.crab.security.SecurityContext;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -33,7 +33,7 @@ public class AnalyticsController implements AnalyticsApi {
     public ResponseEntity<SalesSummary> getSalesSummary(
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         log.info("Getting sales summary from {} to {}", from, to);
         LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
         LocalDateTime toLocal = to != null ? to.toLocalDateTime() : null;
@@ -47,7 +47,7 @@ public class AnalyticsController implements AnalyticsApi {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
             Integer limit) {
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         log.info("Getting top menu items from {} to {} with limit {}", from, to, limit);
         LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
         LocalDateTime toLocal = to != null ? to.toLocalDateTime() : null;
@@ -60,7 +60,7 @@ public class AnalyticsController implements AnalyticsApi {
     public ResponseEntity<List<SalesByEmployeeItem>> getSalesByEmployee(
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         log.info("Getting sales by employee from {} to {}", from, to);
         LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
         LocalDateTime toLocal = to != null ? to.toLocalDateTime() : null;
@@ -73,7 +73,7 @@ public class AnalyticsController implements AnalyticsApi {
     public ResponseEntity<List<SalesByTimeOfDayItem>> getSalesByTimeOfDay(
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         log.info("Getting sales by time of day from {} to {}", from, to);
         LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
         LocalDateTime toLocal = to != null ? to.toLocalDateTime() : null;
@@ -94,7 +94,7 @@ public class AnalyticsController implements AnalyticsApi {
     public ResponseEntity<FinancialSummary> getFinancialSummary(
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         log.info("Getting financial summary from {} to {}", from, to);
         LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
         LocalDateTime toLocal = to != null ? to.toLocalDateTime() : null;

@@ -15,7 +15,7 @@ import com.krusty.crab.service.EmployeeActionLogService;
 import com.krusty.crab.service.OnlinePaymentService;
 import com.krusty.crab.service.PaymentService;
 import com.krusty.crab.util.AuditActions;
-import com.krusty.crab.util.SecurityUtil;
+import com.krusty.crab.security.SecurityContext;
 import java.time.OffsetDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +49,7 @@ public class PaymentsController implements PaymentsApi {
                 limit,
                 offset);
 
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         Integer clientId = null;
 
         if ("CLIENT".equals(user.getUserType())) {
@@ -85,7 +85,7 @@ public class PaymentsController implements PaymentsApi {
         boolean simulateFailure = Boolean.TRUE.equals(paymentRequest.getSimulateFailure());
         Integer paymentId = paymentService.processPayment(paymentRequest.getOrderId(), method, simulateFailure);
         com.krusty.crab.entity.Payment payment = paymentService.getPaymentByOrderId(paymentRequest.getOrderId());
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         if ("EMPLOYEE".equals(user.getUserType())) {
             String details = String.format("method=%s, amount=%s", method.getValue(), order.getTotalAmount());
             actionLogService.logAction(
@@ -161,7 +161,7 @@ public class PaymentsController implements PaymentsApi {
         validatePaymentAccess(order, PaymentMethod.CASH);
         com.krusty.crab.dto.generated.ChangeResponse response = paymentService.processCashPayment(
                 cashPaymentRequest.getOrderId(), cashPaymentRequest.getAmountReceived());
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         if ("EMPLOYEE".equals(user.getUserType())) {
             String details = String.format(
                     "method=%s, amountReceived=%s",
@@ -192,7 +192,7 @@ public class PaymentsController implements PaymentsApi {
     }
 
     private void validatePaymentAccess(Order order, PaymentMethod method) {
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
 
         if (order.getPaymentMethod() != null && order.getPaymentMethod() != method) {
             throw new ValidationException("Payment method does not match the order");
@@ -241,7 +241,7 @@ public class PaymentsController implements PaymentsApi {
     }
 
     private void validatePaymentViewAccess(Order order) {
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
 
         if ("CLIENT".equals(user.getUserType())) {
             Integer orderClientId =
@@ -261,7 +261,7 @@ public class PaymentsController implements PaymentsApi {
     }
 
     private void requireEmployeeRoleAny(String... allowedRoles) {
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
 
         if (!"EMPLOYEE".equals(user.getUserType())) {
             throw new AccessDeniedException("Only employees can perform this action");

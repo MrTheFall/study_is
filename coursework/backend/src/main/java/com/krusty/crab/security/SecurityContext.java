@@ -1,13 +1,12 @@
-package com.krusty.crab.util;
+package com.krusty.crab.security;
 
-import com.krusty.crab.security.UserPrincipal;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-public class SecurityUtil {
+public class SecurityContext {
 
     public static UserPrincipal getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

@@ -11,7 +11,7 @@ import com.krusty.crab.security.UserPrincipal;
 import com.krusty.crab.service.ClientService;
 import com.krusty.crab.service.OrderService;
 import com.krusty.crab.service.ReviewService;
-import com.krusty.crab.util.SecurityUtil;
+import com.krusty.crab.security.SecurityContext;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +36,7 @@ public class ReviewsController implements ReviewsApi {
     @PreAuthorize("hasRole('CLIENT') and authentication.principal.userId == #p0.clientId")
     public ResponseEntity<com.krusty.crab.dto.generated.Review> createReview(ReviewCreateRequest reviewCreateRequest) {
         log.info("Creating review for order: {}", reviewCreateRequest.getOrderId());
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         if (reviewCreateRequest.getClientId() == null) {
             throw new ValidationException("clientId is required");
         }
@@ -63,7 +63,7 @@ public class ReviewsController implements ReviewsApi {
             "hasRole('Manager') or (hasRole('CLIENT') and (#p0 == null or authentication.principal.userId == #p0))")
     public ResponseEntity<List<com.krusty.crab.dto.generated.Review>> getAllReviews(Integer clientId, Integer orderId) {
         log.info("Getting reviews, clientId: {}, orderId: {}", clientId, orderId);
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         if ("CLIENT".equals(user.getUserType())) {
             if (clientId == null) {
                 clientId = user.getUserId();
@@ -100,7 +100,7 @@ public class ReviewsController implements ReviewsApi {
     }
 
     private void assertReviewAccess(Review review) {
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         if ("CLIENT".equals(user.getUserType())) {
             Integer reviewClientId =
                     review.getClient() != null ? review.getClient().getId() : null;

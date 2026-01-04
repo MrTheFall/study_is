@@ -5,7 +5,7 @@ import com.krusty.crab.entity.EmployeeActionLog;
 import com.krusty.crab.repository.EmployeeActionLogRepository;
 import com.krusty.crab.repository.EmployeeRepository;
 import com.krusty.crab.security.UserPrincipal;
-import com.krusty.crab.util.SecurityUtil;
+import com.krusty.crab.security.SecurityContext;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -66,7 +66,7 @@ public class EmployeeActionLogService {
             String details) {
         UserPrincipal user;
         try {
-            user = SecurityUtil.getCurrentUser();
+            user = SecurityContext.getCurrentUser();
         } catch (Exception e) {
             return;
         }

@@ -9,7 +9,7 @@ import com.krusty.crab.security.UserPrincipal;
 import com.krusty.crab.service.EmployeeActionLogService;
 import com.krusty.crab.service.InventoryService;
 import com.krusty.crab.util.AuditActions;
-import com.krusty.crab.util.SecurityUtil;
+import com.krusty.crab.security.SecurityContext;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +54,7 @@ public class InventoryController implements InventoryApi {
     @Override
     public ResponseEntity<com.krusty.crab.dto.generated.InventoryRecord> updateInventory(
             Integer ingredientId, InventoryUpdateRequest inventoryUpdateRequest) {
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         log.info(
                 "Updating inventory for ingredient: {} with delta: {}",
                 ingredientId,

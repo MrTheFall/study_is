@@ -18,7 +18,7 @@ import com.krusty.crab.security.UserPrincipal;
 import com.krusty.crab.service.EmployeeActionLogService;
 import com.krusty.crab.service.OrderService;
 import com.krusty.crab.util.AuditActions;
-import com.krusty.crab.util.SecurityUtil;
+import com.krusty.crab.security.SecurityContext;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +43,7 @@ public class OrdersController implements OrdersApi {
     @Override
     public ResponseEntity<PlaceOrder201Response> placeOrder(PlaceOrderRequest placeOrderRequest) {
         log.info("Placing order for client: {}", placeOrderRequest.getClientId());
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         if ("CLIENT".equals(user.getUserType())
                 && placeOrderRequest.getClientId() != null
                 && !placeOrderRequest.getClientId().equals(user.getUserId())) {
@@ -77,7 +77,7 @@ public class OrdersController implements OrdersApi {
     public ResponseEntity<List<com.krusty.crab.dto.generated.Order>> getAllOrders(
             com.krusty.crab.dto.generated.OrderStatus status, Integer clientId) {
         log.info("Getting all orders, status: {}, clientId: {}", status, clientId);
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         if ("CLIENT".equals(user.getUserType())) {
             clientId = user.getUserId();
         }
@@ -114,7 +114,7 @@ public class OrdersController implements OrdersApi {
             throw new ValidationException("status is required");
         }
 
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         String currentStatus = order.getStatus() != null ? order.getStatus().getValue() : null;
         com.krusty.crab.dto.generated.OrderStatus requestedStatus = updateOrderStatusRequest.getStatus();
 
@@ -230,7 +230,7 @@ public class OrdersController implements OrdersApi {
             throw new ValidationException("Payment method can only be changed for pending orders");
         }
 
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         if ("CLIENT".equals(user.getUserType())) {
             // ok (assertOrderAccess already checked ownership)
         } else if ("EMPLOYEE".equals(user.getUserType())) {
@@ -295,7 +295,7 @@ public class OrdersController implements OrdersApi {
             throw new ValidationException("Too many orderIds (max 200)");
         }
 
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         if ("CLIENT".equals(user.getUserType())) {
             long ownedCount = orderRepository.countOwnedByClient(user.getUserId(), normalized);
             if (ownedCount != normalized.size()) {
@@ -312,7 +312,7 @@ public class OrdersController implements OrdersApi {
     public ResponseEntity<com.krusty.crab.dto.generated.Order> assignCourierToOrder(
             Integer orderId, AssignCourierRequest assignCourierRequest) {
         log.info("Assigning courier {} to order {}", assignCourierRequest.getCourierId(), orderId);
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         Integer previousCourierId = null;
         if ("EMPLOYEE".equals(user.getUserType())) {
             Order before = orderService.getOrderById(orderId);
@@ -340,7 +340,7 @@ public class OrdersController implements OrdersApi {
     }
 
     private void assertOrderAccess(Order order) {
-        UserPrincipal user = SecurityUtil.getCurrentUser();
+        UserPrincipal user = SecurityContext.getCurrentUser();
         if ("CLIENT".equals(user.getUserType())) {
             Integer orderClientId =
                     order.getClient() != null ? order.getClient().getId() : null;
