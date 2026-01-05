@@ -88,7 +88,9 @@ public class PaymentWorkflowService {
     }
 
     public Payment getPaymentByOrderId(Integer orderId) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new EntityNotFoundException("Order", orderId));
+        Order order = orderRepository
+                .findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
         validatePaymentViewAccess(order);
         return paymentService.getPaymentByOrderId(orderId);
     }
