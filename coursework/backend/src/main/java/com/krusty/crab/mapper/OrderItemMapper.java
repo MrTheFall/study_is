@@ -1,5 +1,7 @@
 package com.krusty.crab.mapper;
 
+import com.krusty.crab.dto.generated.OrderItem;
+import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.NullValuePropertyMappingStrategy;
@@ -7,13 +9,10 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface OrderItemMapper {
 
-    @Mapping(target = "orderId", expression = "java(entity.getOrder() != null ? entity.getOrder().getId() : null)")
-    @Mapping(
-            target = "menuItemId",
-            expression = "java(entity.getMenuItem() != null ? entity.getMenuItem().getId() : null)")
-    @Mapping(target = "name", expression = "java(entity.getMenuItem() != null ? entity.getMenuItem().getName() : null)")
-    com.krusty.crab.dto.generated.OrderItem toDto(com.krusty.crab.entity.OrderItem entity);
+    @Mapping(target = "orderId", source = "order.id")
+    @Mapping(target = "menuItemId", source = "menuItem.id")
+    @Mapping(target = "name", source = "menuItem.name")
+    OrderItem toDto(com.krusty.crab.entity.OrderItem entity);
 
-    java.util.List<com.krusty.crab.dto.generated.OrderItem> toDtoList(
-            java.util.List<com.krusty.crab.entity.OrderItem> entities);
+    List<OrderItem> toDtoList(List<com.krusty.crab.entity.OrderItem> entities);
 }
