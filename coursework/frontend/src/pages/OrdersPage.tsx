@@ -657,13 +657,13 @@ export function OrdersPage() {
         return;
       }
 
-      const simulateFailure = sanitizedCardNumber === '0000000000000000';
+      const shouldSimulateFailure = sanitizedCardNumber === '0000000000000000';
       const response = await paymentsApi.startOnlinePayment({
         orderId: clientPayOrder.id,
         cardNumber: sanitizedCardNumber,
         cardExpiry: sanitizedExpiry,
         cardCvv: sanitizedCvv,
-        simulateFailure,
+        shouldSimulateFailure,
       });
       const redirectUrl = response.data.redirectUrl;
       if (!redirectUrl) {

@@ -2283,7 +2283,7 @@ components:
           type: integer
         method:
           $ref: '#/components/schemas/PaymentMethod'
-        simulateFailure:
+        shouldSimulateFailure:
           type: boolean
           description: Только для метода online - принудительно смоделировать ошибку платежа (UC-2 альтернативный поток 6а)
           default: false
@@ -2310,7 +2310,7 @@ components:
         cardHolder:
           type: string
           description: Имя держателя карты
-        simulateFailure:
+        shouldSimulateFailure:
           type: boolean
           description: Принудительно смоделировать отказ банка
           default: false

@@ -44,7 +44,7 @@ public class OnlinePaymentService {
     public OnlinePaymentSession startPayment(
             Order order,
             CardData cardData,
-            boolean simulateFailure,
+            boolean shouldSimulateFailure,
             String returnUrl,
             String callbackUrl,
             String bankBaseUrl) {
@@ -82,7 +82,7 @@ public class OnlinePaymentService {
                 cardData.holder(),
                 returnUrl,
                 callbackUrl,
-                simulateFailure);
+                shouldSimulateFailure);
 
         BankPaymentInitResponse bankResponse = bankSimulatorClient.initiatePayment(bankRequest, bankBaseUrl);
 

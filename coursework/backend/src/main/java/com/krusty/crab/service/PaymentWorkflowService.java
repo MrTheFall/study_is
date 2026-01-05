@@ -57,8 +57,8 @@ public class PaymentWorkflowService {
         }
 
         validatePaymentAccess(order, method);
-        boolean simulateFailure = Boolean.TRUE.equals(paymentRequest.getSimulateFailure());
-        paymentService.processPayment(paymentRequest.getOrderId(), method, simulateFailure);
+        boolean shouldSimulateFailure = Boolean.TRUE.equals(paymentRequest.getShouldSimulateFailure());
+        paymentService.processPayment(paymentRequest.getOrderId(), method, shouldSimulateFailure);
 
         Payment payment = paymentService.getPaymentByOrderId(paymentRequest.getOrderId());
         UserPrincipal user = SecurityContext.getCurrentUser();
@@ -106,11 +106,11 @@ public class PaymentWorkflowService {
                 request.getCardCvv(),
                 request.getCardHolder());
 
-        boolean simulateFailure = Boolean.TRUE.equals(request.getSimulateFailure());
+        boolean shouldSimulateFailure = Boolean.TRUE.equals(request.getShouldSimulateFailure());
         return onlinePaymentService.startPayment(
                 order,
                 cardData,
-                simulateFailure,
+                shouldSimulateFailure,
                 baseUrl + "/payments/online/return",
                 baseUrl + "/payments/online/notify",
                 baseUrl);

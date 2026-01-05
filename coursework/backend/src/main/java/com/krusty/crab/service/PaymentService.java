@@ -27,14 +27,14 @@ public class PaymentService {
     private final PaymentMapper paymentMapper;
 
     @Transactional
-    public Integer processPayment(Integer orderId, PaymentMethod method, boolean simulateFailure) {
+    public Integer processPayment(Integer orderId, PaymentMethod method, boolean shouldSimulateFailure) {
         orderRepository.findById(orderId).orElseThrow(() -> new EntityNotFoundException("Order", orderId));
 
         if (paymentRepository.existsByOrderId(orderId)) {
             throw new PaymentException("Payment already exists for order " + orderId);
         }
 
-        if (method == PaymentMethod.ONLINE && simulateFailure) {
+        if (method == PaymentMethod.ONLINE && shouldSimulateFailure) {
             throw new PaymentException("Online payment failed");
         }
 

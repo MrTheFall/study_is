@@ -13,4 +13,4 @@ public record BankPaymentInitRequest(
         String cardHolder,
         String returnUrl,
         String callbackUrl,
-        Boolean simulateFailure) {}
+        Boolean shouldSimulateFailure) {}

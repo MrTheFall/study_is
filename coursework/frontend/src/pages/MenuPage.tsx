@@ -346,13 +346,13 @@ export function MenuPage() {
       }
 
       if (paymentMethod === PaymentMethod.Online) {
-        const simulateFailure = sanitizedCardNumber === '0000000000000000';
+        const shouldSimulateFailure = sanitizedCardNumber === '0000000000000000';
         const response = await paymentsApi.startOnlinePayment({
           orderId,
           cardNumber: sanitizedCardNumber,
           cardExpiry: sanitizedExpiry,
           cardCvv: sanitizedCvv,
-          simulateFailure,
+          shouldSimulateFailure,
         });
 
         const redirectUrl = response.data.redirectUrl;

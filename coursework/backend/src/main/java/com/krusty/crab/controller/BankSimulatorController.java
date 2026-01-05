@@ -81,7 +81,7 @@ public class BankSimulatorController {
         }
 
         BankPaymentStatus finalStatus =
-                session.getForceFailure() ? BankPaymentStatus.DECLINED : BankPaymentStatus.APPROVED;
+                session.getFailureForced() ? BankPaymentStatus.DECLINED : BankPaymentStatus.APPROVED;
 
         bankSimulatorService.updateStatus(
                 session, finalStatus, finalStatus == BankPaymentStatus.DECLINED ? "declined" : null);
