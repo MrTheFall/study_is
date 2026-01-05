@@ -178,11 +178,7 @@ public class OrdersController implements OrdersApi {
         if (user.getUserType() == UserType.EMPLOYEE
                 && (currentStatus == null || !currentStatus.equalsIgnoreCase(newStatus.getValue()))) {
             actionLogService.logOrderAction(
-                    user.getUserId(),
-                    AuditActions.ORDER_STATUS_CHANGE,
-                    orderId,
-                    currentStatus,
-                    newStatus.getValue());
+                    user.getUserId(), AuditActions.ORDER_STATUS_CHANGE, orderId, currentStatus, newStatus.getValue());
         }
         Order updatedOrder = orderService.getOrderById(orderId);
         com.krusty.crab.dto.generated.Order dto = orderMapper.toDto(updatedOrder);
@@ -299,11 +295,7 @@ public class OrdersController implements OrdersApi {
                     ? assignCourierRequest.getCourierId().toString()
                     : null;
             actionLogService.logOrderAction(
-                    user.getUserId(),
-                    AuditActions.ORDER_COURIER_ASSIGN,
-                    orderId,
-                    fromValue,
-                    toValue);
+                    user.getUserId(), AuditActions.ORDER_COURIER_ASSIGN, orderId, fromValue, toValue);
         }
         return ResponseEntity.ok(orderMapper.toDto(updated));
     }

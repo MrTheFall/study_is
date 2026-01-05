@@ -46,7 +46,8 @@ class AuthServiceTest {
         client.setEmail("client@example.com");
         client.setPasswordHash(PasswordUtil.encode("secret"));
         when(clientRepository.findByEmail("client@example.com")).thenReturn(Optional.of(client));
-        when(jwtUtil.generateToken("client@example.com", UserType.CLIENT, 1, null)).thenReturn("token");
+        when(jwtUtil.generateToken("client@example.com", UserType.CLIENT, 1, null))
+                .thenReturn("token");
 
         String token = authService.loginClient("client@example.com", "secret");
 

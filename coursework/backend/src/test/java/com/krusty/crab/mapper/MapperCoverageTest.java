@@ -54,8 +54,7 @@ class MapperCoverageTest {
     private final ShiftMapper shiftMapper = Mappers.getMapper(ShiftMapper.class);
     private final ReportViewMapper reportViewMapper = Mappers.getMapper(ReportViewMapper.class);
     private final SalaryPaymentMapper salaryPaymentMapper = Mappers.getMapper(SalaryPaymentMapper.class);
-    private final EmployeeActionLogMapper employeeActionLogMapper =
-            Mappers.getMapper(EmployeeActionLogMapper.class);
+    private final EmployeeActionLogMapper employeeActionLogMapper = Mappers.getMapper(EmployeeActionLogMapper.class);
 
     @Test
     void clientMapper_mapsEntityAndUpdate() {

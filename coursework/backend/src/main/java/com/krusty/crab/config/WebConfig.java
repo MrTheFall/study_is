@@ -13,11 +13,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     private static final String ORDER_STATUS_VALUES = allowedValues(
-            com.krusty.crab.dto.generated.OrderStatus.values(),
-            com.krusty.crab.dto.generated.OrderStatus::getValue);
+            com.krusty.crab.dto.generated.OrderStatus.values(), com.krusty.crab.dto.generated.OrderStatus::getValue);
     private static final String ORDER_TYPE_VALUES = allowedValues(
-            com.krusty.crab.dto.generated.OrderType.values(),
-            com.krusty.crab.dto.generated.OrderType::getValue);
+            com.krusty.crab.dto.generated.OrderType.values(), com.krusty.crab.dto.generated.OrderType::getValue);
     private static final String PAYMENT_METHOD_VALUES = allowedValues(
             com.krusty.crab.dto.generated.PaymentMethod.values(),
             com.krusty.crab.dto.generated.PaymentMethod::getValue);
@@ -34,10 +32,7 @@ public class WebConfig implements WebMvcConfigurer {
         @Override
         public com.krusty.crab.dto.generated.OrderStatus convert(String source) {
             return convertEnum(
-                    source,
-                    com.krusty.crab.dto.generated.OrderStatus::fromValue,
-                    "OrderStatus",
-                    ORDER_STATUS_VALUES);
+                    source, com.krusty.crab.dto.generated.OrderStatus::fromValue, "OrderStatus", ORDER_STATUS_VALUES);
         }
     }
 
@@ -46,10 +41,7 @@ public class WebConfig implements WebMvcConfigurer {
         @Override
         public com.krusty.crab.dto.generated.OrderType convert(String source) {
             return convertEnum(
-                    source,
-                    com.krusty.crab.dto.generated.OrderType::fromValue,
-                    "OrderType",
-                    ORDER_TYPE_VALUES);
+                    source, com.krusty.crab.dto.generated.OrderType::fromValue, "OrderType", ORDER_TYPE_VALUES);
         }
     }
 
@@ -65,8 +57,7 @@ public class WebConfig implements WebMvcConfigurer {
         }
     }
 
-    private static <T> T convertEnum(
-            String source, Function<String, T> parser, String typeName, String allowedValues) {
+    private static <T> T convertEnum(String source, Function<String, T> parser, String typeName, String allowedValues) {
         String normalized = source != null ? source.trim() : null;
         if (!StringUtils.hasText(normalized)) {
             return null;
@@ -75,8 +66,7 @@ public class WebConfig implements WebMvcConfigurer {
             return parser.apply(normalized);
         } catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException(
-                    String.format("Invalid %s value: '%s'. Valid values: %s", typeName, normalized, allowedValues),
-                    ex);
+                    String.format("Invalid %s value: '%s'. Valid values: %s", typeName, normalized, allowedValues), ex);
         }
     }
 

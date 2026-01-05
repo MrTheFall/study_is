@@ -1,8 +1,8 @@
 package com.krusty.crab.controller;
 
 import com.krusty.crab.api.FinanceApi;
-import com.krusty.crab.dto.generated.SalaryPaymentCreateRequest;
 import com.krusty.crab.dto.generated.SalaryPayment;
+import com.krusty.crab.dto.generated.SalaryPaymentCreateRequest;
 import com.krusty.crab.mapper.SalaryPaymentMapper;
 import com.krusty.crab.service.EmployeeActionLogService;
 import com.krusty.crab.service.SalaryPaymentService;
@@ -41,8 +41,7 @@ public class FinanceController implements FinanceApi {
     }
 
     @Override
-    public ResponseEntity<SalaryPayment> createSalaryPayment(
-            SalaryPaymentCreateRequest salaryPaymentCreateRequest) {
+    public ResponseEntity<SalaryPayment> createSalaryPayment(SalaryPaymentCreateRequest salaryPaymentCreateRequest) {
         log.info("Creating salary payment for employee {}", salaryPaymentCreateRequest.getEmployeeId());
         var payment = salaryPaymentService.create(
                 salaryPaymentCreateRequest.getEmployeeId(),

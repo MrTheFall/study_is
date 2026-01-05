@@ -50,8 +50,8 @@ public class PaymentsController implements PaymentsApi {
                 "Processing payment for order: {} with method: {}",
                 paymentRequest.getOrderId(),
                 paymentRequest.getMethod());
-        com.krusty.crab.dto.generated.Payment dto = paymentMapper.toDto(
-                paymentWorkflowService.processPayment(paymentRequest));
+        com.krusty.crab.dto.generated.Payment dto =
+                paymentMapper.toDto(paymentWorkflowService.processPayment(paymentRequest));
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 

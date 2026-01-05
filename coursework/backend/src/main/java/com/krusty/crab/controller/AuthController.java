@@ -6,8 +6,8 @@ import com.krusty.crab.dto.generated.LoginClient200Response;
 import com.krusty.crab.dto.generated.LoginClientRequest;
 import com.krusty.crab.dto.generated.LoginEmployee200Response;
 import com.krusty.crab.dto.generated.LoginEmployeeRequest;
-import com.krusty.crab.service.AuthService;
 import com.krusty.crab.security.SecurityContext;
+import com.krusty.crab.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -51,8 +51,8 @@ public class AuthController implements AuthApi {
         GetCurrentUser200Response response = new GetCurrentUser200Response();
         response.setUserId(userPrincipal.getUserId());
         response.setUsername(userPrincipal.getUsername());
-        response.setUserType(
-                GetCurrentUser200Response.UserTypeEnum.fromValue(userPrincipal.getUserType().getValue()));
+        response.setUserType(GetCurrentUser200Response.UserTypeEnum.fromValue(
+                userPrincipal.getUserType().getValue()));
         response.setRole(userPrincipal.getRole());
 
         return ResponseEntity.ok(response);

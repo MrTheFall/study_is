@@ -89,7 +89,8 @@ class PaymentServiceTest {
     void processPayment_returnsPaymentIdOnSuccess() {
         when(orderRepository.findById(10)).thenReturn(Optional.of(new Order()));
         when(paymentRepository.existsByOrderId(10)).thenReturn(false);
-        when(paymentRepository.callProcessPayment(10, PaymentMethod.CARD.getValue())).thenReturn(99);
+        when(paymentRepository.callProcessPayment(10, PaymentMethod.CARD.getValue()))
+                .thenReturn(99);
 
         Integer paymentId = paymentService.processPayment(10, PaymentMethod.CARD, false);
 
@@ -106,8 +107,7 @@ class PaymentServiceTest {
         List<Payment> result = paymentService.listPayments(1, true, from, to, 0, -5);
 
         assertThat(result).hasSize(1);
-        verify(paymentRepository)
-                .findRecent(1, true, from.toLocalDateTime(), to.toLocalDateTime(), 1, 0);
+        verify(paymentRepository).findRecent(1, true, from.toLocalDateTime(), to.toLocalDateTime(), 1, 0);
     }
 
     @Test
@@ -145,7 +145,8 @@ class PaymentServiceTest {
         order.setTotalAmount(BigDecimal.valueOf(12));
         when(orderRepository.findById(7)).thenReturn(Optional.of(order));
         when(paymentRepository.existsByOrderId(7)).thenReturn(false);
-        when(paymentRepository.callProcessPayment(7, PaymentMethod.CASH.getValue())).thenReturn(55);
+        when(paymentRepository.callProcessPayment(7, PaymentMethod.CASH.getValue()))
+                .thenReturn(55);
 
         ChangeResponse response = new ChangeResponse();
         response.setChange(BigDecimal.valueOf(3));

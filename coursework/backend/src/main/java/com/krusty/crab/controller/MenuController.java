@@ -4,8 +4,8 @@ import com.krusty.crab.api.MenuApi;
 import com.krusty.crab.dto.generated.MenuItemCreateRequest;
 import com.krusty.crab.entity.MenuItem;
 import com.krusty.crab.mapper.MenuMapper;
-import com.krusty.crab.service.MenuAvailabilityService;
 import com.krusty.crab.service.EmployeeActionLogService;
+import com.krusty.crab.service.MenuAvailabilityService;
 import com.krusty.crab.service.MenuService;
 import com.krusty.crab.util.AuditActions;
 import java.util.List;
@@ -48,8 +48,8 @@ public class MenuController implements MenuApi {
     public ResponseEntity<com.krusty.crab.dto.generated.MenuItem> getMenuItemById(Integer menuItemId) {
         log.info("Getting menu item by ID: {}", menuItemId);
         MenuItem item = menuService.getMenuItemById(menuItemId);
-        com.krusty.crab.dto.generated.MenuItem dto = menuAvailabilityService.applyStockAvailability(
-                menuMapper.toDto(item));
+        com.krusty.crab.dto.generated.MenuItem dto =
+                menuAvailabilityService.applyStockAvailability(menuMapper.toDto(item));
         return ResponseEntity.ok(dto);
     }
 

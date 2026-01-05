@@ -20,8 +20,7 @@ class DbErrorUtilTest {
 
     @Test
     void extractMeaningfulMessage_usesCauseWhenPresent() {
-        RuntimeException exception =
-                new RuntimeException("outer", new RuntimeException("ERROR: inner"));
+        RuntimeException exception = new RuntimeException("outer", new RuntimeException("ERROR: inner"));
 
         assertThat(DbErrorUtil.extractMeaningfulMessage(exception)).isEqualTo("inner");
     }

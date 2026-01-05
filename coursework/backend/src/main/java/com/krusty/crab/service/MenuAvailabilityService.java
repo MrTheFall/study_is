@@ -34,7 +34,9 @@ public class MenuAvailabilityService {
         if (!availableOnly) {
             return items;
         }
-        return items.stream().filter(item -> Boolean.TRUE.equals(item.getAvailable())).toList();
+        return items.stream()
+                .filter(item -> Boolean.TRUE.equals(item.getAvailable()))
+                .toList();
     }
 
     public MenuItem applyStockAvailability(MenuItem item) {

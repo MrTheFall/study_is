@@ -36,8 +36,7 @@ class MenuAvailabilityServiceTest {
 
         when(menuService.getOutOfStockMenuItemIds(List.of(1, 2))).thenReturn(Set.of(2));
 
-        List<MenuItem> result =
-                menuAvailabilityService.applyStockAvailability(List.of(item1, item2, item3), true);
+        List<MenuItem> result = menuAvailabilityService.applyStockAvailability(List.of(item1, item2, item3), true);
 
         assertThat(item1.getAvailable()).isTrue();
         assertThat(item2.getAvailable()).isFalse();
@@ -48,7 +47,8 @@ class MenuAvailabilityServiceTest {
     @Test
     void applyStockAvailability_returnsInputWhenNullOrEmpty() {
         assertThat(menuAvailabilityService.applyStockAvailability(null, false)).isNull();
-        assertThat(menuAvailabilityService.applyStockAvailability(List.of(), false)).isEmpty();
+        assertThat(menuAvailabilityService.applyStockAvailability(List.of(), false))
+                .isEmpty();
         verifyNoInteractions(menuService);
     }
 

@@ -29,7 +29,9 @@ public class OrderPlacementService {
                     "clientId=%s, type=%s, paymentMethod=%s",
                     request.getClientId(),
                     request.getType() != null ? request.getType().getValue() : null,
-                    request.getPaymentMethod() != null ? request.getPaymentMethod().getValue() : null);
+                    request.getPaymentMethod() != null
+                            ? request.getPaymentMethod().getValue()
+                            : null);
             actionLogService.logOrderAction(user.getUserId(), AuditActions.ORDER_CREATE, orderId, details);
         }
 

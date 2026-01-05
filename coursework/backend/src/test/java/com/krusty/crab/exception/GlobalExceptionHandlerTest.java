@@ -70,10 +70,7 @@ class GlobalExceptionHandlerTest {
                 "inventory");
 
         assertError(
-                handler.handleMenuException(new MenuException("menu")),
-                HttpStatus.BAD_REQUEST,
-                "MENU_ERROR",
-                "menu");
+                handler.handleMenuException(new MenuException("menu")), HttpStatus.BAD_REQUEST, "MENU_ERROR", "menu");
 
         assertError(
                 handler.handleEmployeeException(new EmployeeException("employee")),
@@ -110,8 +107,7 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getCode()).isEqualTo("BAD_REQUEST");
-        assertThat(response.getBody().getMessage())
-                .contains("Invalid value 'abc'", "parameter 'id'", "Integer");
+        assertThat(response.getBody().getMessage()).contains("Invalid value 'abc'", "parameter 'id'", "Integer");
 
         assertError(
                 handler.handleRuntimeException(new RuntimeException("boom")),

@@ -1,25 +1,25 @@
 package com.krusty.crab.service;
 
 import com.krusty.crab.dto.generated.CashPaymentRequest;
-import com.krusty.crab.dto.generated.PaymentRequest;
-import com.krusty.crab.dto.generated.OnlinePaymentStartRequest;
 import com.krusty.crab.dto.generated.ChangeResponse;
+import com.krusty.crab.dto.generated.OnlinePaymentStartRequest;
+import com.krusty.crab.dto.generated.PaymentRequest;
 import com.krusty.crab.entity.OnlinePaymentSession;
 import com.krusty.crab.entity.Order;
 import com.krusty.crab.entity.Payment;
 import com.krusty.crab.entity.enums.PaymentMethod;
 import com.krusty.crab.exception.EntityNotFoundException;
 import com.krusty.crab.exception.ValidationException;
+import com.krusty.crab.repository.OrderRepository;
 import com.krusty.crab.security.SecurityContext;
 import com.krusty.crab.security.UserPrincipal;
 import com.krusty.crab.security.UserType;
 import com.krusty.crab.util.AuditActions;
-import com.krusty.crab.repository.OrderRepository;
 import java.time.OffsetDateTime;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
-import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -51,7 +51,8 @@ public class PaymentWorkflowService {
                 .findById(paymentRequest.getOrderId())
                 .orElseThrow(() -> new EntityNotFoundException("Order", paymentRequest.getOrderId()));
 
-        PaymentMethod method = PaymentMethod.fromValue(paymentRequest.getMethod().getValue());
+        PaymentMethod method =
+                PaymentMethod.fromValue(paymentRequest.getMethod().getValue());
         if (method == PaymentMethod.ONLINE) {
             throw new ValidationException("Online payment must be initiated via /payments/online/start");
         }
@@ -88,25 +89,20 @@ public class PaymentWorkflowService {
     }
 
     public Payment getPaymentByOrderId(Integer orderId) {
-        Order order = orderRepository
-                .findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
+        Order order =
+                orderRepository.findById(orderId).orElseThrow(() -> new EntityNotFoundException("Order", orderId));
         validatePaymentViewAccess(order);
         return paymentService.getPaymentByOrderId(orderId);
     }
 
     public OnlinePaymentSession startOnlinePayment(OnlinePaymentStartRequest request, String baseUrl) {
         Integer orderId = request.getOrderId();
-        Order order = orderRepository
-                .findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
+        Order order =
+                orderRepository.findById(orderId).orElseThrow(() -> new EntityNotFoundException("Order", orderId));
         validatePaymentAccess(order, PaymentMethod.ONLINE);
 
         OnlinePaymentService.CardData cardData = new OnlinePaymentService.CardData(
-                request.getCardNumber(),
-                request.getCardExpiry(),
-                request.getCardCvv(),
-                request.getCardHolder());
+                request.getCardNumber(), request.getCardExpiry(), request.getCardCvv(), request.getCardHolder());
 
         boolean shouldSimulateFailure = Boolean.TRUE.equals(request.getShouldSimulateFailure());
         return onlinePaymentService.startPayment(
@@ -145,7 +141,8 @@ public class PaymentWorkflowService {
         }
 
         if (user.getUserType() == UserType.CLIENT) {
-            Integer orderClientId = order.getClient() != null ? order.getClient().getId() : null;
+            Integer orderClientId =
+                    order.getClient() != null ? order.getClient().getId() : null;
             if (orderClientId == null || !orderClientId.equals(user.getUserId())) {
                 throw new AccessDeniedException("Access denied");
             }
@@ -170,7 +167,8 @@ public class PaymentWorkflowService {
         UserPrincipal user = SecurityContext.getCurrentUser();
 
         if (user.getUserType() == UserType.CLIENT) {
-            Integer orderClientId = order.getClient() != null ? order.getClient().getId() : null;
+            Integer orderClientId =
+                    order.getClient() != null ? order.getClient().getId() : null;
             if (orderClientId == null || !orderClientId.equals(user.getUserId())) {
                 throw new AccessDeniedException("Access denied");
             }

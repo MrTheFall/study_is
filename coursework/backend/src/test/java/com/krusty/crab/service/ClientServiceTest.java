@@ -48,8 +48,7 @@ class ClientServiceTest {
     void lookupClient_returnsByEmail() {
         Client client = new Client();
         client.setId(1);
-        when(clientRepository.findByEmail("client@example.com"))
-                .thenReturn(Optional.of(client));
+        when(clientRepository.findByEmail("client@example.com")).thenReturn(Optional.of(client));
 
         Client result = clientService.lookupClient("client@example.com", null);
 
@@ -60,10 +59,8 @@ class ClientServiceTest {
     void lookupClient_returnsByPhoneWhenEmailMissing() {
         Client client = new Client();
         client.setId(2);
-        when(clientRepository.findByEmail("missing@example.com"))
-                .thenReturn(Optional.empty());
-        when(clientRepository.findByPhone("123"))
-                .thenReturn(Optional.of(client));
+        when(clientRepository.findByEmail("missing@example.com")).thenReturn(Optional.empty());
+        when(clientRepository.findByPhone("123")).thenReturn(Optional.of(client));
 
         Client result = clientService.lookupClient("missing@example.com", "123");
 
@@ -72,8 +69,7 @@ class ClientServiceTest {
 
     @Test
     void lookupClient_throwsWhenEmailNotFound() {
-        when(clientRepository.findByEmail("missing@example.com"))
-                .thenReturn(Optional.empty());
+        when(clientRepository.findByEmail("missing@example.com")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> clientService.lookupClient("missing@example.com", null))
                 .isInstanceOf(EntityNotFoundException.class)
@@ -221,6 +217,7 @@ class ClientServiceTest {
 
         ArgumentCaptor<Client> captor = ArgumentCaptor.forClass(Client.class);
         verify(clientRepository).save(captor.capture());
-        assertThat(PasswordUtil.matches("new", captor.getValue().getPasswordHash())).isTrue();
+        assertThat(PasswordUtil.matches("new", captor.getValue().getPasswordHash()))
+                .isTrue();
     }
 }
