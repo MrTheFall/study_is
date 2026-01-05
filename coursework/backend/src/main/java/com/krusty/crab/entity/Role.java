@@ -11,15 +11,14 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class Role {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    
+
     @Column(name = "name", nullable = false, length = 128)
     private String name;
-    
+
     @Column(name = "permissions", columnDefinition = "text")
     private String permissions;
 }
-

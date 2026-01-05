@@ -7,8 +7,13 @@ import com.krusty.crab.exception.PaymentException;
 import com.krusty.crab.mapper.PaymentMapper;
 import com.krusty.crab.repository.OrderRepository;
 import com.krusty.crab.repository.PaymentRepository;
+import com.krusty.crab.util.DbErrorUtil;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,50 +21,72 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentService {
-    
+
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
     private final PaymentMapper paymentMapper;
-    
+
     @Transactional
-    public Integer processPayment(Integer orderId, PaymentMethod method) {
-        orderRepository.findById(orderId)
-            .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
-        
+    public Integer processPayment(Integer orderId, PaymentMethod method, boolean shouldSimulateFailure) {
+        orderRepository.findById(orderId).orElseThrow(() -> new EntityNotFoundException("Order", orderId));
+
         if (paymentRepository.existsByOrderId(orderId)) {
             throw new PaymentException("Payment already exists for order " + orderId);
         }
-        
+
+        if (method == PaymentMethod.ONLINE && shouldSimulateFailure) {
+            throw new PaymentException("Online payment failed");
+        }
+
         try {
             Integer paymentId = paymentRepository.callProcessPayment(orderId, method.getValue());
             log.info("Payment processed successfully with ID: {} for order: {}", paymentId, orderId);
             return paymentId;
+        } catch (DataAccessException e) {
+            String dbMessage = DbErrorUtil.extractMeaningfulMessage(e);
+            throw new PaymentException(
+                    dbMessage != null ? dbMessage : "Failed to process payment: " + e.getMessage(), e);
         } catch (Exception e) {
             throw new PaymentException("Failed to process payment: " + e.getMessage(), e);
         }
     }
-    
+
     public Payment getPaymentByOrderId(Integer orderId) {
-        return paymentRepository.findByOrderId(orderId)
-            .orElseThrow(() -> new EntityNotFoundException("Payment", orderId));
+        return paymentRepository
+                .findByOrderId(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Payment", orderId));
     }
-    
+
+    public List<Payment> listPayments(
+            Integer clientId, Boolean success, OffsetDateTime from, OffsetDateTime to, Integer limit, Integer offset) {
+        int resolvedLimit = limit != null ? limit : 50;
+        int resolvedOffset = offset != null ? offset : 0;
+        if (resolvedLimit < 1) resolvedLimit = 1;
+        if (resolvedLimit > 500) resolvedLimit = 500;
+        if (resolvedOffset < 0) resolvedOffset = 0;
+
+        LocalDateTime fromLocal = from != null ? from.toLocalDateTime() : null;
+        LocalDateTime toLocal = to != null ? to.toLocalDateTime() : null;
+
+        return paymentRepository.findRecent(clientId, success, fromLocal, toLocal, resolvedLimit, resolvedOffset);
+    }
+
     public boolean paymentExists(Integer orderId) {
         return paymentRepository.existsByOrderId(orderId);
     }
-    
+
     @Transactional
-    public com.krusty.crab.dto.generated.ChangeResponse processCashPayment(Integer orderId, java.math.BigDecimal amountReceived) {
-        com.krusty.crab.entity.Order order = orderRepository.findById(orderId)
-            .orElseThrow(() -> new EntityNotFoundException("Order", orderId));
-        
+    public com.krusty.crab.dto.generated.ChangeResponse processCashPayment(
+            Integer orderId, java.math.BigDecimal amountReceived) {
+        com.krusty.crab.entity.Order order =
+                orderRepository.findById(orderId).orElseThrow(() -> new EntityNotFoundException("Order", orderId));
+
         if (amountReceived.compareTo(order.getTotalAmount()) < 0) {
             throw new PaymentException("Amount received is less than order total");
         }
-        
-        processPayment(orderId, PaymentMethod.CASH);
-        
+
+        processPayment(orderId, PaymentMethod.CASH, false);
+
         return paymentMapper.toChangeResponse(order.getTotalAmount(), amountReceived);
     }
 }
-

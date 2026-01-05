@@ -1,17 +1,17 @@
 package com.krusty.crab.util;
 
+import com.krusty.crab.security.UserType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import javax.crypto.SecretKey;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 @Component
 public class JwtUtil {
@@ -27,9 +27,9 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(String username, String userType, Integer userId, String role) {
+    public String generateToken(String username, UserType userType, Integer userId, String role) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("userType", userType);
+        claims.put("userType", userType.getValue());
         claims.put("userId", userId);
         if (role != null) {
             claims.put("role", role);
@@ -51,8 +51,9 @@ public class JwtUtil {
         return extractClaim(token, Claims::getSubject);
     }
 
-    public String extractUserType(String token) {
-        return extractClaim(token, claims -> claims.get("userType", String.class));
+    public UserType extractUserType(String token) {
+        String userType = extractClaim(token, claims -> claims.get("userType", String.class));
+        return UserType.fromValue(userType);
     }
 
     public Integer extractUserId(String token) {
@@ -97,4 +98,3 @@ public class JwtUtil {
         }
     }
 }
-

@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "coursework/**"
+      - ".github/workflows/**"
+  pull_request:
+    paths:
+      - "coursework/**"
+      - ".github/workflows/**"
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: coursework/backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+      - name: Build
+        run: ./gradlew --no-daemon assemble
+      - name: Lint
+        run: ./gradlew --no-daemon checkstyleMain checkstyleTest
+      - name: Format Check
+        run: ./gradlew --no-daemon spotlessCheck
+      - name: Unit Tests
+        run: ./gradlew --no-daemon test jacocoTestReport jacocoTestCoverageVerification
+      - name: Upload Backend Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-artifacts
+          path: |
+            coursework/backend/build/libs/*.jar
+            coursework/backend/build/reports/jacoco/test
+            coursework/backend/build/test-results/test
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: coursework/frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: coursework/frontend/package-lock.json
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+      - name: Install
+        run: npm ci
+      - name: Generate API
+        run: npm run generate-api
+      - name: Build
+        run: npm run build
+      - name: Lint
+        run: npm run lint
+      - name: Format Check
+        run: npm run format:check
+      - name: Upload Frontend Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: coursework/frontend/dist

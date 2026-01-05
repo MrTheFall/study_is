@@ -3,6 +3,9 @@ plugins {
 	id 'org.springframework.boot' version '4.0.0'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'org.openapi.generator' version '7.5.0'
+	id 'jacoco'
+	id 'checkstyle'
+	id 'com.diffplug.spotless' version '6.25.0'
 }
 
 group = 'com.krusty.crab'
@@ -47,14 +50,77 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'com.h2database:h2'
+	testImplementation platform('org.testcontainers:testcontainers-bom:1.21.4')
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:postgresql'
 	testImplementation 'io.jsonwebtoken:jjwt-api:0.12.5'
 	testImplementation 'io.jsonwebtoken:jjwt-impl:0.12.5'
 	testImplementation 'io.jsonwebtoken:jjwt-jackson:0.12.5'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+checkstyle {
+	toolVersion = '10.17.0'
+	configFile = file("$rootDir/config/checkstyle/checkstyle.xml")
+}
+
+tasks.withType(Checkstyle).configureEach {
+	exclude('**/build/**', '**/generated/**')
+}
+
+jacoco {
+	toolVersion = '0.8.12'
+}
+
+def jacocoExcludes = [
+	'com/krusty/crab/dto/generated/**',
+	'com/krusty/crab/api/**',
+	'com/krusty/crab/invoker/**'
+]
+
+jacocoTestReport {
+	reports {
+		xml.required = true
+		html.required = true
+	}
+	classDirectories.setFrom(files(classDirectories.files.collect {
+		fileTree(dir: it, exclude: jacocoExcludes)
+	}))
+}
+
+jacocoTestCoverageVerification {
+	violationRules {
+		rule {
+			limit {
+				minimum = 0.50
+			}
+		}
+	}
+	classDirectories.setFrom(files(classDirectories.files.collect {
+		fileTree(dir: it, exclude: jacocoExcludes)
+	}))
+}
+
 tasks.named('test') {
-	useJUnitPlatform()
+	finalizedBy tasks.named('jacocoTestReport')
+}
+
+spotless {
+	java {
+		target 'src/**/*.java'
+		targetExclude "$buildDir/**"
+		palantirJavaFormat()
+		trimTrailingWhitespace()
+		endWithNewline()
+	}
+}
+
+tasks.named('test') {
+	useJUnitPlatform {
+		if (project.hasProperty('excludeIntegration')) {
+			excludeTags 'integration'
+		}
+	}
 }
 
 openApiGenerate {

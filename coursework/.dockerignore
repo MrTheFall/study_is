@@ -1,0 +1,9 @@
+.git
+.gitignore
+**/.gradle
+**/.idea
+**/node_modules
+**/dist
+**/build
+logs
+report

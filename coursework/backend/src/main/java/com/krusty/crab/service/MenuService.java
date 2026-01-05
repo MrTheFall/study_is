@@ -4,37 +4,45 @@ import com.krusty.crab.entity.MenuItem;
 import com.krusty.crab.exception.EntityNotFoundException;
 import com.krusty.crab.exception.MenuException;
 import com.krusty.crab.repository.MenuItemRepository;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class MenuService {
-    
+
     private final MenuItemRepository menuItemRepository;
-    
+
     public List<MenuItem> getAllMenuItems() {
         return menuItemRepository.findAll();
     }
-    
+
     public List<MenuItem> getAvailableMenuItems() {
         return menuItemRepository.findByAvailableTrue();
     }
-    
+
     public MenuItem getMenuItemById(Integer id) {
-        return menuItemRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("MenuItem", id));
+        return menuItemRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("MenuItem", id));
     }
-    
+
     public List<MenuItem> searchMenuItems(String name) {
         return menuItemRepository.findByNameContainingIgnoreCase(name);
     }
-    
+
+    public Set<Integer> getOutOfStockMenuItemIds(List<Integer> menuItemIds) {
+        if (menuItemIds == null || menuItemIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return new HashSet<>(menuItemRepository.findOutOfStockMenuItemIds(menuItemIds));
+    }
+
     @Transactional
     public MenuItem createMenuItem(MenuItem menuItem) {
         if (menuItem.getPrice() == null || menuItem.getPrice().signum() < 0) {
@@ -54,7 +62,7 @@ public class MenuService {
             throw new MenuException("Failed to create menu item: " + e.getMessage(), e);
         }
     }
-    
+
     @Transactional
     public MenuItem updateMenuItem(Integer id, MenuItem menuItemData) {
         MenuItem menuItem = getMenuItemById(id);
@@ -77,7 +85,7 @@ public class MenuService {
         log.info("MenuItem {} updated", id);
         return updated;
     }
-    
+
     @Transactional
     public void deleteMenuItem(Integer id) {
         MenuItem menuItem = getMenuItemById(id);
@@ -85,4 +93,3 @@ public class MenuService {
         log.info("MenuItem {} deleted", id);
     }
 }
-

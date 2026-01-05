@@ -34,6 +34,9 @@ begin
     
     select coalesce(max(id), 0) into max_id from inventory_records;
     perform setval('inventory_records_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from inventory_transactions;
+    perform setval('inventory_transactions_id_seq', max_id + 1, false);
     
     select coalesce(max(id), 0) into max_id from orders;
     perform setval('orders_id_seq', max_id + 1, false);
@@ -46,5 +49,10 @@ begin
     
     select coalesce(max(id), 0) into max_id from reviews;
     perform setval('reviews_id_seq', max_id + 1, false);
-end $$;
 
+    select coalesce(max(id), 0) into max_id from report_views;
+    perform setval('report_views_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from salary_payments;
+    perform setval('salary_payments_id_seq', max_id + 1, false);
+end $$;

@@ -1,0 +1,70 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      allow_non_main:
+        description: Allow deploys from non-main refs
+        required: false
+        default: "false"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Guard non-main deploys
+        if: ${{ github.ref != 'refs/heads/main' && inputs.allow_non_main != 'true' }}
+        run: |
+          echo "Deploys are allowed only from main. Re-run with allow_non_main=true to override."
+          exit 1
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: coursework/frontend/package-lock.json
+      - name: Validate Deploy Secrets
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          if [ -z "$DEPLOY_HOST" ] || [ -z "$DEPLOY_USER" ] || [ -z "$DEPLOY_PATH" ] || [ -z "$DEPLOY_SSH_KEY" ]; then
+            echo "Missing deploy secrets. Set DEPLOY_HOST, DEPLOY_USER, DEPLOY_PATH, DEPLOY_SSH_KEY."
+            exit 1
+          fi
+      - name: Build Backend
+        working-directory: coursework/backend
+        run: ./gradlew --no-daemon assemble
+      - name: Build Frontend
+        working-directory: coursework/frontend
+        run: |
+          npm ci
+          npm run build
+      - name: Configure SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+      - name: Deploy Artifacts
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_PATH/backend' '$DEPLOY_PATH/frontend'"
+          scp coursework/backend/build/libs/*.jar "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/backend/"
+          rsync -az --delete coursework/frontend/dist/ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/frontend/"

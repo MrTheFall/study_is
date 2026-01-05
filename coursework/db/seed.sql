@@ -10,16 +10,28 @@ on conflict do nothing;
 -- Employees
 insert into employees (id, full_name, login, password_hash, role_id, salary, contact_phone)
 values
-  (1, 'Eugene Krabs',   'krabs',  'hash(krabs)', 1, 100000.00, '+1-000-111-2222'),
-  (2, 'SpongeBob',      'spongeb', 'hash(sb)',   3,  40000.00, '+1-000-333-4444'),
-  (3, 'Squidward Tentacles', 'squid', 'hash(sq)', 2, 35000.00, '+1-000-555-6666')
+  (1, 'Eugene Krabs',   'krabs',  '$2a$12$HqFpO5lLdX5ly7cX3BVSw.uHIcXa/QchVDpBhHE45rspEU6GN1VR2', 1, 100000.00, '+1-000-111-2222'),
+  (2, 'SpongeBob',      'spongeb', '$2a$12$iHPWDpiJLMa7ZLJRA1ftW.kjsZ.8Q7PuU4cgL4sf6/MYmxcIu8b6O',   3,  40000.00, '+1-000-333-4444'),
+  (3, 'Squidward Tentacles', 'squid', '$2a$12$R2V18.LlW4hWbZcBQ4aovuedcm0jEiavnYsYed9t4zkIvtfqYKXoO', 2, 35000.00, '+1-000-555-6666'),
+  (10001, 'Admin Manager', 'admin', '$2b$12$TTNHxfAOco6gkzPrewfSIus/zjrWZzf1s59Si/Q6ik86Rife5GLZG', 1, 100000.00, '+1-999-000-0000'),
+  (10002, 'Test Manager', 'manager', '$2b$12$4wLxa/ORKbQ2JShrmldrAeXsEtIXmQ1GZGybKxJDSxvyhUJM0htgy', 1, 100000.00, '+1-999-000-0001'),
+  (10003, 'Test Cashier', 'cashier', '$2b$12$j0kbfZVqUQawBTK.oYXaGOnzoIIGvc8mylfu8.ISHIkVxx2J32Uz2', 2, 50000.00, '+1-999-000-0002'),
+  (10004, 'Test Cook', 'cook', '$2b$12$wACo3dGm5PMeKnIjCwuK4O8dt9sfghRTsbmIYt3fqs5hnpjyL4V0q', 3, 50000.00, '+1-999-000-0003')
+on conflict do nothing;
+
+-- Salary payments (sample expenses for financial report)
+insert into salary_payments (id, employee_id, amount, note)
+values
+  (1, 10003, 5000.00, 'Seed salary payment'),
+  (2, 10004, 7000.00, 'Seed salary payment')
 on conflict do nothing;
 
 -- Clients
 insert into clients (id, name, phone, email, password_hash, default_address, loyalty_points)
 values
-  (1, 'Patrick Star', '+1-100-200-3000', 'patrick@example.com', 'hash(patrick)', 'Rock St. 1', 10),
-  (2, 'Sandy Cheeks', '+1-100-200-3001', 'sandy@example.com',   'hash(sandy)',   'Dome Ave. 7', 25)
+  (1, 'Patrick Star', '+1-100-200-3000', 'patrick@example.com', '$2a$12$ujmowcxLII.cASD/ug63PufQbYkyPWsa2c.JMuE/y9Lz86Rm21xVK', 'Rock St. 1', 10),
+  (2, 'Sandy Cheeks', '+1-100-200-3001', 'sandy@example.com',   '$2a$12$HGWkQ3lJnd6J3ethqBJW.u.PyOje1ZarhMpjlhPZBf2gos/E6K0MK',   'Dome Ave. 7', 25),
+  (100, 'Test Client', '+1-100-200-3999', 'client@example.com', '$2b$12$tsfi7QIDNtHm6o14VlKaouDyZoANnU9DSV/rq3WB/fBBtjQ3HnAIa', 'Bikini Bottom, Test st. 1', 0)
 on conflict do nothing;
 
 -- Couriers
@@ -78,6 +90,18 @@ insert into inventory_records (id, ingredient_id, quantity) values
   (7, 7, 5000)
 on conflict do nothing;
 
+-- Inventory transactions (seed initial stock for UI/testing)
+insert into inventory_transactions (id, ingredient_id, delta, reason, source, employee_id)
+values
+  (1, 1, 500,  'Initial seed stock', 'seed', 10002),
+  (2, 2, 400,  'Initial seed stock', 'seed', 10002),
+  (3, 3, 5000, 'Initial seed stock', 'seed', 10002),
+  (4, 4, 8000, 'Initial seed stock', 'seed', 10002),
+  (5, 5, 3000, 'Initial seed stock', 'seed', 10002),
+  (6, 6, 2000, 'Initial seed stock', 'seed', 10002),
+  (7, 7, 5000, 'Initial seed stock', 'seed', 10002)
+on conflict do nothing;
+
 -- Shifts (non-overlapping times per employee per date)
 insert into shifts (id, shift_date, start_time, end_time, note) values
   (1, date '2025-01-01', time '09:00', time '17:00', 'Day shift'),
@@ -92,10 +116,10 @@ insert into employee_shifts (id, employee_id, shift_id, status) values
 on conflict do nothing;
 
 -- Orders
-insert into orders (id, client_id, type, status, courier_id, delivered_at, delivery_address)
+insert into orders (id, client_id, type, status, payment_method, courier_id, delivered_at, delivery_address)
 values
-  (1, 1, 'dine_in',  'completed', null, null, null),
-  (2, 2, 'delivery', 'delivered', 1, now(), 'Bikini Bottom, Coral St. 123')
+  (1, 1, 'dine_in',  'completed', 'cash', null, null, null),
+  (2, 2, 'delivery', 'delivered', 'card', 1, now(), 'Bikini Bottom, Coral St. 123')
 on conflict do nothing;
 
 -- Order items (triggers will recalc order totals)
@@ -121,5 +145,64 @@ values
   (2, 2, 2, 4, 'Fast delivery, tasty patty')
 on conflict do nothing;
 
-commit;
+-- Sync sequences to the highest seeded ids to avoid collisions on insert
+do $$
+declare
+    max_id integer;
+begin
+    select coalesce(max(id), 0) into max_id from clients;
+    perform setval('clients_id_seq', max_id + 1, false);
 
+    select coalesce(max(id), 0) into max_id from roles;
+    perform setval('roles_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from employees;
+    perform setval('employees_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from shifts;
+    perform setval('shifts_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from employee_shifts;
+    perform setval('employee_shifts_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from couriers;
+    perform setval('couriers_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from menu_items;
+    perform setval('menu_items_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from recipes;
+    perform setval('recipes_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from ingredients;
+    perform setval('ingredients_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from ingredient_usages;
+    perform setval('ingredient_usages_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from inventory_records;
+    perform setval('inventory_records_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from inventory_transactions;
+    perform setval('inventory_transactions_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from orders;
+    perform setval('orders_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from order_items;
+    perform setval('order_items_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from payments;
+    perform setval('payments_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from reviews;
+    perform setval('reviews_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from report_views;
+    perform setval('report_views_id_seq', max_id + 1, false);
+
+    select coalesce(max(id), 0) into max_id from salary_payments;
+    perform setval('salary_payments_id_seq', max_id + 1, false);
+end $$;
+
+commit;
