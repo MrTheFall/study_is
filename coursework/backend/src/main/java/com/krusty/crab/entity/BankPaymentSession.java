@@ -49,7 +49,7 @@ public class BankPaymentSession {
     private String failureReason;
 
     @Column(name = "force_failure", nullable = false)
-    private Boolean failureForced;
+    private Boolean shouldDecline;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

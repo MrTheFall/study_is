@@ -51,7 +51,7 @@ public class BankSimulatorService {
                 ? sanitizedNumber.substring(sanitizedNumber.length() - 4)
                 : sanitizedNumber;
 
-        boolean failureForced =
+        boolean shouldDecline =
                 Boolean.TRUE.equals(request.shouldSimulateFailure()) || "0000000000000000".equals(sanitizedNumber);
 
         LocalDateTime now = LocalDateTime.now();
@@ -65,7 +65,7 @@ public class BankSimulatorService {
                 .otpCode(resolveOtp())
                 .returnUrl(request.returnUrl())
                 .callbackUrl(request.callbackUrl())
-                .failureForced(failureForced)
+                .shouldDecline(shouldDecline)
                 .createdAt(now)
                 .updatedAt(now)
                 .expiresAt(now.plusMinutes(challengeTtlMinutes))
