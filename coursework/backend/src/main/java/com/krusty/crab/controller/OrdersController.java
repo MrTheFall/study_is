@@ -48,7 +48,7 @@ public class OrdersController implements OrdersApi {
         if (user.getUserType() == UserType.CLIENT
                 && placeOrderRequest.getClientId() != null
                 && !placeOrderRequest.getClientId().equals(user.getUserId())) {
-            throw new AccessDeniedException("Access denied");
+            throw new AccessDeniedException("Clients can only place orders for themselves");
         }
         if (placeOrderRequest.getType() != null
                 && "delivery".equalsIgnoreCase(placeOrderRequest.getType().getValue())
