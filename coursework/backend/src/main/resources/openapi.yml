@@ -2069,7 +2069,6 @@ components:
           type: string
         price:
           type: number
-          format: decimal
         available:
           type: boolean
         prepTimeMinutes:
@@ -2088,7 +2087,6 @@ components:
           type: string
         price:
           type: number
-          format: decimal
           minimum: 0
         available:
           type: boolean
@@ -2135,7 +2133,6 @@ components:
           format: date-time
         totalAmount:
           type: number
-          format: decimal
         courierId:
           type: integer
           nullable: true
@@ -2214,7 +2211,6 @@ components:
           minimum: 1
         unitPrice:
           type: number
-          format: decimal
 
     OrderItem:
       type: object
@@ -2231,10 +2227,8 @@ components:
           type: integer
         unitPrice:
           type: number
-          format: decimal
         totalPrice:
           type: number
-          format: decimal
         note:
           type: string
 
@@ -2258,7 +2252,6 @@ components:
           $ref: '#/components/schemas/PaymentMethod'
         amount:
           type: number
-          format: decimal
         paidAt:
           type: string
           format: date-time
@@ -2324,7 +2317,6 @@ components:
           type: integer
         amount:
           type: number
-          format: decimal
         status:
           $ref: '#/components/schemas/OnlinePaymentStatus'
         redirectUrl:
@@ -2354,7 +2346,6 @@ components:
           type: integer
         amountReceived:
           type: number
-          format: decimal
           minimum: 0
 
     ChangeResponse:
@@ -2362,13 +2353,10 @@ components:
       properties:
         orderTotal:
           type: number
-          format: decimal
         amountReceived:
           type: number
-          format: decimal
         change:
           type: number
-          format: decimal
 
     Review:
       type: object
@@ -2416,7 +2404,6 @@ components:
           type: integer
         quantity:
           type: number
-          format: decimal
         lastUpdated:
           type: string
           format: date-time
@@ -2441,10 +2428,8 @@ components:
           type: string
         quantity:
           type: number
-          format: decimal
         minThreshold:
           type: number
-          format: decimal
 
     InventoryTransaction:
       type: object
@@ -2457,7 +2442,6 @@ components:
           type: string
         delta:
           type: number
-          format: decimal
         reason:
           type: string
         source:
@@ -2533,16 +2517,12 @@ components:
           format: date-time
         revenue:
           type: number
-          format: decimal
         ingredientExpenses:
           type: number
-          format: decimal
         salaryExpenses:
           type: number
-          format: decimal
         profit:
           type: number
-          format: decimal
 
     SalaryPaymentCreateRequest:
       type: object
@@ -2554,7 +2534,6 @@ components:
           type: integer
         amount:
           type: number
-          format: decimal
         note:
           type: string
         paidAt:
@@ -2572,7 +2551,6 @@ components:
           type: string
         amount:
           type: number
-          format: decimal
         note:
           type: string
         paidAt:
@@ -2592,7 +2570,6 @@ components:
           type: integer
         salary:
           type: number
-          format: decimal
         contactPhone:
           type: string
         hiredAt:
@@ -2617,7 +2594,6 @@ components:
           type: integer
         salary:
           type: number
-          format: decimal
         contactPhone:
           type: string
 
@@ -2723,10 +2699,8 @@ components:
           type: integer
         revenue:
           type: number
-          format: decimal
         avgTicket:
           type: number
-          format: decimal
 
     SalesByEmployeeItem:
       type: object
@@ -2739,10 +2713,8 @@ components:
           type: integer
         revenue:
           type: number
-          format: decimal
         avgTicket:
           type: number
-          format: decimal
 
     SalesByTimeOfDayItem:
       type: object
@@ -2754,10 +2726,8 @@ components:
           type: integer
         revenue:
           type: number
-          format: decimal
         avgTicket:
           type: number
-          format: decimal
 
     TopMenuItem:
       type: object
@@ -2770,7 +2740,6 @@ components:
           type: integer
         revenue:
           type: number
-          format: decimal
 
     ErrorResponse:
       type: object
