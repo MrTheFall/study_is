@@ -18,6 +18,7 @@ import com.krusty.crab.security.SecurityContext;
 import com.krusty.crab.security.UserPrincipal;
 import com.krusty.crab.security.UserType;
 import com.krusty.crab.service.EmployeeActionLogService;
+import com.krusty.crab.service.OrderPlacementService;
 import com.krusty.crab.service.OrderService;
 import com.krusty.crab.util.AuditActions;
 import java.util.List;
@@ -40,35 +41,12 @@ public class OrdersController implements OrdersApi {
     private final OrderItemMapper orderItemMapper;
     private final OrderRepository orderRepository;
     private final EmployeeActionLogService actionLogService;
+    private final OrderPlacementService orderPlacementService;
 
     @Override
     public ResponseEntity<PlaceOrder201Response> placeOrder(PlaceOrderRequest placeOrderRequest) {
         log.info("Placing order for client: {}", placeOrderRequest.getClientId());
-        UserPrincipal user = SecurityContext.getCurrentUser();
-        if (user.getUserType() == UserType.CLIENT
-                && placeOrderRequest.getClientId() != null
-                && !placeOrderRequest.getClientId().equals(user.getUserId())) {
-            throw new AccessDeniedException("Clients can only place orders for themselves");
-        }
-        if (placeOrderRequest.getType() != null
-                && "delivery".equalsIgnoreCase(placeOrderRequest.getType().getValue())
-                && placeOrderRequest.getPaymentMethod() == null) {
-            throw new ValidationException("paymentMethod is required for delivery orders");
-        }
-        Integer createdByEmployeeId = user.getUserType() == UserType.EMPLOYEE ? user.getUserId() : null;
-        Integer orderId = orderService.placeOrder(placeOrderRequest, createdByEmployeeId);
-        if (user.getUserType() == UserType.EMPLOYEE) {
-            String details = String.format(
-                    "clientId=%s, type=%s, paymentMethod=%s",
-                    placeOrderRequest.getClientId(),
-                    placeOrderRequest.getType() != null
-                            ? placeOrderRequest.getType().getValue()
-                            : null,
-                    placeOrderRequest.getPaymentMethod() != null
-                            ? placeOrderRequest.getPaymentMethod().getValue()
-                            : null);
-            actionLogService.logOrderAction(user.getUserId(), AuditActions.ORDER_CREATE, orderId, details);
-        }
+        Integer orderId = orderPlacementService.placeOrder(placeOrderRequest);
         PlaceOrder201Response response = orderMapper.toPlaceOrderResponse(orderId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
