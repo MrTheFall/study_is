@@ -7,6 +7,7 @@ import com.krusty.crab.exception.ValidationException;
 import com.krusty.crab.repository.ClientRepository;
 import com.krusty.crab.repository.EmployeeRepository;
 import com.krusty.crab.security.UserPrincipal;
+import com.krusty.crab.security.UserType;
 import com.krusty.crab.util.JwtUtil;
 import com.krusty.crab.util.PasswordUtil;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +35,7 @@ public class AuthService {
             throw new BadCredentialsException("Invalid email or password");
         }
 
-        String token = jwtUtil.generateToken(email, "CLIENT", client.getId(), null);
+        String token = jwtUtil.generateToken(email, UserType.CLIENT, client.getId(), null);
 
         log.info("Client {} logged in successfully", email);
         return token;
@@ -51,24 +52,24 @@ public class AuthService {
         }
 
         String roleName = employee.getRole() != null ? employee.getRole().getName() : null;
-        String token = jwtUtil.generateToken(login, "EMPLOYEE", employee.getId(), roleName);
+        String token = jwtUtil.generateToken(login, UserType.EMPLOYEE, employee.getId(), roleName);
 
         log.info("Employee {} logged in successfully with role {}", login, roleName);
         return token;
     }
 
     @Transactional(readOnly = true)
-    public UserPrincipal getCurrentUser(Integer userId, String userType) {
-        if ("CLIENT".equals(userType)) {
+    public UserPrincipal getCurrentUser(Integer userId, UserType userType) {
+        if (userType == UserType.CLIENT) {
             Client client =
                     clientRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("Client", userId));
-            return new UserPrincipal(client.getId(), client.getEmail(), "CLIENT", null);
-        } else if ("EMPLOYEE".equals(userType)) {
+            return new UserPrincipal(client.getId(), client.getEmail(), UserType.CLIENT, null);
+        } else if (userType == UserType.EMPLOYEE) {
             Employee employee = employeeRepository
                     .findById(userId)
                     .orElseThrow(() -> new EntityNotFoundException("Employee", userId));
             String roleName = employee.getRole() != null ? employee.getRole().getName() : null;
-            return new UserPrincipal(employee.getId(), employee.getLogin(), "EMPLOYEE", roleName);
+            return new UserPrincipal(employee.getId(), employee.getLogin(), UserType.EMPLOYEE, roleName);
         } else {
             throw new ValidationException("Invalid user type: " + userType);
         }

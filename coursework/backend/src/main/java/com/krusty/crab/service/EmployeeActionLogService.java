@@ -4,8 +4,9 @@ import com.krusty.crab.entity.Employee;
 import com.krusty.crab.entity.EmployeeActionLog;
 import com.krusty.crab.repository.EmployeeActionLogRepository;
 import com.krusty.crab.repository.EmployeeRepository;
-import com.krusty.crab.security.UserPrincipal;
 import com.krusty.crab.security.SecurityContext;
+import com.krusty.crab.security.UserPrincipal;
+import com.krusty.crab.security.UserType;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -124,7 +125,7 @@ public class EmployeeActionLogService {
             return;
         }
 
-        if (user == null || !"EMPLOYEE".equals(user.getUserType())) {
+        if (user == null || user.getUserType() != UserType.EMPLOYEE) {
             return;
         }
 

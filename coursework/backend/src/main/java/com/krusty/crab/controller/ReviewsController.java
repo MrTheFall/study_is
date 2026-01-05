@@ -7,11 +7,12 @@ import com.krusty.crab.entity.Order;
 import com.krusty.crab.entity.Review;
 import com.krusty.crab.exception.ValidationException;
 import com.krusty.crab.mapper.ReviewMapper;
+import com.krusty.crab.security.SecurityContext;
 import com.krusty.crab.security.UserPrincipal;
+import com.krusty.crab.security.UserType;
 import com.krusty.crab.service.ClientService;
 import com.krusty.crab.service.OrderService;
 import com.krusty.crab.service.ReviewService;
-import com.krusty.crab.security.SecurityContext;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -64,13 +65,13 @@ public class ReviewsController implements ReviewsApi {
     public ResponseEntity<List<com.krusty.crab.dto.generated.Review>> getAllReviews(Integer clientId, Integer orderId) {
         log.info("Getting reviews, clientId: {}, orderId: {}", clientId, orderId);
         UserPrincipal user = SecurityContext.getCurrentUser();
-        if ("CLIENT".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.CLIENT) {
             if (clientId == null) {
                 clientId = user.getUserId();
             } else if (!clientId.equals(user.getUserId())) {
                 throw new AccessDeniedException("Access denied");
             }
-        } else if (!"EMPLOYEE".equals(user.getUserType())) {
+        } else if (user.getUserType() != UserType.EMPLOYEE) {
             throw new AccessDeniedException("Access denied");
         }
 
@@ -101,7 +102,7 @@ public class ReviewsController implements ReviewsApi {
 
     private void assertReviewAccess(Review review) {
         UserPrincipal user = SecurityContext.getCurrentUser();
-        if ("CLIENT".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.CLIENT) {
             Integer reviewClientId =
                     review.getClient() != null ? review.getClient().getId() : null;
             if (reviewClientId == null || !reviewClientId.equals(user.getUserId())) {
@@ -109,7 +110,7 @@ public class ReviewsController implements ReviewsApi {
             }
             return;
         }
-        if ("EMPLOYEE".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.EMPLOYEE) {
             return;
         }
         throw new AccessDeniedException("Access denied");

@@ -10,12 +10,13 @@ import com.krusty.crab.exception.EntityNotFoundException;
 import com.krusty.crab.exception.ValidationException;
 import com.krusty.crab.mapper.PaymentMapper;
 import com.krusty.crab.repository.OrderRepository;
+import com.krusty.crab.security.SecurityContext;
 import com.krusty.crab.security.UserPrincipal;
+import com.krusty.crab.security.UserType;
 import com.krusty.crab.service.EmployeeActionLogService;
 import com.krusty.crab.service.OnlinePaymentService;
 import com.krusty.crab.service.PaymentService;
 import com.krusty.crab.util.AuditActions;
-import com.krusty.crab.security.SecurityContext;
 import java.time.OffsetDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -52,9 +53,9 @@ public class PaymentsController implements PaymentsApi {
         UserPrincipal user = SecurityContext.getCurrentUser();
         Integer clientId = null;
 
-        if ("CLIENT".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.CLIENT) {
             clientId = user.getUserId();
-        } else if ("EMPLOYEE".equals(user.getUserType())) {
+        } else if (user.getUserType() == UserType.EMPLOYEE) {
             requireEmployeeRoleAny("Cashier", "Manager");
         } else {
             throw new AccessDeniedException("Access denied");
@@ -86,7 +87,7 @@ public class PaymentsController implements PaymentsApi {
         Integer paymentId = paymentService.processPayment(paymentRequest.getOrderId(), method, simulateFailure);
         com.krusty.crab.entity.Payment payment = paymentService.getPaymentByOrderId(paymentRequest.getOrderId());
         UserPrincipal user = SecurityContext.getCurrentUser();
-        if ("EMPLOYEE".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.EMPLOYEE) {
             String details = String.format("method=%s, amount=%s", method.getValue(), order.getTotalAmount());
             actionLogService.logOrderAction(user.getUserId(), AuditActions.PAYMENT_PROCESS, order.getId(), details);
         }
@@ -154,7 +155,7 @@ public class PaymentsController implements PaymentsApi {
         com.krusty.crab.dto.generated.ChangeResponse response = paymentService.processCashPayment(
                 cashPaymentRequest.getOrderId(), cashPaymentRequest.getAmountReceived());
         UserPrincipal user = SecurityContext.getCurrentUser();
-        if ("EMPLOYEE".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.EMPLOYEE) {
             String details = String.format(
                     "method=%s, amountReceived=%s",
                     PaymentMethod.CASH.getValue(), cashPaymentRequest.getAmountReceived());
@@ -201,7 +202,7 @@ public class PaymentsController implements PaymentsApi {
             }
         }
 
-        if ("CLIENT".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.CLIENT) {
             Integer orderClientId =
                     order.getClient() != null ? order.getClient().getId() : null;
             if (orderClientId == null || !orderClientId.equals(user.getUserId())) {
@@ -213,7 +214,7 @@ public class PaymentsController implements PaymentsApi {
             return;
         }
 
-        if ("EMPLOYEE".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.EMPLOYEE) {
             requireEmployeeRoleAny("Cashier", "Manager");
             if (method == PaymentMethod.ONLINE) {
                 throw new AccessDeniedException("Employees cannot process online payments");
@@ -227,7 +228,7 @@ public class PaymentsController implements PaymentsApi {
     private void validatePaymentViewAccess(Order order) {
         UserPrincipal user = SecurityContext.getCurrentUser();
 
-        if ("CLIENT".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.CLIENT) {
             Integer orderClientId =
                     order.getClient() != null ? order.getClient().getId() : null;
             if (orderClientId == null || !orderClientId.equals(user.getUserId())) {
@@ -236,7 +237,7 @@ public class PaymentsController implements PaymentsApi {
             return;
         }
 
-        if ("EMPLOYEE".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.EMPLOYEE) {
             requireEmployeeRoleAny("Cashier", "Manager");
             return;
         }
@@ -247,7 +248,7 @@ public class PaymentsController implements PaymentsApi {
     private void requireEmployeeRoleAny(String... allowedRoles) {
         UserPrincipal user = SecurityContext.getCurrentUser();
 
-        if (!"EMPLOYEE".equals(user.getUserType())) {
+        if (user.getUserType() != UserType.EMPLOYEE) {
             throw new AccessDeniedException("Only employees can perform this action");
         }
 

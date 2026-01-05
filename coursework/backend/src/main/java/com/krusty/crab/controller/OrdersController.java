@@ -14,11 +14,12 @@ import com.krusty.crab.exception.ValidationException;
 import com.krusty.crab.mapper.OrderItemMapper;
 import com.krusty.crab.mapper.OrderMapper;
 import com.krusty.crab.repository.OrderRepository;
+import com.krusty.crab.security.SecurityContext;
 import com.krusty.crab.security.UserPrincipal;
+import com.krusty.crab.security.UserType;
 import com.krusty.crab.service.EmployeeActionLogService;
 import com.krusty.crab.service.OrderService;
 import com.krusty.crab.util.AuditActions;
-import com.krusty.crab.security.SecurityContext;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +45,7 @@ public class OrdersController implements OrdersApi {
     public ResponseEntity<PlaceOrder201Response> placeOrder(PlaceOrderRequest placeOrderRequest) {
         log.info("Placing order for client: {}", placeOrderRequest.getClientId());
         UserPrincipal user = SecurityContext.getCurrentUser();
-        if ("CLIENT".equals(user.getUserType())
+        if (user.getUserType() == UserType.CLIENT
                 && placeOrderRequest.getClientId() != null
                 && !placeOrderRequest.getClientId().equals(user.getUserId())) {
             throw new AccessDeniedException("Access denied");
@@ -54,9 +55,9 @@ public class OrdersController implements OrdersApi {
                 && placeOrderRequest.getPaymentMethod() == null) {
             throw new ValidationException("paymentMethod is required for delivery orders");
         }
-        Integer createdByEmployeeId = "EMPLOYEE".equals(user.getUserType()) ? user.getUserId() : null;
+        Integer createdByEmployeeId = user.getUserType() == UserType.EMPLOYEE ? user.getUserId() : null;
         Integer orderId = orderService.placeOrder(placeOrderRequest, createdByEmployeeId);
-        if ("EMPLOYEE".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.EMPLOYEE) {
             String details = String.format(
                     "clientId=%s, type=%s, paymentMethod=%s",
                     placeOrderRequest.getClientId(),
@@ -77,7 +78,7 @@ public class OrdersController implements OrdersApi {
             com.krusty.crab.dto.generated.OrderStatus status, Integer clientId) {
         log.info("Getting all orders, status: {}, clientId: {}", status, clientId);
         UserPrincipal user = SecurityContext.getCurrentUser();
-        if ("CLIENT".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.CLIENT) {
             clientId = user.getUserId();
         }
         List<Order> orders;
@@ -117,14 +118,14 @@ public class OrdersController implements OrdersApi {
         String currentStatus = order.getStatus() != null ? order.getStatus().getValue() : null;
         com.krusty.crab.dto.generated.OrderStatus requestedStatus = updateOrderStatusRequest.getStatus();
 
-        if ("CLIENT".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.CLIENT) {
             if (requestedStatus != com.krusty.crab.dto.generated.OrderStatus.CANCELLED) {
                 throw new AccessDeniedException("Clients can only cancel their orders");
             }
             if (currentStatus == null || !"pending".equalsIgnoreCase(currentStatus)) {
                 throw new ValidationException("Client can only cancel pending orders");
             }
-        } else if ("EMPLOYEE".equals(user.getUserType())) {
+        } else if (user.getUserType() == UserType.EMPLOYEE) {
             String role = user.getRole();
             if (role == null) {
                 throw new AccessDeniedException("Access denied");
@@ -190,13 +191,13 @@ public class OrdersController implements OrdersApi {
         com.krusty.crab.entity.enums.OrderStatus newStatus =
                 com.krusty.crab.entity.enums.OrderStatus.fromValue(requestedStatus.getValue());
         Integer acceptedByEmployeeId = null;
-        if ("EMPLOYEE".equals(user.getUserType())
+        if (user.getUserType() == UserType.EMPLOYEE
                 && requestedStatus == com.krusty.crab.dto.generated.OrderStatus.CONFIRMED
                 && ("Cashier".equals(user.getRole()) || "Manager".equals(user.getRole()))) {
             acceptedByEmployeeId = user.getUserId();
         }
         orderService.updateOrderStatus(orderId, newStatus, acceptedByEmployeeId);
-        if ("EMPLOYEE".equals(user.getUserType())
+        if (user.getUserType() == UserType.EMPLOYEE
                 && (currentStatus == null || !currentStatus.equalsIgnoreCase(newStatus.getValue()))) {
             actionLogService.logOrderAction(
                     user.getUserId(),
@@ -227,9 +228,9 @@ public class OrdersController implements OrdersApi {
         }
 
         UserPrincipal user = SecurityContext.getCurrentUser();
-        if ("CLIENT".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.CLIENT) {
             // ok (assertOrderAccess already checked ownership)
-        } else if ("EMPLOYEE".equals(user.getUserType())) {
+        } else if (user.getUserType() == UserType.EMPLOYEE) {
             String role = user.getRole();
             if (!"Cashier".equals(role) && !"Manager".equals(role)) {
                 throw new AccessDeniedException("Access denied");
@@ -245,7 +246,7 @@ public class OrdersController implements OrdersApi {
         PaymentMethod newMethod = PaymentMethod.fromValue(
                 updateOrderPaymentMethodRequest.getPaymentMethod().getValue());
         Order updated = orderService.updateOrderPaymentMethod(orderId, newMethod);
-        if ("EMPLOYEE".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.EMPLOYEE) {
             String prevMethod =
                     order.getPaymentMethod() != null ? order.getPaymentMethod().getValue() : null;
             if (prevMethod == null || !prevMethod.equalsIgnoreCase(newMethod.getValue())) {
@@ -289,7 +290,7 @@ public class OrdersController implements OrdersApi {
         }
 
         UserPrincipal user = SecurityContext.getCurrentUser();
-        if ("CLIENT".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.CLIENT) {
             long ownedCount = orderRepository.countOwnedByClient(user.getUserId(), normalized);
             if (ownedCount != normalized.size()) {
                 throw new AccessDeniedException("Access denied");
@@ -307,14 +308,14 @@ public class OrdersController implements OrdersApi {
         log.info("Assigning courier {} to order {}", assignCourierRequest.getCourierId(), orderId);
         UserPrincipal user = SecurityContext.getCurrentUser();
         Integer previousCourierId = null;
-        if ("EMPLOYEE".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.EMPLOYEE) {
             Order before = orderService.getOrderById(orderId);
             if (before != null && before.getCourier() != null) {
                 previousCourierId = before.getCourier().getId();
             }
         }
         Order updated = orderService.assignCourierToOrder(orderId, assignCourierRequest.getCourierId());
-        if ("EMPLOYEE".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.EMPLOYEE) {
             String fromValue = previousCourierId != null ? previousCourierId.toString() : null;
             String toValue = assignCourierRequest.getCourierId() != null
                     ? assignCourierRequest.getCourierId().toString()
@@ -331,7 +332,7 @@ public class OrdersController implements OrdersApi {
 
     private void assertOrderAccess(Order order) {
         UserPrincipal user = SecurityContext.getCurrentUser();
-        if ("CLIENT".equals(user.getUserType())) {
+        if (user.getUserType() == UserType.CLIENT) {
             Integer orderClientId =
                     order.getClient() != null ? order.getClient().getId() : null;
             if (orderClientId == null || !orderClientId.equals(user.getUserId())) {

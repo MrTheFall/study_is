@@ -8,6 +8,6 @@ import lombok.Getter;
 public class UserPrincipal {
     private Integer userId;
     private String username;
-    private String userType; // "CLIENT" or "EMPLOYEE"
+    private UserType userType;
     private String role; // Role name for employees, null for clients
 }

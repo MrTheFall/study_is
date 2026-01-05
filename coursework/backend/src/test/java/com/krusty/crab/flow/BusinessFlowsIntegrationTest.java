@@ -15,6 +15,7 @@ import com.krusty.crab.entity.Order;
 import com.krusty.crab.entity.enums.OrderStatus;
 import com.krusty.crab.repository.OrderRepository;
 import com.krusty.crab.security.UserPrincipal;
+import com.krusty.crab.security.UserType;
 import com.krusty.crab.service.BankSignatureService;
 import com.krusty.crab.util.BankPayloadUtil;
 import java.math.BigDecimal;
@@ -414,13 +415,13 @@ class BusinessFlowsIntegrationTest {
     }
 
     private static Authentication clientAuth(int clientId) {
-        UserPrincipal principal = new UserPrincipal(clientId, "client@example.com", "CLIENT", null);
+        UserPrincipal principal = new UserPrincipal(clientId, "client@example.com", UserType.CLIENT, null);
         return new UsernamePasswordAuthenticationToken(
                 principal, null, List.of(new SimpleGrantedAuthority("ROLE_CLIENT")));
     }
 
     private static Authentication cookAuth(int employeeId) {
-        UserPrincipal principal = new UserPrincipal(employeeId, "cook", "EMPLOYEE", "Cook");
+        UserPrincipal principal = new UserPrincipal(employeeId, "cook", UserType.EMPLOYEE, "Cook");
         return new UsernamePasswordAuthenticationToken(
                 principal,
                 null,
@@ -428,7 +429,7 @@ class BusinessFlowsIntegrationTest {
     }
 
     private static Authentication cashierAuth(int employeeId) {
-        UserPrincipal principal = new UserPrincipal(employeeId, "cashier", "EMPLOYEE", "Cashier");
+        UserPrincipal principal = new UserPrincipal(employeeId, "cashier", UserType.EMPLOYEE, "Cashier");
         return new UsernamePasswordAuthenticationToken(
                 principal,
                 null,
@@ -436,7 +437,7 @@ class BusinessFlowsIntegrationTest {
     }
 
     private static Authentication managerAuth(int employeeId) {
-        UserPrincipal principal = new UserPrincipal(employeeId, "manager", "EMPLOYEE", "Manager");
+        UserPrincipal principal = new UserPrincipal(employeeId, "manager", UserType.EMPLOYEE, "Manager");
         return new UsernamePasswordAuthenticationToken(
                 principal,
                 null,

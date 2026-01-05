@@ -51,7 +51,8 @@ public class AuthController implements AuthApi {
         GetCurrentUser200Response response = new GetCurrentUser200Response();
         response.setUserId(userPrincipal.getUserId());
         response.setUsername(userPrincipal.getUsername());
-        response.setUserType(GetCurrentUser200Response.UserTypeEnum.fromValue(userPrincipal.getUserType()));
+        response.setUserType(
+                GetCurrentUser200Response.UserTypeEnum.fromValue(userPrincipal.getUserType().getValue()));
         response.setRole(userPrincipal.getRole());
 
         return ResponseEntity.ok(response);
