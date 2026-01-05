@@ -2,6 +2,9 @@ package com.krusty.crab.controller;
 
 import com.krusty.crab.api.PaymentsApi;
 import com.krusty.crab.dto.generated.CashPaymentRequest;
+import com.krusty.crab.dto.generated.OnlinePaymentStartRequest;
+import com.krusty.crab.dto.generated.OnlinePaymentStartResponse;
+import com.krusty.crab.dto.generated.OnlinePaymentStatus;
 import com.krusty.crab.dto.generated.PaymentRequest;
 import com.krusty.crab.entity.OnlinePaymentSession;
 import com.krusty.crab.mapper.PaymentMapper;
@@ -54,8 +57,8 @@ public class PaymentsController implements PaymentsApi {
 
     @Override
     @PreAuthorize("hasRole('CLIENT')")
-    public ResponseEntity<com.krusty.crab.dto.generated.OnlinePaymentStartResponse> startOnlinePayment(
-            com.krusty.crab.dto.generated.OnlinePaymentStartRequest onlinePaymentStartRequest) {
+    public ResponseEntity<OnlinePaymentStartResponse> startOnlinePayment(
+            OnlinePaymentStartRequest onlinePaymentStartRequest) {
         Integer orderId = onlinePaymentStartRequest.getOrderId();
         log.info("Starting online payment for order: {}", orderId);
 
@@ -65,13 +68,11 @@ public class PaymentsController implements PaymentsApi {
 
         OnlinePaymentSession session = paymentWorkflowService.startOnlinePayment(onlinePaymentStartRequest, baseUrl);
 
-        com.krusty.crab.dto.generated.OnlinePaymentStartResponse response =
-                new com.krusty.crab.dto.generated.OnlinePaymentStartResponse();
+        OnlinePaymentStartResponse response = new OnlinePaymentStartResponse();
         response.setSessionId(session.getId().toString());
         response.setOrderId(orderId);
         response.setAmount(session.getAmount());
-        response.setStatus(com.krusty.crab.dto.generated.OnlinePaymentStatus.fromValue(
-                session.getStatus().getValue()));
+        response.setStatus(OnlinePaymentStatus.fromValue(session.getStatus().getValue()));
         response.setRedirectUrl(session.getRedirectUrl());
         if (session.getExpiresAt() != null) {
             response.setExpiresAt(session.getExpiresAt().atOffset(java.time.ZoneOffset.UTC));
